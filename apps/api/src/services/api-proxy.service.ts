@@ -2,6 +2,15 @@ import { HTTPException } from "hono/http-exception";
 
 const API_PROXY_URL = process.env.API_PROXY_URL || "http://localhost:3002";
 
+function decodeHtmlEntities(url: string): string {
+  return url
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 const DEFAULT_TIMEOUT_MS = 5000;
 const EPISODES_TIMEOUT_MS = 30000;
 const MAX_RETRIES = 3;
@@ -284,13 +293,19 @@ export async function getEpisodes(
   );
 
   const metadata = response.metadata as EpisodeMetadata | undefined;
+
+  const decodedEpisodes = response.data.map((ep) => ({
+    ...ep,
+    url: ep.url ? decodeHtmlEntities(ep.url) : undefined,
+  }));
+
   const transformedData: EpisodesResponse = {
     id: bookId,
     title: metadata?.title ?? "",
     cover: metadata?.cover ?? "",
     intro: metadata?.intro ?? "",
     totalEpisodes: response.total ?? response.data.length,
-    episodes: response.data,
+    episodes: decodedEpisodes,
   };
 
   return {
