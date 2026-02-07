@@ -1,15 +1,30 @@
 const DEFAULT_TIMEOUT_MS = 5000;
 
+/**
+ * Decode HTML entities in a URL
+ * Converts &amp; to &, &lt; to <, &gt; to >, etc.
+ */
+export function decodeHtmlEntities(url: string): string {
+  return url
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 export async function validateVideoUrl(url: string): Promise<boolean> {
   if (!url || url.trim() === "") {
     return false;
   }
 
+  const decodedUrl = decodeHtmlEntities(url);
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-    const response = await fetch(url, {
+    const response = await fetch(decodedUrl, {
       method: "HEAD",
       signal: controller.signal,
       redirect: "manual",
@@ -20,7 +35,7 @@ export async function validateVideoUrl(url: string): Promise<boolean> {
     return response.ok || (response.status >= 300 && response.status < 400);
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      console.log(`[URLValidator] Timeout validating URL: ${url}`);
+      console.log(`[URLValidator] Timeout validating URL: ${decodedUrl}`);
     }
     return false;
   }

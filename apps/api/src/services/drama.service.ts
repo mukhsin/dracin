@@ -10,6 +10,7 @@ import {
   validateVideoUrl,
   getHighestQualityUrl,
   hasAnyVideoUrl,
+  decodeHtmlEntities,
 } from "../lib/url-validator.js";
 
 // ============================================
@@ -424,7 +425,9 @@ export class DramaService {
   ): Partial<Record<VideoQuality, string>> {
     const videoUrls: Partial<Record<VideoQuality, string>> = {};
 
-    const qualityMatch = url.match(/\.(\d+p|4k)\./i);
+    const decodedUrl = decodeHtmlEntities(url);
+
+    const qualityMatch = decodedUrl.match(/\.(\d+p|4k)\./i);
 
     if (qualityMatch) {
       const detectedQuality = qualityMatch[1].toLowerCase() as VideoQuality;
@@ -433,12 +436,12 @@ export class DramaService {
           detectedQuality,
         )
       ) {
-        videoUrls[detectedQuality] = url;
+        videoUrls[detectedQuality] = decodedUrl;
       } else {
-        videoUrls["1080p"] = url;
+        videoUrls["1080p"] = decodedUrl;
       }
     } else {
-      videoUrls["1080p"] = url;
+      videoUrls["1080p"] = decodedUrl;
     }
 
     return videoUrls;
