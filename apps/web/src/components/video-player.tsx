@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { VideoControls } from "./video-controls.js";
 import type { VideoQuality, VideoUrls } from "./quality-selector.js";
+import { decodeVideoUrls } from "../lib/utils.js";
 
 interface VideoPlayerProps {
   episodeId: string;
@@ -22,7 +23,11 @@ export function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const videoUrls: VideoUrls = propVideoUrls || {};
+  const videoUrls: VideoUrls = propVideoUrls
+    ? (decodeVideoUrls(
+        propVideoUrls as Record<string, string | undefined>,
+      ) as VideoUrls)
+    : {};
 
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>("1080p");
   const [isPlaying, setIsPlaying] = useState(false);
