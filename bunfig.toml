@@ -1,0 +1,2 @@
+[test]
+# Exclude e2e tests from bun test (they use Playwright)

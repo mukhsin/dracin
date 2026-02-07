@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+
+# This is the root Dockerfile for turbo prune
+# It creates a pruned version of the monorepo for efficient Docker builds
+# See: https://turbo.build/repo/docs/guides/tools/docker
+
+FROM oven/bun:1-alpine AS base
+
+# Install turbo globally
+RUN bun install -g turbo@^2.4.0
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package.json bun.lock ./
+COPY turbo.json ./
+
+# Copy all workspace package.json files
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
+
+# Copy source code
+COPY apps/api ./apps/api
+COPY apps/web ./apps/web
+COPY packages/shared ./packages/shared
+
+# Run turbo prune to create a minimal monorepo for Docker
+# This creates /app/out with only the necessary files
+RUN turbo prune --scope=@repo/api --scope=@repo/web --docker
+
+# The output is in /app/out which contains:
+# - full/ - complete monorepo structure with only needed packages
+# - json/ - just the package.json files (for layer caching)
+# - lockfile - the lockfile
+
+# Note: This Dockerfile is used by docker-compose to build the pruned context
+# The actual service Dockerfiles use the pruned output

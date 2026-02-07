@@ -1,0 +1,324 @@
+/* ============================================
+   5-THEME DESIGN SYSTEM FOR DRACIN
+   ============================================ */
+
+/* ----------------------------------------
+   DEFAULT THEME (DracinKita - Ultra Minimal)
+   ---------------------------------------- */
+:root {
+  /* Base colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+
+  /* Accent colors */
+  --accent-primary: #3b82f6;
+  --accent-secondary: #60a5fa;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #60a5fa);
+
+  /* Text colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Border colors */
+  --border-color: #334155;
+
+  /* Player-specific */
+  --player-accent: #3b82f6;
+  --player-bg: rgba(15, 23, 42, 0.95);
+  --player-control-bg: rgba(30, 41, 59, 0.8);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: #3b82f6;
+  --player-button-hover: rgba(255, 255, 255, 0.1);
+}
+
+/* ----------------------------------------
+   DRAMA BOX DB THEME (Clean Dark + Pink)
+   ---------------------------------------- */
+[data-theme="dramabox"] {
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #1a1a1a;
+
+  --accent-primary: #ff1493;
+  --accent-secondary: #ff69b4;
+  --accent-gradient: linear-gradient(135deg, #ff1493, #ff69b4);
+
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #666666;
+
+  --border-color: #333333;
+
+  --player-accent: #ff1493;
+  --player-bg: rgba(0, 0, 0, 0.95);
+  --player-control-bg: rgba(26, 26, 26, 0.9);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: #ff1493;
+  --player-button-hover: rgba(255, 20, 147, 0.2);
+}
+
+/* DramaBoxDB specific styles */
+[data-theme="dramabox"] .drama-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+[data-theme="dramabox"] .drama-card:hover {
+  box-shadow: 0 0 20px rgba(255, 20, 147, 0.3);
+}
+
+/* ----------------------------------------
+   DRACIN KITA THEME (Slate + Blue)
+   ---------------------------------------- */
+[data-theme="dracinkita"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+
+  --accent-primary: #3b82f6;
+  --accent-secondary: #60a5fa;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #60a5fa);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border-color: #334155;
+
+  --player-accent: #3b82f6;
+  --player-bg: rgba(15, 23, 42, 0.95);
+  --player-control-bg: rgba(30, 41, 59, 0.8);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: #3b82f6;
+  --player-button-hover: rgba(59, 130, 246, 0.2);
+}
+
+/* DracinKita specific - Minimal */
+[data-theme="dracinkita"] .drama-card {
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dracinkita"] .drama-card:hover {
+  border-color: var(--border-color);
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------
+   IQIYI THEME (Dark + Green VIP)
+   ---------------------------------------- */
+[data-theme="iqiyi"] {
+  --bg-primary: #1a1c22;
+  --bg-secondary: #23252b;
+  --bg-card: #23252b;
+
+  --accent-primary: #1cc749;
+  --accent-secondary: #2dd55a;
+  --accent-gradient: linear-gradient(135deg, #1cc749, #2dd55a);
+
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+
+  --border-color: #333333;
+
+  --player-accent: #1cc749;
+  --player-bg: rgba(26, 28, 34, 0.95);
+  --player-control-bg: rgba(35, 37, 43, 0.9);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: #1cc749;
+  --player-button-hover: rgba(28, 199, 73, 0.2);
+}
+
+/* iQ.com specific - VIP badges */
+[data-theme="iqiyi"] .vip-badge {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #000;
+  font-weight: bold;
+}
+
+[data-theme="iqiyi"] .drama-card:hover {
+  box-shadow: 0 4px 20px rgba(28, 199, 73, 0.2);
+}
+
+/* ----------------------------------------
+   NETFLIX THEME (Black + Red + Card Expansion)
+   ---------------------------------------- */
+[data-theme="netflix"] {
+  --bg-primary: #000000;
+  --bg-secondary: #141414;
+  --bg-card: #141414;
+
+  --accent-primary: #e50914;
+  --accent-secondary: #ff0a16;
+  --accent-gradient: linear-gradient(135deg, #e50914, #ff0a16);
+
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #666666;
+
+  --border-color: #333333;
+
+  --player-accent: #e50914;
+  --player-bg: rgba(0, 0, 0, 0.95);
+  --player-control-bg: rgba(20, 20, 20, 0.9);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: #e50914;
+  --player-button-hover: rgba(229, 9, 20, 0.2);
+}
+
+/* Netflix specific - Card expansion */
+[data-theme="netflix"] .drama-card {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+[data-theme="netflix"] .drama-card:hover {
+  transform: scale(1.4);
+  z-index: 100;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+}
+
+/* Netflix horizontal scroll rows */
+[data-theme="netflix"] .drama-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: scroll;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 40px 4%;
+}
+
+[data-theme="netflix"] .drama-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* ----------------------------------------
+   MODERN GLASS THEME (Glassmorphism + Gradient)
+   ---------------------------------------- */
+[data-theme="glass"] {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: rgba(255, 255, 255, 0.05);
+  --bg-card: rgba(255, 255, 255, 0.05);
+
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #ec4899;
+  --accent-gradient: linear-gradient(135deg, #8b5cf6, #ec4899);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+
+  --border-color: rgba(255, 255, 255, 0.1);
+
+  --player-accent: #8b5cf6;
+  --player-bg: rgba(10, 10, 15, 0.7);
+  --player-control-bg: rgba(255, 255, 255, 0.1);
+  --player-progress-bg: rgba(255, 255, 255, 0.2);
+  --player-progress-filled: linear-gradient(135deg, #8b5cf6, #ec4899);
+  --player-button-hover: rgba(255, 255, 255, 0.15);
+}
+
+/* Glass theme specific - Glassmorphism */
+[data-theme="glass"] .drama-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+[data-theme="glass"] .drama-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="glass"] header {
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   VIDEO PLAYER THEME STYLES
+   ============================================ */
+
+/* Player control bar theming */
+[data-theme] .video-controls {
+  background: linear-gradient(to top, var(--player-bg), transparent);
+}
+
+[data-theme] .video-progress-filled {
+  background: var(--player-progress-filled);
+}
+
+[data-theme] .video-control-button:hover {
+  background: var(--player-button-hover);
+}
+
+/* Netflix player - Bigger controls */
+[data-theme="netflix"] .video-play-button {
+  transform: scale(1.2);
+}
+
+[data-theme="netflix"] .video-progress-bar {
+  height: 4px;
+}
+
+[data-theme="netflix"] .video-progress-bar:hover {
+  height: 6px;
+}
+
+/* Glass player - Blur effect */
+[data-theme="glass"] .video-controls-bar {
+  background: var(--player-control-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* iQ.com player - VIP style */
+[data-theme="iqiyi"] .video-quality-badge {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #000;
+}
+
+/* ============================================
+   SHIMMER LOADING EFFECT (Glass Theme)
+   ============================================ */
+[data-theme="glass"] .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  [data-theme="netflix"] .drama-card:hover {
+    transform: scale(1.05);
+  }
+
+  [data-theme="glass"] .drama-card {
+    border-radius: 12px;
+  }
+}

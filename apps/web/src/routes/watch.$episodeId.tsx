@@ -1,0 +1,247 @@
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, Loader2, Film, Clock, AlertCircle } from "lucide-react";
+import { VideoPlayer } from "../components/video-player.js";
+import type { VideoUrls } from "../components/quality-selector.js";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+const MOCK_EPISODE = {
+  id: "test",
+  dramaId: "test-drama",
+  number: 1,
+  title: "Test Episode",
+  description: "This is a test episode for development.",
+  duration: 600,
+  videoUrls: {
+    "1080p": "/dracin-01.mp4",
+    "720p": "/dracin-01.mp4",
+    "480p": "/dracin-01.mp4",
+  },
+  createdAt: new Date().toISOString(),
+  drama: {
+    id: "test-drama",
+    title: "Test Drama",
+    slug: "test-drama",
+    posterUrl: null,
+  },
+};
+
+interface Episode {
+  id: string;
+  dramaId: string;
+  number: number;
+  title: string;
+  description: string | null;
+  duration: number;
+  videoUrls: VideoUrls;
+  createdAt: string;
+}
+
+interface Drama {
+  id: string;
+  title: string;
+  slug: string;
+  posterUrl: string | null;
+}
+
+interface EpisodeDetail extends Episode {
+  drama: Drama;
+}
+
+export const Route = createFileRoute("/watch/$episodeId")({
+  component: WatchPage,
+});
+
+function WatchPage() {
+  const { episodeId } = Route.useParams();
+
+  const {
+    data: episode,
+    isLoading: isEpisodeLoading,
+    error: episodeError,
+  } = useQuery<EpisodeDetail>({
+    queryKey: ["episode", episodeId],
+    queryFn: async () => {
+      if (episodeId === "test") {
+        return MOCK_EPISODE;
+      }
+      const response = await fetch(`${API_URL}/api/episodes/${episodeId}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Episode not found");
+        }
+        throw new Error("Failed to load episode");
+      }
+
+      const result = await response.json();
+
+      if (result && typeof result === "object") {
+        if ("data" in result && result.data) {
+          return result.data as EpisodeDetail;
+        }
+        return result as EpisodeDetail;
+      }
+
+      throw new Error("Invalid response format");
+    },
+    enabled: !!episodeId,
+  });
+
+  const {
+    data: videoData,
+    isLoading: isVideoLoading,
+    error: videoError,
+  } = useQuery<{
+    episodeId: string;
+    videoUrls: VideoUrls;
+    qualities: string[];
+    source: string;
+  }>({
+    queryKey: ["episode-videos", episodeId],
+    queryFn: async () => {
+      if (episodeId === "test") {
+        return {
+          episodeId: "test",
+          videoUrls: MOCK_EPISODE.videoUrls,
+          qualities: ["1080p", "720p", "480p"],
+          source: "primary",
+        };
+      }
+      const response = await fetch(
+        `${API_URL}/api/episodes/${episodeId}/videos`,
+        {
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load video URLs");
+      }
+
+      const result = await response.json();
+
+      if (
+        result &&
+        typeof result === "object" &&
+        "data" in result &&
+        result.data
+      ) {
+        return result.data;
+      }
+
+      throw new Error("Invalid video response format");
+    },
+    enabled: !!episodeId,
+  });
+
+  const isLoading = isEpisodeLoading || isVideoLoading;
+  const error = episodeError || videoError;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading episode...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !episode) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Episode Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            {error?.message || "The episode you're looking for doesn't exist."}
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Mobile-First Layout */}
+      <div className="max-w-lg mx-auto">
+        {/* Video Player Container - Full width on mobile */}
+        <div className="relative bg-black">
+          {/* Back Button - Overlay on video */}
+          <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/70 to-transparent">
+            <Link
+              to={`/dramas/${episode.drama.slug}`}
+              className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">{episode.drama.title}</span>
+            </Link>
+          </div>
+
+          {/* Video Player */}
+          <VideoPlayer
+            episodeId={episode.id}
+            videoUrls={videoData?.videoUrls}
+            title={episode.title || `Episode ${episode.number}`}
+            posterUrl={episode.drama.posterUrl || undefined}
+          />
+        </div>
+
+        {/* Episode Info - Below video on mobile */}
+        <div className="px-4 py-4">
+          {/* Episode metadata */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Film className="w-4 h-4" />
+            <span>Episode {episode.number}</span>
+            {episode.duration > 0 && (
+              <>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {Math.floor(episode.duration / 60)} min
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Title */}
+          <h1 className="text-xl font-bold mb-3">
+            {episode.title || `Episode ${episode.number}`}
+          </h1>
+
+          {/* Description */}
+          {episode.description && (
+            <p className="text-muted-foreground leading-relaxed">
+              {episode.description}
+            </p>
+          )}
+
+          {/* Drama link */}
+          <div className="mt-6 pt-4 border-t">
+            <Link
+              to={`/dramas/${episode.drama.slug}`}
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <Film className="w-4 h-4" />
+              View all episodes of {episode.drama.title}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default WatchPage;

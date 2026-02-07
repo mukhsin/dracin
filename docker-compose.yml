@@ -1,0 +1,158 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: dracin-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-dracin}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-dracin123}
+      POSTGRES_DB: ${DATABASE_NAME:-dracin}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - dracin-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-dracin} -d ${DATABASE_NAME:-dracin}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # API Service (Hono)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: dracin-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-dracin}
+      DATABASE_USER: ${DATABASE_USER:-dracin}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-dracin123}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-here-min-32-chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      PRIMARY_API_URL: ${PRIMARY_API_URL:-http://api:3001}
+      API_PROXY_URL: ${API_PROXY_URL:-http://api-proxy:3002}
+    ports:
+      - "3001:3001"
+    networks:
+      - dracin-network
+    depends_on:
+      db:
+        condition: service_healthy
+      api-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # Web Service (TanStack Start)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: dracin-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    ports:
+      - "3000:3000"
+    networks:
+      - dracin-network
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.125"
+          memory: 128M
+
+  # API-Proxy Service (Optional/Fallback)
+  api-proxy:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: dracin-api-proxy
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-dracin}
+      DATABASE_USER: ${DATABASE_USER:-dracin}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-dracin123}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-here-min-32-chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3002}
+      PRIMARY_API_URL: ${PRIMARY_API_URL:-http://api:3001}
+      API_PROXY_URL: ${API_PROXY_URL:-http://api-proxy:3002}
+    ports:
+      - "3002:3002"
+    networks:
+      - dracin-network
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.125"
+          memory: 128M
+    profiles:
+      - fallback
+      - full
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dracin-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
