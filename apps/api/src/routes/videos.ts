@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { episodes, dramas } from "../db/schema.js";
 import { getEpisodes } from "../services/api-proxy.service.js";
+import { decodeHtmlEntities } from "../lib/url-validator.js";
 import {
   getCircuitBreakerStatus,
   clearFallbackCache,
@@ -192,23 +193,25 @@ function transformApiProxyUrlToVideoUrls(
 ): Partial<Record<VideoQuality, string>> {
   const videoUrls: Partial<Record<VideoQuality, string>> = {};
 
+  const decodedUrl = decodeHtmlEntities(url);
+
   // Try to detect quality from URL pattern
   // Common patterns: .1080p., .720p., .480p., etc.
-  const qualityMatch = url.match(/\.(\d+p|4k)\./i);
+  const qualityMatch = decodedUrl.match(/\.(\d+p|4k)\./i);
 
   if (qualityMatch) {
     const detectedQuality = qualityMatch[1].toLowerCase() as VideoQuality;
     if (
       ["240p", "360p", "480p", "720p", "1080p", "4k"].includes(detectedQuality)
     ) {
-      videoUrls[detectedQuality] = url;
+      videoUrls[detectedQuality] = decodedUrl;
     } else {
       // Unknown quality pattern, default to 1080p
-      videoUrls["1080p"] = url;
+      videoUrls["1080p"] = decodedUrl;
     }
   } else {
     // No quality detected in URL, default to 1080p
-    videoUrls["1080p"] = url;
+    videoUrls["1080p"] = decodedUrl;
   }
 
   return videoUrls;
