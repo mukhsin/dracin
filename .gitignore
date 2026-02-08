@@ -44,5 +44,9 @@ Thumbs.db
 coverage/
 *.lcov
 
+# Sisyphus artifacts
+.sisyphus/evidence/
+.sisyphus/drafts/
+
 # TypeScript
 *.tsbuildinfo
