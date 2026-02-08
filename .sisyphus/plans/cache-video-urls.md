@@ -352,13 +352,13 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
 
 **Acceptance Criteria:**
 
-- [ ] URL validator function created with HEAD request and 5s timeout
-- [ ] `getBySlugWithValidation` method added to drama service
-- [ ] Drama detail route updated to use validation method
-- [ ] Fire-and-forget pattern implemented (no await on `fetchAndCacheEpisodes`)
-- [ ] Batch update updates ALL episodes by `bookId` + `index` (episode number)
-- [ ] Response includes `source` field ("cache" or "fresh")
-- [ ] Logs show: validation result, cache hit/miss, fire-and-forget completion
+- [x] URL validator function created with HEAD request and 5s timeout
+- [x] `getBySlugWithValidation` method added to drama service
+- [x] Drama detail route updated to use validation method
+- [x] Fire-and-forget pattern implemented (no await on `fetchAndCacheEpisodes`)
+- [x] Batch update updates ALL episodes by `bookId` + `index` (episode number)
+- [x] Response includes `source` field ("cache" or "fresh")
+- [x] Logs show: validation result, cache hit/miss, fire-and-forget completion
 
 **Agent-Executed QA Scenario:**
 
@@ -508,14 +508,14 @@ tail -f apps/api/logs/app.log | grep -E "(Fire-and-forget|Cache valid|Cache stal
 
 ### Final Checklist
 
-- [ ] URL validator with HEAD request and timeout
-- [ ] Drama service has `getBySlugWithValidation` method
-- [ ] Fire-and-forget pattern (no await on DB update)
-- [ ] Batch update all episodes by `bookId` + `index`
-- [ ] Response includes `meta.source` field
-- [ ] Logs show validation and caching operations
-- [ ] No TypeScript errors
-- [ ] All QA scenarios pass
+- [x] URL validator with HEAD request and timeout
+- [x] Drama service has `getBySlugWithValidation` method
+- [x] Fire-and-forget pattern (no await on DB update)
+- [x] Batch update all episodes by `bookId` + `index`
+- [x] Response includes `meta.source` field
+- [x] Logs show validation and caching operations
+- [x] No TypeScript errors
+- [x] All QA scenarios pass
 
 ---
 

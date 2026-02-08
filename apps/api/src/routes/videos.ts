@@ -34,6 +34,15 @@ const episodeIdSchema = z.object({
  */
 type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";
 
+const VIDEO_QUALITIES: VideoQuality[] = [
+  "240p",
+  "360p",
+  "480p",
+  "720p",
+  "1080p",
+  "4k",
+];
+
 /**
  * Video URLs response type
  */
@@ -81,6 +90,7 @@ export function createVideoRoutes(): Hono {
             id: true,
             number: true,
             videoUrls: true,
+            dramaId: true,
           },
           with: {
             drama: {
@@ -151,13 +161,22 @@ export function createVideoRoutes(): Hono {
           }
         }
 
-        const qualities = Object.keys(videoUrls) as VideoQuality[];
+        const qualities = VIDEO_QUALITIES.filter((quality) =>
+          Boolean(videoUrls[quality] && videoUrls[quality]?.trim()),
+        ) as VideoQuality[];
+
+        const shortVideoUrls = buildShortVideoUrls(
+          new URL(c.req.url).origin,
+          episode.dramaId,
+          episode.number,
+          qualities,
+        );
 
         const response: VideoUrlsResponse = {
           success: true,
           data: {
             episodeId: id,
-            videoUrls,
+            videoUrls: shortVideoUrls,
             qualities,
             source,
           },
@@ -215,6 +234,24 @@ function transformApiProxyUrlToVideoUrls(
   }
 
   return videoUrls;
+}
+
+function buildShortVideoUrls(
+  origin: string,
+  dramaId: string,
+  episodeNumber: number,
+  qualities: VideoQuality[],
+): Partial<Record<VideoQuality, string>> {
+  const shortUrls: Partial<Record<VideoQuality, string>> = {};
+
+  const cleanOrigin = origin.replace(/\/+$/, "");
+
+  for (const quality of qualities) {
+    const episodeKey = `${episodeNumber}.${quality}.mp4`;
+    shortUrls[quality] = `${cleanOrigin}/api/video/${dramaId}.${episodeKey}`;
+  }
+
+  return shortUrls;
 }
 
 /**

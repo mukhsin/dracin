@@ -1,10 +1,34 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Loader2, Film, Clock, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+function buildShortVideoUrl(
+  dramaId: string,
+  episodeNumber: number,
+  quality: string,
+): string {
+  return `${API_URL}/api/video/${dramaId}.${episodeNumber}.${quality}.mp4`;
+}
+
+function toShortVideoUrls(
+  dramaId: string,
+  episodeNumber: number,
+  videoUrls?: VideoUrls,
+): VideoUrls | undefined {
+  if (!videoUrls) return videoUrls;
+
+  return Object.fromEntries(
+    Object.keys(videoUrls).map((quality) => [
+      quality,
+      buildShortVideoUrl(dramaId, episodeNumber, quality),
+    ]),
+  ) as VideoUrls;
+}
 
 const MOCK_EPISODE = {
   id: "test",
@@ -141,6 +165,17 @@ function WatchPage() {
   const isLoading = isEpisodeLoading || isVideoLoading;
   const error = episodeError || videoError;
 
+  const videoUrls = useMemo(() => {
+    if (episodeId === "test") return videoData?.videoUrls;
+    if (!episode || !videoData?.videoUrls) return videoData?.videoUrls;
+
+    return toShortVideoUrls(
+      episode.drama.id,
+      episode.number,
+      videoData.videoUrls,
+    );
+  }, [episode, episodeId, videoData?.videoUrls]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -182,7 +217,8 @@ function WatchPage() {
           {/* Back Button - Overlay on video */}
           <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/70 to-transparent">
             <Link
-              to={`/dramas/${episode.drama.slug}`}
+              to="/dramas/$dramaId"
+              params={{ dramaId: episode.drama.slug }}
               className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -193,7 +229,7 @@ function WatchPage() {
           {/* Video Player */}
           <VideoPlayer
             episodeId={episode.id}
-            videoUrls={videoData?.videoUrls}
+            videoUrls={videoUrls}
             title={episode.title || `Episode ${episode.number}`}
             posterUrl={episode.drama.posterUrl || undefined}
           />
@@ -231,7 +267,8 @@ function WatchPage() {
           {/* Drama link */}
           <div className="mt-6 pt-4 border-t">
             <Link
-              to={`/dramas/${episode.drama.slug}`}
+              to="/dramas/$dramaId"
+              params={{ dramaId: episode.drama.slug }}
               className="inline-flex items-center gap-2 text-primary hover:underline"
             >
               <Film className="w-4 h-4" />
