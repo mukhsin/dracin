@@ -73,6 +73,11 @@ interface EpisodeDetail extends Episode {
   drama: Drama;
 }
 
+interface DramaEpisodesResponse {
+  drama: Drama;
+  episodes: Episode[];
+}
+
 export const Route = createFileRoute("/watch/$episodeId")({
   component: WatchPage,
 });
@@ -162,6 +167,43 @@ function WatchPage() {
     enabled: !!episodeId,
   });
 
+  const { data: dramaEpisodesData } = useQuery<DramaEpisodesResponse>({
+    queryKey: ["drama-episodes", episode?.drama.slug],
+    queryFn: async () => {
+      if (episodeId === "test") {
+        return {
+          drama: MOCK_EPISODE.drama,
+          episodes: [MOCK_EPISODE],
+        };
+      }
+      const slug = episode?.drama.slug;
+      if (!slug) {
+        throw new Error("Drama slug is required");
+      }
+      const response = await fetch(`${API_URL}/api/dramas/${slug}/episodes`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load drama episodes");
+      }
+
+      const result = await response.json();
+
+      if (
+        result &&
+        typeof result === "object" &&
+        "episodes" in result &&
+        Array.isArray(result.episodes)
+      ) {
+        return result as DramaEpisodesResponse;
+      }
+
+      throw new Error("Invalid drama episodes response format");
+    },
+    enabled: !!episode?.drama.slug,
+  });
+
   const isLoading = isEpisodeLoading || isVideoLoading;
   const error = episodeError || videoError;
 
@@ -175,6 +217,27 @@ function WatchPage() {
       videoData.videoUrls,
     );
   }, [episode, episodeId, videoData?.videoUrls]);
+
+  const { prevEpisode, nextEpisode } = useMemo(() => {
+    if (!episode || !dramaEpisodesData?.episodes) {
+      return { prevEpisode: null, nextEpisode: null };
+    }
+
+    const currentIndex = dramaEpisodesData.episodes.findIndex(
+      (item) => item.id === episode.id,
+    );
+
+    if (currentIndex === -1) {
+      return { prevEpisode: null, nextEpisode: null };
+    }
+
+    return {
+      prevEpisode: dramaEpisodesData.episodes[currentIndex - 1] ?? null,
+      nextEpisode: dramaEpisodesData.episodes[currentIndex + 1] ?? null,
+    };
+  }, [episode, dramaEpisodesData?.episodes]);
+
+  const showMobileNav = Boolean(prevEpisode || nextEpisode);
 
   if (isLoading) {
     return (
@@ -209,7 +272,9 @@ function WatchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className={`min-h-screen bg-background ${showMobileNav ? "pb-20" : ""}`}
+    >
       {/* Mobile-First Layout */}
       <div className="max-w-lg mx-auto">
         {/* Video Player Container - Full width on mobile */}
@@ -219,10 +284,11 @@ function WatchPage() {
             <Link
               to="/dramas/$dramaId"
               params={{ dramaId: episode.drama.slug }}
-              className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+              className="inline-flex items-center text-white/90 hover:text-white transition-colors"
+              aria-label={`Back to ${episode.drama.title}`}
             >
               <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">{episode.drama.title}</span>
+              <span className="sr-only">Back to {episode.drama.title}</span>
             </Link>
           </div>
 
@@ -230,7 +296,6 @@ function WatchPage() {
           <VideoPlayer
             episodeId={episode.id}
             videoUrls={videoUrls}
-            title={episode.title || `Episode ${episode.number}`}
             posterUrl={episode.drama.posterUrl || undefined}
           />
         </div>
@@ -238,24 +303,24 @@ function WatchPage() {
         {/* Episode Info - Below video on mobile */}
         <div className="px-4 py-4">
           {/* Episode metadata */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <Film className="w-4 h-4" />
-            <span>Episode {episode.number}</span>
-            {episode.duration > 0 && (
-              <>
-                <span className="text-border">|</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {Math.floor(episode.duration / 60)} min
-                </span>
-              </>
-            )}
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground mb-4">
+            <span className="text-xs uppercase tracking-wide text-primary-foreground">
+              {episode.drama.title} • Episode {episode.number}
+            </span>
+            <div className="flex items-center gap-2">
+              <Film className="w-4 h-4" />
+              <span>Episode {episode.number}</span>
+              {episode.duration > 0 && (
+                <>
+                  <span className="text-border">|</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {Math.floor(episode.duration / 60)} min
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-
-          {/* Title */}
-          <h1 className="text-xl font-bold mb-3">
-            {episode.title || `Episode ${episode.number}`}
-          </h1>
 
           {/* Description */}
           {episode.description && (
@@ -264,8 +329,8 @@ function WatchPage() {
             </p>
           )}
 
-          {/* Drama link */}
-          <div className="mt-6 pt-4 border-t">
+          {/* Drama link (desktop only) */}
+          <div className="mt-6 pt-4 border-t hidden md:block">
             <Link
               to="/dramas/$dramaId"
               params={{ dramaId: episode.drama.slug }}
@@ -277,6 +342,41 @@ function WatchPage() {
           </div>
         </div>
       </div>
+
+      {showMobileNav && (
+        <div className="md:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur">
+            <div className="max-w-lg mx-auto px-4 py-3">
+              <div className="flex gap-3">
+                {prevEpisode && (
+                  <Link
+                    to="/watch/$episodeId"
+                    params={{ episodeId: prevEpisode.id }}
+                    className="flex-1 rounded-lg border border-border px-3 py-2 text-left text-sm font-semibold text-muted-foreground hover:border-primary"
+                  >
+                    <span className="text-xs text-muted-foreground">Prev</span>
+                    <p className="text-sm text-primary-foreground">
+                      Episode {prevEpisode.number}
+                    </p>
+                  </Link>
+                )}
+                {nextEpisode && (
+                  <Link
+                    to="/watch/$episodeId"
+                    params={{ episodeId: nextEpisode.id }}
+                    className="flex-1 rounded-lg border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground hover:border-primary"
+                  >
+                    <span className="text-xs text-muted-foreground">Next</span>
+                    <p className="text-sm text-primary-foreground">
+                      Episode {nextEpisode.number}
+                    </p>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

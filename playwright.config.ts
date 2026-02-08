@@ -122,7 +122,7 @@ export default defineConfig({
   webServer: [
     {
       command: "cd apps/api && bun run dev",
-      url: "http://localhost:3001/api/health",
+      url: "http://localhost:3001/health",
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
     },

@@ -28,7 +28,7 @@ async function fetchDramas(
   });
 
   if (search) {
-    params.append("search", search);
+    params.append("q", search);
   }
 
   const res = await fetch(`${API_BASE_URL}/api/dramas?${params}`, {
@@ -91,7 +91,7 @@ export function useDramasInfinite(options: UseDramasInfiniteOptions = {}) {
   const { search = "", pageSize = 20 } = options;
 
   return useInfiniteQuery({
-    queryKey: ["dramas", "infinite", search],
+    queryKey: ["dramas", "infinite", search, pageSize],
     queryFn: async ({ pageParam = 1 }) => {
       return fetchDramas({
         search,
@@ -107,5 +107,6 @@ export function useDramasInfinite(options: UseDramasInfiniteOptions = {}) {
     },
     initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
+    placeholderData: (prevData) => prevData,
   });
 }
