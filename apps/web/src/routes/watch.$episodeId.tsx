@@ -190,13 +190,20 @@ function WatchPage() {
 
       const result = await response.json();
 
-      if (
-        result &&
-        typeof result === "object" &&
-        "episodes" in result &&
-        Array.isArray(result.episodes)
-      ) {
-        return result as DramaEpisodesResponse;
+      if (result && typeof result === "object") {
+        if (
+          "data" in result &&
+          result.data &&
+          typeof result.data === "object" &&
+          "episodes" in result.data &&
+          Array.isArray(result.data.episodes)
+        ) {
+          return result.data as DramaEpisodesResponse;
+        }
+
+        if ("episodes" in result && Array.isArray(result.episodes)) {
+          return result as DramaEpisodesResponse;
+        }
       }
 
       throw new Error("Invalid drama episodes response format");
@@ -288,7 +295,7 @@ function WatchPage() {
               aria-label={`Back to ${episode.drama.title}`}
             >
               <ChevronLeft className="w-5 h-5" />
-              <span className="sr-only">Back to {episode.drama.title}</span>
+              <span className="ml-2">{episode.drama.title}</span>
             </Link>
           </div>
 
@@ -303,7 +310,7 @@ function WatchPage() {
 
         {/* Episode Info - Below video on mobile */}
         <div className="px-4 py-6 space-y-4">
-          <div className="flex flex-col gap-2">
+          {/*<div className="flex flex-col gap-2">
             <Link
               to="/dramas/$dramaId"
               params={{ dramaId: episode.drama.slug }}
@@ -318,9 +325,9 @@ function WatchPage() {
               </span>
               <ChevronLeft className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
             </Link>
-          </div>
+          </div>*/}
 
-          {(prevEpisode || nextEpisode) && (
+          {(prevEpisode || nextEpisode) && !showMobileNav && (
             <div className="relative">
               <div className="bg-background/50 rounded-xl p-4 border border-border/50">
                 <div className="flex items-center justify-between">
