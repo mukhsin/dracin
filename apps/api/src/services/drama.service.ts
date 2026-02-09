@@ -1,4 +1,4 @@
-import { eq, sql, like, desc, asc, and, or, count } from "drizzle-orm";
+import { eq, sql, like, ilike, desc, asc, and, or, count } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { dramas, episodes } from "../db/schema.js";
 import type { Drama, Episode, PaginatedResponse } from "@repo/shared/types";
@@ -61,8 +61,8 @@ export class DramaService {
       const searchTerm = `%${filters.search}%`;
       whereConditions.push(
         or(
-          like(dramas.title, searchTerm),
-          like(dramas.description, searchTerm),
+          ilike(dramas.title, searchTerm),
+          ilike(dramas.description, searchTerm),
         ),
       );
     }
@@ -254,8 +254,8 @@ export class DramaService {
       .from(dramas)
       .where(
         or(
-          like(dramas.title, searchTerm),
-          like(dramas.description, searchTerm),
+          ilike(dramas.title, searchTerm),
+          ilike(dramas.description, searchTerm),
         ),
       )
       .orderBy(asc(dramas.title))

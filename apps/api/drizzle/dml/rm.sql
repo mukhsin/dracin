@@ -1,4 +1,4 @@
--- Clear all data from dracin-enviel-scraper database
+-- Clear all data from dracin-scraper database
 DELETE FROM episodes;
 DELETE FROM dramas;
 DELETE FROM drama_scrape_status;
