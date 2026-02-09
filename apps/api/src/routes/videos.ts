@@ -135,7 +135,7 @@ export function createVideoRoutes(): Hono {
             ) {
               // Find the matching episode by number
               const matchingEpisode = apiProxyResult.data.episodes.find(
-                (ep) => ep.index === episode.number,
+                (ep) => ep.index + 1 === episode.number,
               );
 
               if (matchingEpisode?.url) {
