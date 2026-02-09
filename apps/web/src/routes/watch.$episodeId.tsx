@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Loader2, Film, Clock, AlertCircle } from "lucide-react";
+import { ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 
@@ -303,24 +303,18 @@ function WatchPage() {
 
         {/* Episode Info - Below video on mobile */}
         <div className="px-4 py-4">
-          {/* Episode metadata */}
           <div className="flex flex-col gap-1 text-sm text-muted-foreground mb-4">
-            <span className="text-xs uppercase tracking-wide text-primary-foreground">
-              {episode.drama.title} • Episode {episode.number}
-            </span>
-            {/*<div className="flex items-center gap-2">
-              <Film className="w-4 h-4" />
-              <span>Episode {episode.number}</span>
-              {episode.duration > 0 && (
-                <>
-                  <span className="text-border">|</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {Math.floor(episode.duration / 60)} min
-                  </span>
-                </>
-              )}
-            </div>*/}
+            <Link
+              to="/dramas/$dramaId"
+              params={{ dramaId: episode.drama.slug }}
+              className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-primary-foreground hover:text-primary transition-colors duration-200 hover:underline decoration-primary/50 decoration-1 underline-offset-2"
+              aria-label={`View details for ${episode.drama.title}`}
+            >
+              <span className="font-semibold">{episode.drama.title}</span>
+              <span className="text-muted-foreground">
+                • Episode {episode.number}
+              </span>
+            </Link>
           </div>
 
           {/* Description */}
@@ -329,18 +323,6 @@ function WatchPage() {
               {episode.description}
             </p>
           )}
-
-          {/* Drama link (desktop only) */}
-          <div className="mt-6 pt-4 border-t hidden md:block">
-            <Link
-              to="/dramas/$dramaId"
-              params={{ dramaId: episode.drama.slug }}
-              className="inline-flex items-center gap-2 text-primary hover:underline"
-            >
-              <Film className="w-4 h-4" />
-              View all episodes of {episode.drama.title}
-            </Link>
-          </div>
         </div>
       </div>
 
