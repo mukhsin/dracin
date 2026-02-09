@@ -297,6 +297,7 @@ function WatchPage() {
             episodeId={episode.id}
             videoUrls={videoUrls}
             posterUrl={episode.drama.posterUrl || undefined}
+            dramaSlug={episode.drama.slug}
           />
         </div>
 
@@ -307,7 +308,7 @@ function WatchPage() {
             <span className="text-xs uppercase tracking-wide text-primary-foreground">
               {episode.drama.title} • Episode {episode.number}
             </span>
-            <div className="flex items-center gap-2">
+            {/*<div className="flex items-center gap-2">
               <Film className="w-4 h-4" />
               <span>Episode {episode.number}</span>
               {episode.duration > 0 && (
@@ -319,7 +320,7 @@ function WatchPage() {
                   </span>
                 </>
               )}
-            </div>
+            </div>*/}
           </div>
 
           {/* Description */}

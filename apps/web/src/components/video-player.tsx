@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
+import { ChevronLeft } from "lucide-react";
 import { VideoControls } from "./video-controls.js";
 import type { VideoQuality, VideoUrls } from "./quality-selector.js";
 import { decodeVideoUrls } from "../lib/utils.js";
@@ -10,6 +12,7 @@ interface VideoPlayerProps {
   posterUrl?: string;
   autoPlay?: boolean;
   startTime?: number;
+  dramaSlug?: string;
 }
 
 export function VideoPlayer({
@@ -19,6 +22,7 @@ export function VideoPlayer({
   posterUrl,
   autoPlay = false,
   startTime = 0,
+  dramaSlug,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -315,18 +319,31 @@ export function VideoPlayer({
                 />
               </svg>
             </div>
-            <p className="text-white font-medium mb-3">{error}</p>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setError(null);
-                videoRef.current?.load();
-              }}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Retry
-            </button>
+            <p className="text-white font-medium mb-4">{error}</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setError(null);
+                  videoRef.current?.load();
+                }}
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Retry
+              </button>
+              {dramaSlug && (
+                <Link
+                  to="/dramas/$dramaId"
+                  params={{ dramaId: dramaSlug }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back to Drama Details
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}
