@@ -1,13 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Film, Menu, X, User, LogOut, Search } from "lucide-react";
+import { Film, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth } from "../hooks/use-auth.js";
-import { ThemeSwitcher } from "./theme-switcher.js";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
@@ -23,8 +20,6 @@ export function Header() {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/dramas", label: "Browse" },
-    { to: "/watchlist", label: "Watchlist", auth: true },
-    { to: "/history", label: "History", auth: true },
   ];
 
   const isActive = (path: string) => {
@@ -53,7 +48,6 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
-              if (link.auth && !isAuthenticated) return null;
               const active = isActive(link.to);
               return (
                 <Link
@@ -73,54 +67,9 @@ export function Header() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            {/* Search Button */}
-            <Link
-              to="/dramas"
-              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5" />
-            </Link>
-
-            {/* Theme Switcher */}
-            <ThemeSwitcher />
-
-            {/* Auth Buttons */}
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium truncate max-w-[120px]">
-                    {user?.name || user?.email}
-                  </span>
-                </div>
-                <button
-                  onClick={logout}
-                  className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                  aria-label="Logout"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  to="/auth/login"
-                  className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/auth/register"
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-
             {/* Mobile Menu Button */}
             <button
+              type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
               aria-label="Toggle menu"
@@ -139,7 +88,6 @@ export function Header() {
           <div className="md:hidden border-t bg-background/95 backdrop-blur-md">
             <nav className="flex flex-col py-4">
               {navLinks.map((link) => {
-                if (link.auth && !isAuthenticated) return null;
                 const active = isActive(link.to);
                 return (
                   <Link
@@ -156,25 +104,6 @@ export function Header() {
                   </Link>
                 );
               })}
-              {!isAuthenticated && (
-                <>
-                  <div className="border-t my-2" />
-                  <Link
-                    to="/auth/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/auth/register"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-4 py-3 text-sm font-medium text-primary"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
             </nav>
           </div>
         )}
