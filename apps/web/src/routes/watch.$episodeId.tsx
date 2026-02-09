@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 
@@ -316,6 +316,55 @@ function WatchPage() {
               </span>
             </Link>
           </div>
+
+          {(prevEpisode || nextEpisode) && (
+            <div className="flex items-center justify-between py-4 px-2">
+              <div className="flex items-center">
+                {prevEpisode ? (
+                  <Link
+                    to="/watch/$episodeId"
+                    params={{ episodeId: prevEpisode.id }}
+                    className="p-2 rounded-full hover:bg-muted transition-colors"
+                    aria-label={`Previous episode: Episode ${prevEpisode.number}`}
+                  >
+                    <ChevronLeft className="w-5 h-5 text-primary" />
+                  </Link>
+                ) : (
+                  <div className="w-9 h-9 flex items-center justify-center">
+                    <div className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Episode
+                  </span>
+                  <span className="text-lg font-bold text-primary ml-1">
+                    {episode.number}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end">
+                {nextEpisode ? (
+                  <Link
+                    to="/watch/$episodeId"
+                    params={{ episodeId: nextEpisode.id }}
+                    className="p-2 rounded-full hover:bg-muted transition-colors"
+                    aria-label={`Next episode: Episode ${nextEpisode.number}`}
+                  >
+                    <ChevronRight className="w-5 h-5 text-primary" />
+                  </Link>
+                ) : (
+                  <div className="w-9 h-9 flex items-center justify-center">
+                    <div className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           {episode.description && (
