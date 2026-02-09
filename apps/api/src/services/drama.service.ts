@@ -321,7 +321,7 @@ export class DramaService {
             id: crypto.randomUUID(),
             dramaId: drama.id,
             bookId: drama.bookId ?? null,
-            number: apiEpisode.index,
+            number: apiEpisode.index + 1,
             title: apiEpisode.title,
             description: null,
             duration: null,
@@ -392,7 +392,7 @@ export class DramaService {
               .where(
                 and(
                   eq(episodes.dramaId, drama.id),
-                  eq(episodes.number, apiEpisode.index),
+                  eq(episodes.number, apiEpisode.index + 1),
                 ),
               );
 
