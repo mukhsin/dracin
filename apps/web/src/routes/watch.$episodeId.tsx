@@ -302,106 +302,125 @@ function WatchPage() {
         </div>
 
         {/* Episode Info - Below video on mobile */}
-        <div className="px-4 py-4">
-          <div className="flex flex-col gap-1 text-sm text-muted-foreground mb-4">
+        <div className="px-4 py-6 space-y-4">
+          <div className="flex flex-col gap-2">
             <Link
               to="/dramas/$dramaId"
               params={{ dramaId: episode.drama.slug }}
-              className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-primary-foreground hover:text-primary transition-colors duration-200 hover:underline decoration-primary/50 decoration-1 underline-offset-2"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-200 group"
               aria-label={`View details for ${episode.drama.title}`}
             >
-              <span className="font-semibold">{episode.drama.title}</span>
-              <span className="text-muted-foreground">
+              <span className="text-primary-foreground/90 group-hover:text-primary transition-colors">
+                {episode.drama.title}
+              </span>
+              <span className="text-xs text-muted-foreground">
                 • Episode {episode.number}
               </span>
+              <ChevronLeft className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
             </Link>
           </div>
 
           {(prevEpisode || nextEpisode) && (
-            <div className="flex items-center justify-between py-4 px-2">
-              <div className="flex items-center">
-                {prevEpisode ? (
-                  <Link
-                    to="/watch/$episodeId"
-                    params={{ episodeId: prevEpisode.id }}
-                    className="p-2 rounded-full hover:bg-muted transition-colors"
-                    aria-label={`Previous episode: Episode ${prevEpisode.number}`}
-                  >
-                    <ChevronLeft className="w-5 h-5 text-primary" />
-                  </Link>
-                ) : (
-                  <div className="w-9 h-9 flex items-center justify-center">
-                    <div className="w-5 h-5 text-muted-foreground" />
+            <div className="relative">
+              <div className="bg-background/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {prevEpisode ? (
+                      <Link
+                        to="/watch/$episodeId"
+                        params={{ episodeId: prevEpisode.id }}
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95"
+                        aria-label={`Previous episode: Episode ${prevEpisode.number}`}
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                        <div className="w-5 h-5 bg-muted-foreground/20 rounded-full" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Episode
-                  </span>
-                  <span className="text-lg font-bold text-primary ml-1">
-                    {episode.number}
-                  </span>
+                  <div className="flex items-center justify-center px-6">
+                    <div className="text-center">
+                      <span className="text-xs font-medium text-muted-foreground tracking-wider">
+                        EPISODE
+                      </span>
+                      <span className="text-2xl font-bold text-primary ml-2 tracking-tight">
+                        {episode.number}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    {nextEpisode ? (
+                      <Link
+                        to="/watch/$episodeId"
+                        params={{ episodeId: nextEpisode.id }}
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95"
+                        aria-label={`Next episode: Episode ${nextEpisode.number}`}
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                        <div className="w-5 h-5 bg-muted-foreground/20 rounded-full" />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-end">
-                {nextEpisode ? (
-                  <Link
-                    to="/watch/$episodeId"
-                    params={{ episodeId: nextEpisode.id }}
-                    className="p-2 rounded-full hover:bg-muted transition-colors"
-                    aria-label={`Next episode: Episode ${nextEpisode.number}`}
-                  >
-                    <ChevronRight className="w-5 h-5 text-primary" />
-                  </Link>
-                ) : (
-                  <div className="w-9 h-9 flex items-center justify-center">
-                    <div className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
               </div>
             </div>
           )}
 
-          {/* Description */}
           {episode.description && (
-            <p className="text-muted-foreground leading-relaxed">
-              {episode.description}
-            </p>
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Synopsis
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
+                {episode.description}
+              </p>
+            </div>
           )}
         </div>
       </div>
 
       {showMobileNav && (
         <div className="md:hidden">
-          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur">
-            <div className="max-w-lg mx-auto px-4 py-3">
+          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur shadow-lg">
+            <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex gap-3">
                 {prevEpisode && (
                   <Link
                     to="/watch/$episodeId"
                     params={{ episodeId: prevEpisode.id }}
-                    className="flex-1 rounded-lg border border-border px-3 py-2 text-left text-sm font-semibold text-muted-foreground hover:border-primary"
+                    className="flex-1 rounded-xl border border-border/50 px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
                   >
-                    <span className="text-xs text-muted-foreground">Prev</span>
-                    <p className="text-sm text-primary-foreground">
-                      Episode {prevEpisode.number}
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground tracking-wider">
+                        PREVIOUS
+                      </span>
+                      <p className="text-sm font-bold text-primary-foreground">
+                        Episode {prevEpisode.number}
+                      </p>
+                    </div>
                   </Link>
                 )}
                 {nextEpisode && (
                   <Link
                     to="/watch/$episodeId"
                     params={{ episodeId: nextEpisode.id }}
-                    className="flex-1 rounded-lg border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground hover:border-primary"
+                    className="flex-1 rounded-xl border border-border/50 px-4 py-3 text-right text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
                   >
-                    <span className="text-xs text-muted-foreground">Next</span>
-                    <p className="text-sm text-primary-foreground">
-                      Episode {nextEpisode.number}
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground tracking-wider">
+                        NEXT
+                      </span>
+                      <p className="text-sm font-bold text-primary-foreground">
+                        Episode {nextEpisode.number}
+                      </p>
+                    </div>
                   </Link>
                 )}
               </div>
