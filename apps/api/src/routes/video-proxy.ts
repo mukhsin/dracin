@@ -196,7 +196,7 @@ async function resolveShortVideoUrl(
   }
 
   const apiEpisode = apiProxyResult.data.episodes.find(
-    (ep) => ep.index === episodeNumber,
+    (ep) => ep.index + 1 === episodeNumber,
   );
 
   if (!apiEpisode?.url) {
