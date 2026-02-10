@@ -1,0 +1,12 @@
+# Cloudflare Tunnel configuration for dracin.mukhsin.web.id
+# Token-based tunnel run: no credentials JSON is required.
+
+ingress:
+  - hostname: dracin.mukhsin.web.id
+    path: /api/*
+    service: http://api:3001
+
+  - hostname: dracin.mukhsin.web.id
+    service: http://web:3000
+
+  - service: http_status:404

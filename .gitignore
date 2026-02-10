@@ -16,7 +16,11 @@ build/
 # Environment files
 .env
 .env.local
+.env.docker
 .env.*.local
+
+# Cloudflare Tunnel credentials
+infra/cloudflared/*.json
 
 # Logs
 logs/
