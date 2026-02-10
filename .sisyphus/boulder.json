@@ -1,11 +1,8 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/cache-video-urls.md",
-  "started_at": "2026-02-07T14:39:16.901Z",
-  "session_ids": [
-    "ses_3c7c5dc67ffeIOUnBGqXcQvRh1",
-    "ses_3c7701582ffe3lc99HQtfWA9hD"
-  ],
-  "plan_name": "cache-video-urls",
-  "completed_at": "2026-02-07T14:46:33.901Z",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/api-proxy-dockerfile-cloudflared.md",
+  "started_at": "2026-02-09T12:37:20.903Z",
+  "session_ids": ["ses_3bdf49f59ffemVZIUlY85drooy"],
+  "plan_name": "api-proxy-dockerfile-cloudflared",
+  "completed_at": "2026-02-09T12:45:40.000Z",
   "status": "completed"
 }

@@ -22,6 +22,15 @@ build/
 # Cloudflare Tunnel credentials
 infra/cloudflared/*.json
 
+# Drizzle generated DML files
+apps/api/drizzle/dml/
+
+# Local sqlite file
+local.db
+
+# Local test videos
+apps/web/public/*.mp4
+
 # Logs
 logs/
 *.log
