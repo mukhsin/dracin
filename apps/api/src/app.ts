@@ -20,7 +20,10 @@ export function createApp() {
   app.use(
     "*",
     cors({
-      origin: ["http://localhost:3000", "http://localhost:5173"],
+      origin:
+        process.env.NODE_ENV === "production"
+          ? ["https://dracin.mukhsin.web.id"]
+          : ["http://localhost:3000"],
       allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
       credentials: true,
