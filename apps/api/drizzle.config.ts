@@ -3,9 +3,12 @@ import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle/migrations",
-  dialect: "postgresql",
+  dialect: "sqlite",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgresql://localhost:5432/dracin",
+    url:
+      (process.env.DATABASE_URL?.startsWith("postgres")
+        ? undefined
+        : process.env.DATABASE_URL) || "file:./.data/dracin.db",
   },
   verbose: true,
   strict: true,

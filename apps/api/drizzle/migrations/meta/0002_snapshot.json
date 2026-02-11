@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d146a0cc-26d1-4299-9dca-ec01e2691ba7",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "5042aeac-bd0d-4887-9d6a-5fa13ecef2a5",
+  "prevId": "01bb328d-b39b-4d04-ad17-2860102a5ca3",
   "tables": {
     "auth_accounts": {
       "name": "auth_accounts",
@@ -53,17 +53,15 @@
           "name": "access_token_expires_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
+          "notNull": false,
+          "autoincrement": false
         },
         "refresh_token_expires_at": {
           "name": "refresh_token_expires_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
+          "notNull": false,
+          "autoincrement": false
         },
         "scope": {
           "name": "scope",
@@ -151,7 +149,7 @@
         },
         "book_id": {
           "name": "book_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -208,6 +206,41 @@
         },
         "source_endpoint": {
           "name": "source_endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "release_year": {
+          "name": "release_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rating": {
+          "name": "rating",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_episodes": {
+          "name": "total_episodes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "genres": {
+          "name": "genres",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -312,7 +345,7 @@
         },
         "book_id": {
           "name": "book_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -440,8 +473,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
+          "autoincrement": false
         },
         "ip_address": {
           "name": "ip_address",
@@ -629,8 +661,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
