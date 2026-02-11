@@ -111,6 +111,7 @@ COPY --from=installer --chown=api:bunjs /app/packages/shared/node_modules ./pack
 # Copy built application
 COPY --from=builder --chown=api:bunjs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=api:bunjs /app/apps/api/package.json ./apps/api/
+COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle.config.ts ./apps/api/
 COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
 COPY --from=builder --chown=api:bunjs /app/package.json ./
 
