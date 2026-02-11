@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { sql } from "drizzle-orm";
+import { users } from "../db/schema.js";
 
 const app = new Hono();
 
 app.get("/", async (c) => {
   try {
-    await db.execute(sql`SELECT 1`);
+    await db.select({ id: users.id }).from(users).limit(1);
 
     return c.json({
       status: "ok",
@@ -22,7 +22,7 @@ app.get("/", async (c) => {
         timestamp: new Date().toISOString(),
         database: "disconnected",
       },
-      503
+      503,
     );
   }
 });
