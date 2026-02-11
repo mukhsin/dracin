@@ -18,6 +18,10 @@ services:
       - sqlite_data:/data
     networks:
       - dracin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-web.rule=Host(`dracin.mukhsin.web.id`)"
+      - "traefik.http.services.dracin-web.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -47,6 +51,10 @@ services:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     networks:
       - dracin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-api.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/api`)"
+      - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
     depends_on:
       api:
         condition: service_healthy
@@ -93,48 +101,11 @@ services:
           cpus: "0.125"
           memory: 128M
 
-  # Cloudflare Tunnel (Single ingress)
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: dracin-cloudflared
-    restart: unless-stopped
-    environment:
-      CLOUDFLARED_TOKEN: ${CLOUDFLARED_TOKEN:?CLOUDFLARED_TOKEN is required}
-    command:
-      [
-        "tunnel",
-        "--no-autoupdate",
-        "run",
-        "--token",
-        "${CLOUDFLARED_TOKEN}",
-        "--config",
-        "/etc/cloudflared/config.yml",
-      ]
-    volumes:
-      - ./infra/cloudflared/config.yml:/etc/cloudflared/config.yml:ro
-    networks:
-      - dracin-network
-    depends_on:
-      web:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: "0.1"
-          memory: 64M
-        reservations:
-          cpus: "0.05"
-          memory: 32M
-
 volumes:
   sqlite_data:
     driver: local
 
 networks:
   dracin-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    external: true
+    name: dokploy-network
