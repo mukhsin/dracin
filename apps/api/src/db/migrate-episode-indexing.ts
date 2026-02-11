@@ -10,24 +10,9 @@
  * number: ep.episodeIndex + 1
  */
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { eq } from "drizzle-orm";
 import { episodes } from "./schema.js";
-import { env } from "../lib/env.js";
-
-// Database connection using the same pattern as db/index.ts
-const pool = new Pool({
-  host: env.DATABASE_HOST,
-  port: env.DATABASE_PORT,
-  database: env.DATABASE_NAME,
-  user: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
-const db = drizzle(pool, { schema: { episodes } });
+import { db } from "./index.js";
 
 async function migrateEpisodeIndexing() {
   console.log("🚀 Starting episode indexing migration...");
@@ -162,10 +147,6 @@ async function migrateEpisodeIndexing() {
     }
 
     process.exit(1);
-  } finally {
-    // Close the database connection
-    await pool.end();
-    console.log("\n🔒 Database connection closed.");
   }
 }
 

@@ -8,11 +8,13 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.string().default("3001"),
-  DATABASE_HOST: z.string(),
-  DATABASE_PORT: z.coerce.number().default(5432),
-  DATABASE_NAME: z.string(),
-  DATABASE_USER: z.string(),
-  DATABASE_PASSWORD: z.string(),
+  DATABASE_URL: z.string().nonempty().default("file:./.data/dracin.db"),
+  DATABASE_AUTH_TOKEN: z.string().optional(),
+  DATABASE_HOST: z.string().optional(),
+  DATABASE_PORT: z.coerce.number().optional(),
+  DATABASE_NAME: z.string().optional(),
+  DATABASE_USER: z.string().optional(),
+  DATABASE_PASSWORD: z.string().optional(),
   API_PROXY_URL: z.string().default("http://localhost:3002"),
 });
 

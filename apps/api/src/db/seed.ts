@@ -1,13 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { users, dramas, episodes, watchlist, watchHistory } from "./schema.js";
-
-const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL || "postgresql://localhost:5432/dracin",
-});
-
-const db = drizzle(pool);
+import { db } from "./index.js";
 
 async function seed() {
   console.log("Seeding database...");
@@ -184,7 +176,6 @@ async function seed() {
   console.log("Added watch history entries");
 
   console.log("Seeding completed successfully!");
-  await pool.end();
 }
 
 seed().catch((error) => {
