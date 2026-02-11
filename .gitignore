@@ -57,10 +57,14 @@ Thumbs.db
 # Testing
 coverage/
 *.lcov
+playwright-report
+test-results
 
 # Sisyphus artifacts
 .sisyphus/evidence/
 .sisyphus/drafts/
+.sisyphus/notepads/
+.sisyphus/plans/
 
 # TypeScript
 *.tsbuildinfo
