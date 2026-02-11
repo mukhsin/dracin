@@ -1,27 +1,21 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import * as schema from "../db/schema.js";
-import { config } from "dotenv";
-import { resolve } from "path";
+import { env } from "./env.js";
 
-config({ path: resolve(process.cwd(), "apps/api/.env") });
+const client = createClient({
+  url: env.DATABASE_URL,
+  authToken: env.DATABASE_AUTH_TOKEN,
+});
 
-const getDatabase = () => {
-  const pool = new Pool({
-    connectionString:
-      process.env.DATABASE_URL || "postgresql://localhost:5432/dracin",
-  });
-  return drizzle(pool, { schema });
-};
-
-const db = getDatabase();
+const db = drizzle(client, { schema });
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: "sqlite",
     schema: schema,
     usePlural: true,
   }),
