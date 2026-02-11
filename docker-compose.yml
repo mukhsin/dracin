@@ -18,8 +18,8 @@ services:
       - dracin-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dracin-web.rule=Host(`dracin.mukhsin.web.id`)"
-      - "traefik.http.services.dracin-web.loadbalancer.server.port=3000"
+      - "traefik.http.routers.dracin-api.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/api`)"
+      - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -47,8 +47,8 @@ services:
       - dracin-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dracin-api.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/api`)"
-      - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
+      - "traefik.http.routers.dracin-web.rule=Host(`dracin.mukhsin.web.id`)"
+      - "traefik.http.services.dracin-web.loadbalancer.server.port=3000"
     depends_on:
       api:
         condition: service_healthy
