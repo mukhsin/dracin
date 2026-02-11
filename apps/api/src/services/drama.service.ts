@@ -39,6 +39,13 @@ export interface DramaListFilters {
 
 type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";
 
+type DramaRow = typeof dramas.$inferSelect;
+type EpisodeRow = typeof episodes.$inferSelect;
+
+const mapDramaRowToShared = (row: DramaRow): Drama => row;
+
+const mapEpisodeRowToShared = (row: EpisodeRow): Episode => row;
+
 // ============================================
 // Drama Service
 // ============================================
@@ -106,7 +113,7 @@ export class DramaService {
       .offset(offset);
 
     return {
-      items: results,
+      items: results.map(mapDramaRowToShared),
       total,
       page,
       pageSize,
@@ -119,11 +126,16 @@ export class DramaService {
    */
   async getBySlug(slug: string): Promise<DramaWithEpisodes | null> {
     // Get drama
-    const [drama] = await db.select().from(dramas).where(eq(dramas.slug, slug));
+    const [dramaRow] = await db
+      .select()
+      .from(dramas)
+      .where(eq(dramas.slug, slug));
 
-    if (!drama) {
+    if (!dramaRow) {
       return null;
     }
+
+    const drama = mapDramaRowToShared(dramaRow);
 
     // Get episodes directly (no seasons)
     const episodesList = await db
@@ -134,7 +146,7 @@ export class DramaService {
 
     return {
       ...drama,
-      episodes: episodesList,
+      episodes: episodesList.map(mapEpisodeRowToShared),
     };
   }
 
@@ -146,14 +158,20 @@ export class DramaService {
     episodes: Episode[];
   }> {
     // Get drama
-    const [drama] = await db
-      .select({ id: dramas.id, title: dramas.title, slug: dramas.slug })
+    const [dramaRow] = await db
+      .select()
       .from(dramas)
       .where(eq(dramas.slug, dramaSlug));
 
-    if (!drama) {
+    if (!dramaRow) {
       return { drama: null, episodes: [] };
     }
+
+    const drama: Pick<Drama, "id" | "title" | "slug"> = {
+      id: dramaRow.id,
+      title: dramaRow.title,
+      slug: dramaRow.slug,
+    };
 
     // Get episodes directly
     const episodesList = await db
@@ -164,7 +182,7 @@ export class DramaService {
 
     return {
       drama,
-      episodes: episodesList,
+      episodes: episodesList.map(mapEpisodeRowToShared),
     };
   }
 
@@ -188,8 +206,10 @@ export class DramaService {
       return null;
     }
 
+    const episode = mapEpisodeRowToShared(result.episode);
+
     return {
-      ...result.episode,
+      ...episode,
       drama: {
         id: result.dramaId,
         title: result.dramaTitle,
@@ -206,30 +226,37 @@ export class DramaService {
     episodeNumber: number,
   ): Promise<EpisodeWithDrama | null> {
     // Get drama first
-    const [drama] = await db
-      .select({ id: dramas.id, title: dramas.title, slug: dramas.slug })
+    const [dramaRow] = await db
+      .select()
       .from(dramas)
       .where(eq(dramas.slug, dramaSlug));
 
-    if (!drama) {
+    if (!dramaRow) {
       return null;
     }
 
     // Get episode
-    const [episode] = await db
+    const [episodeRow] = await db
       .select()
       .from(episodes)
       .where(
-        and(eq(episodes.dramaId, drama.id), eq(episodes.number, episodeNumber)),
+        and(
+          eq(episodes.dramaId, dramaRow.id),
+          eq(episodes.number, episodeNumber),
+        ),
       );
 
-    if (!episode) {
+    if (!episodeRow) {
       return null;
     }
 
     return {
-      ...episode,
-      drama,
+      ...mapEpisodeRowToShared(episodeRow),
+      drama: {
+        id: dramaRow.id,
+        title: dramaRow.title,
+        slug: dramaRow.slug,
+      },
     };
   }
 
@@ -237,11 +264,13 @@ export class DramaService {
    * Get episodes by drama ID (for internal use)
    */
   async getEpisodesByDramaId(dramaId: string): Promise<Episode[]> {
-    return db
+    const rows = await db
       .select()
       .from(episodes)
       .where(eq(episodes.dramaId, dramaId))
       .orderBy(asc(episodes.number));
+
+    return rows.map(mapEpisodeRowToShared);
   }
 
   /**
@@ -249,7 +278,7 @@ export class DramaService {
    */
   async search(query: string, limit: number = 10): Promise<Drama[]> {
     const searchTerm = `%${query}%`;
-    return db
+    const rows = await db
       .select()
       .from(dramas)
       .where(
@@ -260,6 +289,8 @@ export class DramaService {
       )
       .orderBy(asc(dramas.title))
       .limit(limit);
+
+    return rows.map(mapDramaRowToShared);
   }
 
   async getBySlugWithValidation(
@@ -274,12 +305,14 @@ export class DramaService {
       hasAnyVideoUrl(ep.videoUrls),
     );
 
-    if (episodesWithUrls.length === 0 || !drama.bookId) {
+    const bookIdString = drama.bookId?.toString() ?? null;
+
+    if (episodesWithUrls.length === 0 || !bookIdString) {
       console.log(
         `[DramaService] No cached URLs for drama ${slug}, fetching fresh`,
       );
-      if (drama.bookId) {
-        this.fetchAndCacheEpisodes(drama.bookId.toString());
+      if (bookIdString) {
+        this.fetchAndCacheEpisodes(bookIdString);
       }
       return { ...drama, source: "fresh" };
     }
@@ -291,8 +324,8 @@ export class DramaService {
       console.log(
         `[DramaService] No valid URL found for drama ${slug}, fetching fresh`,
       );
-      if (drama.bookId) {
-        this.fetchAndCacheEpisodes(drama.bookId.toString());
+      if (bookIdString) {
+        this.fetchAndCacheEpisodes(bookIdString);
       }
       return { ...drama, source: "fresh" };
     }
@@ -309,12 +342,12 @@ export class DramaService {
 
     console.log(`[DramaService] Cache stale for drama ${slug}, fetching fresh`);
 
-    if (drama.bookId) {
-      this.fetchAndCacheEpisodes(drama.bookId.toString());
+    if (bookIdString) {
+      this.fetchAndCacheEpisodes(bookIdString);
     }
 
     try {
-      const freshResult = await getEpisodes(drama.bookId.toString());
+      const freshResult = await getEpisodes(bookIdString ?? "");
       if (freshResult.success && freshResult.data.episodes.length > 0) {
         const freshEpisodes = freshResult.data.episodes.map(
           (apiEpisode: ApiProxyEpisode) => ({
@@ -367,7 +400,7 @@ export class DramaService {
       const [drama] = await db
         .select({ id: dramas.id })
         .from(dramas)
-        .where(eq(dramas.bookId, Number(bookId)));
+        .where(eq(dramas.bookId, bookId));
 
       if (!drama) {
         console.log(

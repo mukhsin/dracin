@@ -20,7 +20,7 @@ export type DramaStatus = "ongoing" | "completed" | "upcoming";
 
 export interface Drama {
   id: string;
-  bookId: number | null;
+  bookId: string | null;
   title: string;
   slug: string;
   description: string | null;
@@ -65,7 +65,7 @@ export type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";
 export interface Episode {
   id: string;
   dramaId: string;
-  bookId: number | null;
+  bookId: string | null;
   number: number;
   title: string | null;
   description: string | null;
