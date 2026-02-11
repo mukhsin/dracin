@@ -1,16 +1,8 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { db } from "./index.js";
 import { dramas, episodes } from "./schema.js";
+import { and, eq } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
-import { sql } from "drizzle-orm";
-
-const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL || "postgresql://localhost:5432/dracin",
-});
-
-const db = drizzle(pool);
 
 interface DramaData {
   bookId: string;
@@ -23,23 +15,12 @@ interface DramaData {
 }
 
 interface EpisodeData {
-  bookId: number;
+  bookId: string;
   episodeIndex: number;
   title: string;
   url: string;
 }
 
-interface EpisodeData {
-  bookId: number;
-  episodeIndex: number;
-  title: string;
-  url: string;
-}
-
-/**
- * Parse play count string with M/K suffixes to integer
- * Examples: "14M" → 14000000, "3.4M" → 3400000, "317K" → 317000
- */
 function parsePlayCount(playCountStr: string | null): number | null {
   if (!playCountStr) return null;
 
@@ -62,14 +43,16 @@ function parseDramas(sqlContent: string): DramaData[] {
   const dramaRegex =
     /INSERT INTO dramas \(bookId, title, cover, intro, chapterCount, playCount, language, source_endpoint\) VALUES \((\d+), '((?:[^']|'')*)', '((?:[^']|'')*)', '((?:[^']|'')*)', (\d+), (NULL|\d+), '((?:[^']|'')*)', (NULL|'(?:[^']|'')*')\)/g;
 
-  let match;
-  while ((match = dramaRegex.exec(sqlContent)) !== null) {
+  let match: RegExpExecArray | null;
+  while (true) {
+    match = dramaRegex.exec(sqlContent);
+    if (!match) break;
     dramas.push({
       bookId: match[1],
       title: match[2].replace(/''/g, "'"),
       cover: match[3],
       intro: match[4].replace(/''/g, "'"),
-      chapterCount: parseInt(match[5]),
+      chapterCount: parseInt(match[5], 10),
       playCount: match[6] === "NULL" ? null : match[6],
       language: match[7],
     });
@@ -83,11 +66,13 @@ function parseEpisodes(sqlContent: string): EpisodeData[] {
   const episodeRegex =
     /INSERT INTO episodes \(bookId, episode_index, title, url\) VALUES \((\d+), (\d+), '([^']+)', '([^']+)'\)/g;
 
-  let match;
-  while ((match = episodeRegex.exec(sqlContent)) !== null) {
+  let match: RegExpExecArray | null;
+  while (true) {
+    match = episodeRegex.exec(sqlContent);
+    if (!match) break;
     episodes.push({
-      bookId: parseInt(match[1]),
-      episodeIndex: parseInt(match[2]),
+      bookId: match[1],
+      episodeIndex: parseInt(match[2], 10),
       title: match[3],
       url: match[4],
     });
@@ -115,10 +100,8 @@ async function importLanguageData(
   const sqlPath = path.join(process.cwd(), "drizzle", "dml", sqlFile);
   const sqlContent = fs.readFileSync(sqlPath, "utf-8");
 
-  // Parse episodes from SQL (episodes are only in SQL files)
   const episodeData = parseEpisodes(sqlContent);
 
-  // Create a map of bookId to playCount from JSON data (stored as string)
   const playCountMap = new Map<string, string | null>();
   for (const drama of jsonData) {
     if (drama.language === language) {
@@ -126,7 +109,6 @@ async function importLanguageData(
     }
   }
 
-  // Parse dramas from SQL but enrich with playCount from JSON
   const dramaData = parseDramas(sqlContent).map((drama) => ({
     ...drama,
     playCount: playCountMap.get(drama.bookId) ?? null,
@@ -136,18 +118,17 @@ async function importLanguageData(
     `  Found ${dramaData.length} dramas and ${episodeData.length} episodes`,
   );
 
-  // Insert dramas
   for (const drama of dramaData) {
     const existing = await db
       .select({ id: dramas.id })
       .from(dramas)
-      .where(sql`${dramas.bookId} = ${parseInt(drama.bookId)}`)
+      .where(eq(dramas.bookId, drama.bookId))
       .limit(1);
 
     if (existing.length === 0) {
       try {
         await db.insert(dramas).values({
-          bookId: parseInt(drama.bookId),
+          bookId: drama.bookId,
           title: drama.title,
           slug: generateSlug(drama.title, drama.bookId, drama.language),
           description: drama.intro,
@@ -156,6 +137,7 @@ async function importLanguageData(
           language: drama.language,
           playCount: drama.playCount,
           sourceEndpoint: null,
+          totalEpisodes: drama.chapterCount,
           metadata: {
             totalEpisodes: drama.chapterCount,
           },
@@ -173,9 +155,7 @@ async function importLanguageData(
     const drama = await db
       .select({ id: dramas.id })
       .from(dramas)
-      .where(
-        sql`${dramas.bookId} = ${ep.bookId} AND ${dramas.language} = ${language}`,
-      )
+      .where(and(eq(dramas.bookId, ep.bookId), eq(dramas.language, language)))
       .limit(1);
 
     if (drama.length > 0) {
@@ -183,7 +163,10 @@ async function importLanguageData(
         .select({ id: episodes.id })
         .from(episodes)
         .where(
-          sql`${episodes.dramaId} = ${drama[0].id} AND ${episodes.number} = ${ep.episodeIndex + 1}`,
+          and(
+            eq(episodes.dramaId, drama[0].id),
+            eq(episodes.number, ep.episodeIndex + 1),
+          ),
         )
         .limit(1);
 
@@ -191,7 +174,7 @@ async function importLanguageData(
         await db.insert(episodes).values({
           dramaId: drama[0].id,
           bookId: ep.bookId,
-          number: ep.episodeIndex + 1, // Convert 0-indexed to 1-indexed
+          number: ep.episodeIndex + 1,
           title: ep.title,
           sourceUrl: ep.url,
           videoUrls: {},
@@ -207,7 +190,6 @@ async function importLanguageData(
 async function seed() {
   console.log("Starting SQL data import...");
 
-  // Load JSON data for play counts
   const jsonPath = path.join(process.cwd(), "drizzle", "dml", "data.json");
   const jsonContent = fs.readFileSync(jsonPath, "utf-8");
   const jsonData = JSON.parse(jsonContent).data as DramaData[];
@@ -226,7 +208,6 @@ async function seed() {
   }
 
   console.log("\n✅ Data import completed!");
-  await pool.end();
 }
 
 seed().catch((error) => {

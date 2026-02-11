@@ -1,8 +1,16 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/api-proxy-dockerfile-cloudflared.md",
-  "started_at": "2026-02-09T12:37:20.903Z",
-  "session_ids": ["ses_3bdf49f59ffemVZIUlY85drooy"],
-  "plan_name": "api-proxy-dockerfile-cloudflared",
-  "completed_at": "2026-02-09T12:45:40.000Z",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/sqlite-migration.md",
+  "started_at": "2026-02-10T16:20:00.443Z",
+  "session_ids": [
+    "ses_3b7d50a4effePyHxtIt95Bpykq",
+    "ses_3b4cc174affekaE8hOxS6qakmj",
+    "ses_3b4c7c794ffeq8qtyNycIrc3KQ",
+    "ses_3b4c2aa79ffe39eFvIFo4xt7fH",
+    "ses_3b4c778affe9ffecEeL8UtQGhmRgU",
+    "ses_3b4cc174affekaE8hOxS6qakmj",
+    "ses_3b4c7c794ffeq8qtyNycIrc3KQ",
+    "ses_3b4d0a975ffeKa6J4RoCnvz077"
+  ],
+  "plan_name": "sqlite-migration",
   "status": "completed"
 }
