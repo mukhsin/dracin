@@ -76,8 +76,6 @@ RUN bun install -g typescript && \
 COPY --from=dev-installer /app/node_modules ./node_modules
 COPY --from=dev-installer /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=dev-installer /app/packages/shared/node_modules ./packages/shared/node_modules
-
-# Copy full source code
 COPY --from=pruner /app/out/full/ .
 
 # Build the shared package first (dependency of API)
@@ -100,6 +98,24 @@ RUN apk add --no-cache \
     && adduser -S api -u 1001 -G bunjs
 
 WORKDIR /app
+
+RUN mkdir -p /data && chown -R api:bunjs /data
+
+RUN bun install -g drizzle-kit@^0.31.8 && cp $(bun pm bin -g)/drizzle-kit /usr/local/bin/
+
+# Copy production dependencies
+COPY --from=installer --chown=api:bunjs /app/node_modules ./node_modules
+COPY --from=installer --chown=api:bunjs /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=installer --chown=api:bunjs /app/packages/shared/node_modules ./packages/shared/node_modules
+
+# Copy built application
+COPY --from=builder --chown=api:bunjs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=api:bunjs /app/apps/api/package.json ./apps/api/
+COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
+COPY --from=builder --chown=api:bunjs /app/package.json ./
+
+# Switch to non-root user
+USER api
 
 # Copy production dependencies
 COPY --from=installer --chown=api:bunjs /app/node_modules ./node_modules
@@ -126,5 +142,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Start the API server
-CMD ["bun", "run", "apps/api/dist/index.js"]
+CMD sh -c "cd apps/api && bun run db:migrate && bun run apps/api/dist/index.js"

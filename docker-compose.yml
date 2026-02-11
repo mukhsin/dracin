@@ -1,28 +1,4 @@
 services:
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    container_name: dracin-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DATABASE_USER:-dracin}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-dracin123}
-      POSTGRES_DB: ${DATABASE_NAME:-dracin}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - dracin-network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DATABASE_USER:-dracin} -d ${DATABASE_NAME:-dracin}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   # API Service (Hono)
   api:
     build:
@@ -33,20 +9,15 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_NAME: ${DATABASE_NAME:-dracin}
-      DATABASE_USER: ${DATABASE_USER:-dracin}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-dracin123}
+      DATABASE_URL: ${DATABASE_URL:-file:/data/dracin.sqlite}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-here-min-32-chars}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
       PRIMARY_API_URL: ${PRIMARY_API_URL:-http://api:3001}
       API_PROXY_URL: ${API_PROXY_URL:-http://api-proxy:3002}
+    volumes:
+      - sqlite_data:/data
     networks:
       - dracin-network
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -107,9 +78,6 @@ services:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for api-proxy}
     networks:
       - dracin-network
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3002/"]
       interval: 30s
@@ -151,9 +119,17 @@ services:
         condition: service_healthy
       api:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
+        reservations:
+          cpus: "0.05"
+          memory: 32M
 
 volumes:
-  postgres_data:
+  sqlite_data:
     driver: local
 
 networks:
