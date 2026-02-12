@@ -11,7 +11,10 @@ function loadSecretKey() {
     throw new Error("SECRET_KEY environment variable is required");
   }
 
-  console.log("[DEBUG] SECRET_KEY env var:", keyOrPath.substring(0, 50) + "...");
+  console.log(
+    "[DEBUG] SECRET_KEY env var:",
+    keyOrPath.substring(0, 50) + "...",
+  );
   console.log("[DEBUG] SECRET_KEY length:", keyOrPath.length);
 
   const trimmed = keyOrPath.trim();
@@ -24,7 +27,10 @@ function loadSecretKey() {
   if (fs.existsSync(trimmed)) {
     console.log("[DEBUG] Reading key from file:", trimmed);
     const content = fs.readFileSync(trimmed, "utf-8");
-    console.log("[DEBUG] File content preview:", content.substring(0, 50) + "...");
+    console.log(
+      "[DEBUG] File content preview:",
+      content.substring(0, 50) + "...",
+    );
     return content;
   }
 
@@ -39,7 +45,10 @@ function loadSecretKey() {
     if (fs.existsSync(p)) {
       console.log("[DEBUG] Found key at:", p);
       const content = fs.readFileSync(p, "utf-8");
-      console.log("[DEBUG] File content preview:", content.substring(0, 50) + "...");
+      console.log(
+        "[DEBUG] File content preview:",
+        content.substring(0, 50) + "...",
+      );
       return content;
     }
   }
@@ -67,8 +76,14 @@ function loadSecretKey() {
 }
 
 const SECRET_KEY = loadSecretKey();
-console.log("[DEBUG] Final SECRET_KEY preview:", SECRET_KEY.substring(0, 50) + "...");
-console.log("[DEBUG] Final SECRET_KEY starts with '-----BEGIN':", SECRET_KEY.startsWith("-----BEGIN"));
+console.log(
+  "[DEBUG] Final SECRET_KEY preview:",
+  SECRET_KEY.substring(0, 50) + "...",
+);
+console.log(
+  "[DEBUG] Final SECRET_KEY starts with '-----BEGIN':",
+  SECRET_KEY.startsWith("-----BEGIN"),
+);
 console.log("[DEBUG] Final SECRET_KEY length:", SECRET_KEY.length);
 
 const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true });
@@ -88,6 +103,15 @@ const randomNumber = (len) => {
 };
 
 function getSignature(ts, bodyStr, devId, andId, token) {
+  console.log(
+    "[DEBUG] Final SECRET_KEY preview:",
+    SECRET_KEY.substring(0, 50) + "...",
+  );
+  console.log(
+    "[DEBUG] Final SECRET_KEY starts with '-----BEGIN':",
+    SECRET_KEY.startsWith("-----BEGIN"),
+  );
+  console.log("[DEBUG] Final SECRET_KEY length:", SECRET_KEY.length);
   const payload = `timestamp=${ts}${bodyStr}${devId}${andId}${token}`;
   const signer = crypto.createSign("SHA256");
   signer.update(payload);
