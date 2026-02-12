@@ -116,6 +116,9 @@ COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
 COPY --from=builder --chown=api:bunjs /app/package.json ./
 
+# Copy migrations from pruner (turbo prune may exclude them from out/full)
+COPY --from=pruner --chown=api:bunjs /app/apps/api/drizzle/migrations ./apps/api/drizzle/migrations
+
 # Switch to non-root user
 USER api
 
