@@ -6,7 +6,7 @@
 # ==========================================
 # Stage 1: Dependencies
 # ==========================================
-FROM oven/bun:1-alpine AS deps
+FROM oven/bun:1.3.4-alpine AS deps
 
 RUN apk add --no-cache curl ca-certificates
 
@@ -21,7 +21,7 @@ RUN bun install
 # ==========================================
 # Stage 2: Builder
 # ==========================================
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1.3.4-alpine AS builder
 
 RUN apk add --no-cache curl ca-certificates
 RUN bun install -g typescript
@@ -38,7 +38,7 @@ RUN cd apps/api && bun run build
 # ==========================================
 # Stage 3: Runner
 # ==========================================
-FROM oven/bun:1-alpine AS runner
+FROM oven/bun:1.3.4-alpine AS runner
 
 RUN apk add --no-cache curl ca-certificates \
     && addgroup -g 1001 -S bunjs \
