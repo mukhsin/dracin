@@ -32,7 +32,7 @@ COPY . .
 
 RUN bun install
 
-RUN cd packages/shared && bun run build
+RUN cd packages/shared && (bun run build || echo "No build script, skipping")
 RUN cd apps/api && bun run build
 
 # ==========================================
