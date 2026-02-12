@@ -70,4 +70,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-CMD ["sh", "-c", "bunx drizzle-kit migrate --config ./apps/api/drizzle.config.ts && bun run ./apps/api/dist/index.js"]
+CMD ["sh", "-c", "ls -la ./apps/api/drizzle/ && ls -la ./apps/api/drizzle/migrations/ 2>/dev/null || echo 'No migrations folder' && bunx drizzle-kit migrate --config ./apps/api/drizzle.config.ts && bun run ./apps/api/dist/index.js"]
