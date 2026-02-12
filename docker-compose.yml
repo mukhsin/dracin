@@ -1,7 +1,9 @@
 services:
   # API Service (Hono)
   api:
-    image: ghcr.io/mukhsin/dracin-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: dracin-api
     restart: unless-stopped
     environment:
@@ -37,7 +39,11 @@ services:
 
   # Web Service (TanStack Start)
   web:
-    image: ghcr.io/mukhsin/dracin-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     container_name: dracin-web
     restart: unless-stopped
     environment:
@@ -69,7 +75,9 @@ services:
 
   # API-Proxy Service
   api-proxy:
-    image: ghcr.io/mukhsin/dracin-api-proxy:latest
+    build:
+      context: .
+      dockerfile: apps/api-proxy/Dockerfile
     container_name: dracin-api-proxy
     restart: unless-stopped
     environment:
