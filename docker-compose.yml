@@ -83,7 +83,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3002
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for api-proxy}
+      SECRET_KEY: ${SECRET_KEY:-/app/secrets/private-key.pem}
+    volumes:
+      - /root/apps/dracin/secrets/private-key.pem:/app/secrets/private-key.pem:ro
     networks:
       - dracin-network
     healthcheck:
