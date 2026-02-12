@@ -56,6 +56,9 @@ RUN bun install --frozen-lockfile
 # ==========================================
 FROM base AS builder
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy installed dependencies
 COPY --from=installer /app/node_modules ./node_modules
 COPY --from=installer /app/apps/web/node_modules ./apps/web/node_modules
