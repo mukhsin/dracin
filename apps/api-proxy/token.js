@@ -2,8 +2,56 @@ require("dotenv").config();
 const axios = require("axios");
 const crypto = require("crypto");
 const https = require("https");
+const fs = require("fs");
+const path = require("path");
 
-const SECRET_KEY = process.env.SECRET_KEY;
+function loadSecretKey() {
+  const keyOrPath = process.env.SECRET_KEY;
+  if (!keyOrPath) {
+    throw new Error("SECRET_KEY environment variable is required");
+  }
+
+  const trimmed = keyOrPath.trim();
+
+  if (trimmed.startsWith("-----BEGIN")) {
+    return trimmed;
+  }
+
+  if (fs.existsSync(trimmed)) {
+    return fs.readFileSync(trimmed, "utf-8");
+  }
+
+  const possiblePaths = [
+    "/app/secret-key.pem",
+    "/app/secrets/private-key.pem",
+    "/run/secrets/secret_key",
+    path.join(process.cwd(), "secret-key.pem"),
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return fs.readFileSync(p, "utf-8");
+    }
+  }
+
+  const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/;
+  const isBase64 =
+    base64Pattern.test(trimmed) &&
+    !trimmed.includes("\n") &&
+    trimmed.length > 100;
+
+  if (isBase64) {
+    try {
+      return Buffer.from(trimmed, "base64").toString("utf-8");
+    } catch {
+      return trimmed;
+    }
+  }
+
+  return trimmed;
+}
+
+const SECRET_KEY = loadSecretKey();
 
 const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true });
 const DIFAIS = [
