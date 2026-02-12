@@ -16,7 +16,7 @@ COPY package.json bun.lock turbo.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # ==========================================
 # Stage 2: Builder
@@ -30,7 +30,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN bun install --frozen-lockfile
+RUN bun install
 
 RUN cd packages/shared && bun run build
 RUN cd apps/api && bun run build
