@@ -48,8 +48,6 @@ WORKDIR /app
 
 RUN mkdir -p /data && chown -R api:bunjs /data
 
-RUN bun install -g drizzle-kit@^0.31.8
-
 COPY --from=deps --chown=api:bunjs /app/node_modules ./node_modules
 COPY --from=deps --chown=api:bunjs /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps --chown=api:bunjs /app/packages/shared/node_modules ./packages/shared/node_modules
@@ -73,4 +71,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-CMD ["sh", "-c", "drizzle-kit migrate --config ./apps/api/drizzle.config.ts && bun run ./apps/api/dist/index.js"]
+CMD ["sh", "-c", "bunx drizzle-kit migrate --config ./apps/api/drizzle.config.ts && bun run ./apps/api/dist/index.js"]
