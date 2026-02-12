@@ -112,20 +112,7 @@ COPY --from=installer --chown=api:bunjs /app/packages/shared/node_modules ./pack
 COPY --from=builder --chown=api:bunjs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=api:bunjs /app/apps/api/package.json ./apps/api/
 COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle.config.ts ./apps/api/
-COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
-COPY --from=builder --chown=api:bunjs /app/package.json ./
-
-# Switch to non-root user
-USER api
-
-# Copy production dependencies
-COPY --from=installer --chown=api:bunjs /app/node_modules ./node_modules
-COPY --from=installer --chown=api:bunjs /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=installer --chown=api:bunjs /app/packages/shared/node_modules ./packages/shared/node_modules
-
-# Copy built application
-COPY --from=builder --chown=api:bunjs /app/apps/api/dist ./apps/api/dist
-COPY --from=builder --chown=api:bunjs /app/apps/api/package.json ./apps/api/
+COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
 COPY --from=builder --chown=api:bunjs /app/package.json ./
 
