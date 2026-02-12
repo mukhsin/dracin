@@ -76,15 +76,6 @@ function loadSecretKey() {
 }
 
 const SECRET_KEY = loadSecretKey();
-console.log(
-  "[DEBUG] Final SECRET_KEY preview:",
-  SECRET_KEY.substring(0, 50) + "...",
-);
-console.log(
-  "[DEBUG] Final SECRET_KEY starts with '-----BEGIN':",
-  SECRET_KEY.startsWith("-----BEGIN"),
-);
-console.log("[DEBUG] Final SECRET_KEY length:", SECRET_KEY.length);
 
 const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true });
 const DIFAIS = [
@@ -103,20 +94,21 @@ const randomNumber = (len) => {
 };
 
 function getSignature(ts, bodyStr, devId, andId, token) {
-  console.log(
-    "[DEBUG] Final SECRET_KEY preview:",
-    SECRET_KEY.substring(0, 50) + "...",
-  );
-  console.log(
-    "[DEBUG] Final SECRET_KEY starts with '-----BEGIN':",
-    SECRET_KEY.startsWith("-----BEGIN"),
-  );
-  console.log("[DEBUG] Final SECRET_KEY length:", SECRET_KEY.length);
   const payload = `timestamp=${ts}${bodyStr}${devId}${andId}${token}`;
-  const signer = crypto.createSign("SHA256");
-  signer.update(payload);
-  signer.end();
-  return signer.sign(SECRET_KEY, "base64");
+
+  try {
+    // Try standard crypto first
+    const signer = crypto.createSign("SHA256");
+    signer.update(payload);
+    signer.end();
+    return signer.sign(SECRET_KEY, "base64");
+  } catch (e) {
+    console.log("[DEBUG] Standard crypto failed, using Bun crypto:", e.message);
+
+    // Use Bun's crypto.sign which is more forgiving
+    const { sign } = require("crypto");
+    return sign(null, Buffer.from(payload), SECRET_KEY).toString("base64");
+  }
 }
 
 async function getNewToken() {
