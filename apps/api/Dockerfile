@@ -130,4 +130,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-CMD sh -c "cd apps/api && drizzle-kit migrate --config ./drizzle.config.ts && bun run apps/api/dist/index.js"
+CMD sh -c "drizzle-kit migrate --config ./apps/api/drizzle.config.ts && bun run ./apps/api/dist/index.js"
