@@ -1,0 +1,103 @@
+services:
+  # API Service (Hono)
+  api:
+    image: ghcr.io/mukhsin/dracin-api:latest
+    container_name: dracin-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:-file:/data/dracin.sqlite}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-here-min-32-chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      PRIMARY_API_URL: ${PRIMARY_API_URL:-http://api:3001}
+      API_PROXY_URL: ${API_PROXY_URL:-http://api-proxy:3002}
+    volumes:
+      - sqlite_data:/data
+    networks:
+      - dracin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-api.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/api`)"
+      - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # Web Service (TanStack Start)
+  web:
+    image: ghcr.io/mukhsin/dracin-web:latest
+    container_name: dracin-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    networks:
+      - dracin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-web.rule=Host(`dracin.mukhsin.web.id`)"
+      - "traefik.http.services.dracin-web.loadbalancer.server.port=3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.125"
+          memory: 128M
+
+  # API-Proxy Service
+  api-proxy:
+    image: ghcr.io/mukhsin/dracin-api-proxy:latest
+    container_name: dracin-api-proxy
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for api-proxy}
+    networks:
+      - dracin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.125"
+          memory: 128M
+
+volumes:
+  sqlite_data:
+    driver: local
+
+networks:
+  dracin-network:
+    external: true
+    name: dokploy-network

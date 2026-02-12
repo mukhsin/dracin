@@ -14,3 +14,5 @@ docker buildx build --platform linux/amd64,linux/arm64 -t "${REGISTRY}/dracin-we
 docker buildx build --platform linux/amd64,linux/arm64 -t "${REGISTRY}/dracin-api-proxy:${TAG}" -f apps/api-proxy/Dockerfile . --push
 
 echo "Done."
+
+# docker buildx rm dracin-remote
