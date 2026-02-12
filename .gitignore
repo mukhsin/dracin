@@ -68,3 +68,6 @@ test-results
 
 # TypeScript
 *.tsbuildinfo
+
+# Private Key
+private-key.pem
