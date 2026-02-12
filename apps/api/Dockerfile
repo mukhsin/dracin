@@ -58,8 +58,8 @@ COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle.config.ts ./apps/api
 COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
 COPY --from=builder --chown=api:bunjs /app/package.json ./
 
-# Copy migrations from original source
-COPY --chown=api:bunjs apps/api/drizzle ./apps/api/drizzle
+# Copy migrations from builder stage
+COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle ./apps/api/drizzle
 
 USER api
 
