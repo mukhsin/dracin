@@ -417,24 +417,32 @@ export class DramaService {
               : {};
 
             await db
-              .update(episodes)
-              .set({
+              .insert(episodes)
+              .values({
+                dramaId: drama.id,
+                bookId: bookId,
+                number: apiEpisode.index + 1,
+                title: apiEpisode.title ?? `Episode ${apiEpisode.index + 1}`,
+                description: null,
+                duration: null,
                 videoUrls,
                 sourceUrl: apiEpisode.url ?? null,
+                createdAt: new Date(),
               })
-              .where(
-                and(
-                  eq(episodes.dramaId, drama.id),
-                  eq(episodes.number, apiEpisode.index + 1),
-                ),
-              );
+              .onConflictDoUpdate({
+                target: [episodes.dramaId, episodes.number],
+                set: {
+                  videoUrls,
+                  sourceUrl: apiEpisode.url ?? null,
+                },
+              });
 
             console.log(
-              `[DramaService] Fire-and-forget: Updated episode ${apiEpisode.index} for drama ${drama.id}`,
+              `[DramaService] Fire-and-forget: Upserted episode ${apiEpisode.index} for drama ${drama.id}`,
             );
           } catch (error) {
             console.error(
-              `[DramaService] Fire-and-forget: Failed to update episode ${apiEpisode.index}:`,
+              `[DramaService] Fire-and-forget: Failed to upsert episode ${apiEpisode.index}:`,
               error,
             );
           }
