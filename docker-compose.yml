@@ -103,26 +103,26 @@ services:
           cpus: "0.125"
           memory: 128M
 
-  # # Drizzle Gateway Service
-  # drizzle-gateway:
-  #   image: ghcr.io/drizzle-team/gateway:latest
-  #   restart: unless-stopped
-  #   ports:
-  #     - "4983:4983"
-  #   environment:
-  #     PORT: "4983"
-  #     MASTERPASS: "${MASTERPASS}"
-  #   volumes:
-  #     - sqlite_data:/data
-  #   networks:
-  #     - dracin-network
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.dracin-drizzle.rule=Host(`drizzle.dracin.mukhsin.web.id`)"
-  #     - "traefik.http.routers.dracin-drizzle.entrypoints=websecure"
-  #     - "traefik.http.routers.dracin-drizzle.tls.certresolver=letsencrypt"
-  #     - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
-  #     - "traefik.docker.network=dokploy-network"
+  # Drizzle Gateway Service
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    restart: unless-stopped
+    ports:
+      - "4983:4983"
+    environment:
+      PORT: "4983"
+      MASTERPASS: "${MASTERPASS}"
+    volumes:
+      - sqlite_data:/data
+    networks:
+      - dracin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-drizzle.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/db`)"
+      - "traefik.http.routers.dracin-drizzle.middlewares=strip-db-prefix"
+      - "traefik.http.middlewares.strip-db-prefix.stripprefix.prefixes=/db"
+      - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
+      - "traefik.docker.network=dokploy-network"
 
 volumes:
   sqlite_data:
