@@ -11,26 +11,14 @@ function loadSecretKey() {
     throw new Error("SECRET_KEY environment variable is required");
   }
 
-  console.log(
-    "[DEBUG] SECRET_KEY env var:",
-    keyOrPath.substring(0, 50) + "...",
-  );
-  console.log("[DEBUG] SECRET_KEY length:", keyOrPath.length);
-
   const trimmed = keyOrPath.trim();
 
   if (trimmed.startsWith("-----BEGIN")) {
-    console.log("[DEBUG] Using SECRET_KEY as direct key content");
     return trimmed;
   }
 
   if (fs.existsSync(trimmed)) {
-    console.log("[DEBUG] Reading key from file:", trimmed);
     const content = fs.readFileSync(trimmed, "utf-8");
-    console.log(
-      "[DEBUG] File content preview:",
-      content.substring(0, 50) + "...",
-    );
     return content;
   }
 
@@ -43,17 +31,10 @@ function loadSecretKey() {
 
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) {
-      console.log("[DEBUG] Found key at:", p);
       const content = fs.readFileSync(p, "utf-8");
-      console.log(
-        "[DEBUG] File content preview:",
-        content.substring(0, 50) + "...",
-      );
       return content;
     }
   }
-
-  console.log("[DEBUG] No file found, treating as raw value");
 
   const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/;
   const isBase64 =
@@ -62,10 +43,8 @@ function loadSecretKey() {
     trimmed.length > 100;
 
   if (isBase64) {
-    console.log("[DEBUG] Decoding base64...");
     try {
       const decoded = Buffer.from(trimmed, "base64").toString("utf-8");
-      console.log("[DEBUG] Decoded preview:", decoded.substring(0, 50) + "...");
       return decoded;
     } catch {
       return trimmed;
@@ -103,8 +82,6 @@ function getSignature(ts, bodyStr, devId, andId, token) {
     signer.end();
     return signer.sign(SECRET_KEY, "base64");
   } catch (e) {
-    console.log("[DEBUG] Standard crypto failed, using Bun crypto:", e.message);
-
     // Use Bun's crypto.sign which is more forgiving
     const { sign } = require("crypto");
     return sign(null, Buffer.from(payload), SECRET_KEY).toString("base64");
