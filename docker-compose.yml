@@ -108,18 +108,21 @@ services:
     image: ghcr.io/drizzle-team/gateway:latest
     restart: unless-stopped
     ports:
-      - "4983:4983" # atau expose via Traefik
+      - "4983:4983"
     environment:
       PORT: "4983"
-      MASTERPASS: "${MASTERPASS}" # copy dari env sebelumnya
+      MASTERPASS: "${MASTERPASS}"
     volumes:
-      - sqlite_data:/data # <-- shared otomatis!
+      - sqlite_data:/data
     networks:
       - dracin-network
-    labels: # Traefik kayak service lo lain
+    labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dracin-drizzle.rule=Host(`drizzle.dracin.mukhsin.web.id`)" # custom domain
+      - "traefik.http.routers.dracin-drizzle.rule=Host(`drizzle.dracin.mukhsin.web.id`)"
+      - "traefik.http.routers.dracin-drizzle.entrypoints=websecure"
+      - "traefik.http.routers.dracin-drizzle.tls.certresolver=letsencrypt"
       - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
+      - "traefik.docker.network=dokploy-network"
 
 volumes:
   sqlite_data:
