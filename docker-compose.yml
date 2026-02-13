@@ -103,6 +103,24 @@ services:
           cpus: "0.125"
           memory: 128M
 
+  # Drizzle Gateway Service
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    restart: unless-stopped
+    ports:
+      - "4983:4983" # atau expose via Traefik
+    environment:
+      PORT: "4983"
+      MASTERPASS: "${MASTERPASS}" # copy dari env sebelumnya
+    volumes:
+      - sqlite_data:/data # <-- shared otomatis!
+    networks:
+      - dracin-network
+    labels: # Traefik kayak service lo lain
+      - "traefik.enable=true"
+      - "traefik.http.routers.dracin-drizzle.rule=Host(`drizzle.dracin.mukhsin.web.id`)" # custom domain
+      - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
+
 volumes:
   sqlite_data:
     driver: local
