@@ -5,7 +5,8 @@ FROM oven/bun:1.3.4-debian
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl openssl \
-    && groupadd -r bunjs && useradd -r -g bunjs proxy
+    && groupadd -r bunjs 2>/dev/null || true \
+    && id -u proxy >/dev/null 2>&1 || useradd -r -g bunjs proxy
 
 COPY apps/api-proxy/package.json ./package.json
 
