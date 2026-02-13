@@ -116,13 +116,13 @@ services:
       - sqlite_data:/data
     networks:
       - dracin-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dracin-drizzle.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/db`)"
-      - "traefik.http.routers.dracin-drizzle.middlewares=strip-db-prefix"
-      - "traefik.http.middlewares.strip-db-prefix.stripprefix.prefixes=/db"
-      - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
-      - "traefik.docker.network=dokploy-network"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.dracin-drizzle.rule=Host(`dracin.mukhsin.web.id`) && PathPrefix(`/db`)"
+    #   - "traefik.http.routers.dracin-drizzle.middlewares=strip-db-prefix"
+    #   - "traefik.http.middlewares.strip-db-prefix.stripprefix.prefixes=/db"
+    #   - "traefik.http.services.dracin-drizzle.loadbalancer.server.port=4983"
+    #   - "traefik.docker.network=dokploy-network"
 
 volumes:
   sqlite_data:
