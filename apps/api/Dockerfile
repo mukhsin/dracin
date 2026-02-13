@@ -60,8 +60,6 @@ COPY --from=builder --chown=api:bunjs /app/package.json ./
 
 COPY --chown=api:bunjs apps/api/drizzle ./apps/api/drizzle
 
-USER api
-
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -70,4 +68,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-CMD ["sh", "-c", "cd apps/api && ls -la ./drizzle/ && ls -la ./drizzle/migrations/ && ls -la ./drizzle/migrations/meta/ 2>/dev/null || echo 'No meta folder' && bunx drizzle-kit migrate --config ./drizzle.config.ts && bun run ./dist/index.js"]
+CMD ["sh", "-c", "cd apps/api && bunx drizzle-kit migrate --config ./drizzle.config.ts && bun run ./dist/index.js"]
