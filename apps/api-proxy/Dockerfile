@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1
 
-FROM oven/bun:1.3.4-debian
+FROM node:22-slim
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl openssl \
-    && groupadd -r bunjs 2>/dev/null || true \
-    && id -u proxy >/dev/null 2>&1 || useradd -r -g bunjs proxy
+    && groupadd -r nodejs 2>/dev/null || true \
+    && id -u proxy >/dev/null 2>&1 || useradd -r -g nodejs proxy
 
 COPY apps/api-proxy/package.json ./package.json
 
-RUN bun install --production
+RUN npm install --production
 
 COPY apps/api-proxy/ ./
 
@@ -24,4 +24,4 @@ EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f "http://localhost:${PORT}/" || exit 1
 
-CMD ["bun", "index.js"]
+CMD ["node", "index.js"]
