@@ -75,21 +75,20 @@ function DramaCard({ drama, totalEpisodes }: DramaCardProps) {
             </span>
           </div>
         )}
+
+        {language && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              {languageBadges[languageCode] || languageCode.toUpperCase()}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="p-3 flex flex-col h-28">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base mb-1 line-clamp-2">{title}</h3>
-
-          {/* Language Badge */}
-          {language && (
-            <div className="inline-flex items-center gap-1 mb-1">
-              <span className="bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full">
-                {languageBadges[languageCode] || languageCode.toUpperCase()}
-              </span>
-            </div>
-          )}
         </div>
 
         <div className="text-xs text-muted-foreground flex items-center gap-1">
