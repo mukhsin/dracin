@@ -56,11 +56,31 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     });
   }
 
+  // Hide videoUrls, sourceUrl, and bookId from episodes
+  const sanitizedEpisodes = drama.episodes.map((ep) => {
+    const {
+      videoUrls: _v,
+      sourceUrl: _s,
+      bookId: _b,
+      dramaId: _d,
+      description: _d1,
+      duration: _d2,
+      createdAt: _c,
+      ...rest
+    } = ep;
+    return rest;
+  });
+
+  const sanitizedDrama = {
+    ...drama,
+    episodes: sanitizedEpisodes,
+  };
+
   c.header("Cache-Control", "public, max-age=60");
 
   return c.json({
     success: true,
-    data: drama,
+    data: sanitizedDrama,
     meta: { source: drama.source },
   });
 });
@@ -79,11 +99,20 @@ app.get(
       });
     }
 
+    // Hide videoUrls, sourceUrl, and bookId from episodes
+    const sanitizedEpisodes = result.episodes.map((ep) => {
+      const { videoUrls: _v, sourceUrl: _s, bookId: _b, ...rest } = ep;
+      return rest;
+    });
+
     c.header("Cache-Control", "public, max-age=60");
 
     return c.json({
       success: true,
-      data: result,
+      data: {
+        drama: result.drama,
+        episodes: sanitizedEpisodes,
+      },
     });
   },
 );

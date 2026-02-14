@@ -151,3 +151,43 @@ export interface PaginationInput {
   page?: number;
   pageSize?: number;
 }
+
+// ============================================
+// Episode Consolidation Types (Watch Page)
+// ============================================
+
+/**
+ * Minimal episode info for navigation
+ */
+export interface EpisodeSummary {
+  id: string;
+  number: number;
+  title: string | null;
+}
+
+/**
+ * Video info with pre-built URLs for each quality
+ */
+export interface VideoInfo {
+  urls: Record<string, string>;
+}
+
+/**
+ * Episode with drama info and navigation (prev/next episodes)
+ */
+export interface EpisodeWithNavigation extends Episode {
+  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl">;
+  navigation: {
+    prevEpisode: EpisodeSummary | null;
+    nextEpisode: EpisodeSummary | null;
+  };
+  video: VideoInfo;
+}
+
+/**
+ * Response type for consolidated episode endpoint
+ */
+export interface ConsolidatedEpisodeResponse {
+  success: boolean;
+  data: EpisodeWithNavigation;
+}

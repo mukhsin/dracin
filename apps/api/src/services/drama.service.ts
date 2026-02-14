@@ -32,6 +32,20 @@ export interface EpisodeWithDrama extends Episode {
   drama: Pick<Drama, "id" | "title" | "slug">;
 }
 
+export interface EpisodeSummary {
+  id: string;
+  number: number;
+  title: string | null;
+}
+
+export interface EpisodeWithDramaAndNavigation extends Episode {
+  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl">;
+  navigation: {
+    prevEpisode: EpisodeSummary | null;
+    nextEpisode: EpisodeSummary | null;
+  };
+}
+
 export interface DramaListFilters {
   search?: string;
   status?: "ongoing" | "completed" | "upcoming";
@@ -249,9 +263,11 @@ export class DramaService {
   }
 
   /**
-   * Get an episode by ID with drama info
+   * Get an episode by ID with drama info and navigation
    */
-  async getEpisode(episodeId: string): Promise<EpisodeWithDrama | null> {
+  async getEpisode(
+    episodeId: string,
+  ): Promise<EpisodeWithDramaAndNavigation | null> {
     // Get episode with drama info using join
     const [result] = await db
       .select({
@@ -259,6 +275,7 @@ export class DramaService {
         dramaId: dramas.id,
         dramaTitle: dramas.title,
         dramaSlug: dramas.slug,
+        dramaPosterUrl: dramas.posterUrl,
       })
       .from(episodes)
       .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
@@ -270,12 +287,49 @@ export class DramaService {
 
     const episode = mapEpisodeRowToShared(result.episode);
 
+    // Query for previous episode (same drama, number - 1)
+    const [prevEpisode] = await db
+      .select({
+        id: episodes.id,
+        number: episodes.number,
+        title: episodes.title,
+      })
+      .from(episodes)
+      .where(
+        and(
+          eq(episodes.dramaId, result.episode.dramaId),
+          eq(episodes.number, result.episode.number - 1),
+        ),
+      )
+      .limit(1);
+
+    // Query for next episode (same drama, number + 1)
+    const [nextEpisode] = await db
+      .select({
+        id: episodes.id,
+        number: episodes.number,
+        title: episodes.title,
+      })
+      .from(episodes)
+      .where(
+        and(
+          eq(episodes.dramaId, result.episode.dramaId),
+          eq(episodes.number, result.episode.number + 1),
+        ),
+      )
+      .limit(1);
+
     return {
       ...episode,
       drama: {
         id: result.dramaId,
         title: result.dramaTitle,
         slug: result.dramaSlug,
+        posterUrl: result.dramaPosterUrl,
+      },
+      navigation: {
+        prevEpisode: prevEpisode || null,
+        nextEpisode: nextEpisode || null,
       },
     };
   }

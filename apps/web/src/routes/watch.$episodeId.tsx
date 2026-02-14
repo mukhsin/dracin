@@ -4,35 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
+import type { EpisodeWithNavigation } from "@repo/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-function buildShortVideoUrl(
-  dramaId: string,
-  episodeNumber: number,
-  quality: string,
-): string {
-  return `${API_URL}/api/video/${dramaId}.${episodeNumber}.${quality}.mp4`;
-}
-
-function toShortVideoUrls(
-  dramaId: string,
-  episodeNumber: number,
-  videoUrls?: VideoUrls,
-): VideoUrls | undefined {
-  if (!videoUrls) return videoUrls;
-
-  return Object.fromEntries(
-    Object.keys(videoUrls).map((quality) => [
-      quality,
-      buildShortVideoUrl(dramaId, episodeNumber, quality),
-    ]),
-  ) as VideoUrls;
-}
-
-const MOCK_EPISODE = {
+const MOCK_EPISODE: EpisodeWithNavigation = {
   id: "test",
   dramaId: "test-drama",
+  bookId: null,
   number: 1,
   title: "Test Episode",
   description: "This is a test episode for development.",
@@ -42,41 +21,26 @@ const MOCK_EPISODE = {
     "720p": "/dracin-01.mp4",
     "480p": "/dracin-01.mp4",
   },
-  createdAt: new Date().toISOString(),
+  sourceUrl: null,
+  createdAt: new Date(),
   drama: {
     id: "test-drama",
     title: "Test Drama",
     slug: "test-drama",
     posterUrl: null,
   },
+  navigation: {
+    prevEpisode: null,
+    nextEpisode: null,
+  },
+  video: {
+    urls: {
+      "1080p": `${API_URL}/api/video/test-drama.1.1080p.mp4`,
+      "720p": `${API_URL}/api/video/test-drama.1.720p.mp4`,
+      "480p": `${API_URL}/api/video/test-drama.1.480p.mp4`,
+    },
+  },
 };
-
-interface Episode {
-  id: string;
-  dramaId: string;
-  number: number;
-  title: string;
-  description: string | null;
-  duration: number;
-  videoUrls: VideoUrls;
-  createdAt: string;
-}
-
-interface Drama {
-  id: string;
-  title: string;
-  slug: string;
-  posterUrl: string | null;
-}
-
-interface EpisodeDetail extends Episode {
-  drama: Drama;
-}
-
-interface DramaEpisodesResponse {
-  drama: Drama;
-  episodes: Episode[];
-}
 
 export const Route = createFileRoute("/watch/$episodeId")({
   component: WatchPage,
@@ -87,9 +51,9 @@ function WatchPage() {
 
   const {
     data: episode,
-    isLoading: isEpisodeLoading,
-    error: episodeError,
-  } = useQuery<EpisodeDetail>({
+    isLoading,
+    error,
+  } = useQuery<EpisodeWithNavigation>({
     queryKey: ["episode", episodeId],
     queryFn: async () => {
       if (episodeId === "test") {
@@ -110,9 +74,9 @@ function WatchPage() {
 
       if (result && typeof result === "object") {
         if ("data" in result && result.data) {
-          return result.data as EpisodeDetail;
+          return result.data as EpisodeWithNavigation;
         }
-        return result as EpisodeDetail;
+        return result as EpisodeWithNavigation;
       }
 
       throw new Error("Invalid response format");
@@ -120,129 +84,14 @@ function WatchPage() {
     enabled: !!episodeId,
   });
 
-  const {
-    data: videoData,
-    isLoading: isVideoLoading,
-    error: videoError,
-  } = useQuery<{
-    episodeId: string;
-    videoUrls: VideoUrls;
-    qualities: string[];
-    source: string;
-  }>({
-    queryKey: ["episode-videos", episodeId],
-    queryFn: async () => {
-      if (episodeId === "test") {
-        return {
-          episodeId: "test",
-          videoUrls: MOCK_EPISODE.videoUrls,
-          qualities: ["1080p", "720p", "480p"],
-          source: "primary",
-        };
-      }
-      const response = await fetch(
-        `${API_URL}/api/episodes/${episodeId}/videos`,
-        {
-          credentials: "include",
-        },
-      );
+  // Use pre-built video URLs from API
+  const videoUrls = useMemo<VideoUrls | undefined>(() => {
+    return episode?.video?.urls as VideoUrls | undefined;
+  }, [episode]);
 
-      if (!response.ok) {
-        throw new Error("Failed to load video URLs");
-      }
-
-      const result = await response.json();
-
-      if (
-        result &&
-        typeof result === "object" &&
-        "data" in result &&
-        result.data
-      ) {
-        return result.data;
-      }
-
-      throw new Error("Invalid video response format");
-    },
-    enabled: !!episodeId,
-  });
-
-  const { data: dramaEpisodesData } = useQuery<DramaEpisodesResponse>({
-    queryKey: ["drama-episodes", episode?.drama.slug],
-    queryFn: async () => {
-      if (episodeId === "test") {
-        return {
-          drama: MOCK_EPISODE.drama,
-          episodes: [MOCK_EPISODE],
-        };
-      }
-      const slug = episode?.drama.slug;
-      if (!slug) {
-        throw new Error("Drama slug is required");
-      }
-      const response = await fetch(`${API_URL}/api/dramas/${slug}/episodes`, {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to load drama episodes");
-      }
-
-      const result = await response.json();
-
-      if (result && typeof result === "object") {
-        if (
-          "data" in result &&
-          result.data &&
-          typeof result.data === "object" &&
-          "episodes" in result.data &&
-          Array.isArray(result.data.episodes)
-        ) {
-          return result.data as DramaEpisodesResponse;
-        }
-
-        if ("episodes" in result && Array.isArray(result.episodes)) {
-          return result as DramaEpisodesResponse;
-        }
-      }
-
-      throw new Error("Invalid drama episodes response format");
-    },
-    enabled: !!episode?.drama.slug,
-  });
-
-  const isLoading = isEpisodeLoading || isVideoLoading;
-  const error = episodeError || videoError;
-
-  const videoUrls = useMemo(() => {
-    if (episodeId === "test") return videoData?.videoUrls;
-    if (!episode || !videoData?.videoUrls) return videoData?.videoUrls;
-
-    return toShortVideoUrls(
-      episode.drama.id,
-      episode.number,
-      videoData.videoUrls,
-    );
-  }, [episode, episodeId, videoData?.videoUrls]);
-
-  const { prevEpisode, nextEpisode } = useMemo(() => {
-    if (!episode || !dramaEpisodesData?.episodes) {
-      return { prevEpisode: null, nextEpisode: null };
-    }
-
-    const currentIndex = dramaEpisodesData.episodes.findIndex(
-      (item) => item.id === episode.id,
-    );
-
-    if (currentIndex === -1) {
-      return { prevEpisode: null, nextEpisode: null };
-    }
-
-    return {
-      prevEpisode: dramaEpisodesData.episodes[currentIndex - 1] ?? null,
-      nextEpisode: dramaEpisodesData.episodes[currentIndex + 1] ?? null,
-    };
-  }, [episode, dramaEpisodesData?.episodes]);
+  // Use navigation from consolidated API response
+  const prevEpisode = episode?.navigation?.prevEpisode;
+  const nextEpisode = episode?.navigation?.nextEpisode;
 
   const showMobileNav = Boolean(prevEpisode || nextEpisode);
 

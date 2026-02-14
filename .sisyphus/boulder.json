@@ -1,8 +1,9 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/api-proxy-fallback.md",
-  "started_at": "2026-02-13T23:58:20.503Z",
-  "completed_at": "2026-02-14T00:15:00.000Z",
-  "session_ids": ["ses_3a6b8ff6cffeeox2EQyzhjv2sv"],
-  "plan_name": "api-proxy-fallback",
-  "status": "completed"
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/consolidate-watch-api.md",
+  "started_at": "2026-02-14T07:39:29.008Z",
+  "session_ids": [
+    "ses_3a4e9d269ffeJdVYVkbL02g1m4"
+  ],
+  "plan_name": "consolidate-watch-api",
+  "agent": "atlas"
 }

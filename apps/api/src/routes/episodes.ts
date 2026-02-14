@@ -22,29 +22,45 @@ const app = new Hono();
  * GET /api/episodes/:id
  * Get an episode by ID with video URLs and drama info
  */
-app.get(
-  "/:id",
-  zValidator("param", GetEpisodeParamsSchema),
-  async (c) => {
-    const { id } = c.req.valid("param");
+app.get("/:id", zValidator("param", GetEpisodeParamsSchema), async (c) => {
+  const { id } = c.req.valid("param");
 
-    const episode = await dramaService.getEpisode(id);
+  const episode = await dramaService.getEpisode(id);
 
-    if (!episode) {
-      throw new HTTPException(404, {
-        message: `Episode with ID "${id}" not found`,
-      });
-    }
-
-    // Add short caching for episode data (30 seconds - shorter due to video URLs)
-    c.header("Cache-Control", "public, max-age=30");
-
-    return c.json({
-      success: true,
-      data: episode,
+  if (!episode) {
+    throw new HTTPException(404, {
+      message: `Episode with ID "${id}" not found`,
     });
   }
-);
+
+  // Exclude videoUrls and sourceUrl from response, return pre-built video URLs instead
+  const { videoUrls: _v, sourceUrl: _s, ...episodeWithoutUrls } = episode;
+  (void _v, _s);
+
+  // Build pre-built video URLs for each quality
+  const videoUrls: Record<string, string> = {};
+  if (episode.videoUrls) {
+    for (const quality of Object.keys(episode.videoUrls)) {
+      videoUrls[quality] =
+        `/api/video/${episode.dramaId}.${episode.number}.${quality}.mp4`;
+    }
+  }
+
+  const episodeWithVideo = {
+    ...episodeWithoutUrls,
+    video: {
+      urls: videoUrls,
+    },
+  };
+
+  // Add short caching for episode data (30 seconds - shorter due to video URLs)
+  c.header("Cache-Control", "public, max-age=30");
+
+  return c.json({
+    success: true,
+    data: episodeWithVideo,
+  });
+});
 
 export const episodeRoutes = app;
 export type EpisodeRoutes = typeof app;
