@@ -309,8 +309,9 @@ app.get("/video/*", async (c) => {
     const headers = new Headers();
     applyCors(headers);
 
-    return new Response("Missing video path", {
-      status: 400,
+    // Return 404 to let other routes handle non-video paths
+    return new Response(null, {
+      status: 404,
       headers,
     });
   }
