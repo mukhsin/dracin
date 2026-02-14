@@ -1,14 +1,14 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ override: false });
 
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.string().default("3001"),
-  DATABASE_URL: z.string().nonempty().default("file:./.data/dracin.db"),
+  DATABASE_URL: z.string().default("file:./.data/dracin.db"),
   DATABASE_AUTH_TOKEN: z.string().optional(),
   DATABASE_HOST: z.string().optional(),
   DATABASE_PORT: z.coerce.number().optional(),

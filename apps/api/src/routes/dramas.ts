@@ -1,8 +1,11 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { dramaService } from "../services/drama.service.js";
 import { HTTPException } from "hono/http-exception";
+import { db } from "../db/index.js";
+import { dramas } from "../db/schema.js";
 
 const ListDramasQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -36,13 +39,80 @@ app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
     sortOrder,
   });
 
+  const sanitizedItems = result.items.map((drama) => {
+    const { bookId: _b, createdAt: _c, updatedAt: _u, ...rest } = drama;
+    return {
+      ...rest,
+      posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+    };
+  });
+
   c.header("Cache-Control", "public, max-age=300");
 
   return c.json({
     success: true,
-    data: result,
+    data: { ...result, items: sanitizedItems },
     meta: { source: result.source || "db" },
   });
+});
+
+app.get("/:slug/poster.jpg", async (c) => {
+  const slug = c.req.param("slug");
+
+  if (!slug) {
+    throw new HTTPException(404, {
+      message: "Drama with slug not found",
+    });
+  }
+
+  const drama = await db.query.dramas.findFirst({
+    where: eq(dramas.slug, slug),
+    columns: {
+      posterUrl: true,
+    },
+  });
+
+  if (!drama) {
+    throw new HTTPException(404, {
+      message: "Drama with slug not found",
+    });
+  }
+
+  const PLACEHOLDER_PNG_BASE64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PDwYAAAQABJREFUeJz3LiPAAAAAElFTkSuQmCC";
+
+  if (!drama.posterUrl || drama.posterUrl.trim() === "") {
+    const placeholderBytes = Buffer.from(PLACEHOLDER_PNG_BASE64, "base64");
+    c.header("Content-Type", "image/png");
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.body(placeholderBytes);
+  }
+
+  try {
+    const response = await fetch(drama.posterUrl);
+
+    if (!response.ok) {
+      throw new Error(`Upstream returned ${response.status}`);
+    }
+
+    const contentType =
+      response.headers.get("Content-Type") ||
+      response.headers.get("content-type") ||
+      "image/jpeg";
+    const imageBytes = await response.arrayBuffer();
+
+    c.header("Content-Type", contentType);
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.body(imageBytes);
+  } catch (error) {
+    console.error(
+      `[PosterProxy] Failed to fetch poster for slug "${slug}":`,
+      error,
+    );
+    throw new HTTPException(500, {
+      message: "Failed to fetch poster image",
+    });
+  }
 });
 
 app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
@@ -75,8 +145,18 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     return rest;
   });
 
-  const sanitizedDrama = {
-    ...drama,
+  // Sanitize drama: hide bookId, createdAt, updatedAt (keep posterUrl)
+  const {
+    bookId: _bookId,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    episodes: _episodes,
+    ...sanitizedDrama
+  } = drama;
+
+  const dramaResponse = {
+    ...sanitizedDrama,
+    posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
     episodes: sanitizedEpisodes,
   };
 
@@ -84,7 +164,7 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
 
   return c.json({
     success: true,
-    data: sanitizedDrama,
+    data: dramaResponse,
     meta: { source: drama.source },
   });
 });

@@ -1,9 +1,23 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/consolidate-watch-api.md",
-  "started_at": "2026-02-14T07:39:29.008Z",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/drama-api-sanitization.md",
+  "started_at": "2026-02-14T17:42:41.096Z",
   "session_ids": [
-    "ses_3a4e9d269ffeJdVYVkbL02g1m4"
+    "ses_3a2c8e2e6ffedGZJYOvLjojZQs",
+    "ses_3a2bd09d3ffeisbYJKf6duSw7A",
+    "ses_3a2bd09bcffegZHLgBCQRr40oO",
+    "ses_3a2bd09acffeyezMbmznzwNxto",
+    "ses_3a2b70eb8ffec068pfWek6mmGK",
+    "ses_3a2b6ea47ffeQPuyeQNOzuQLpk",
+    "ses_3a2b70eb8ffec068pfWek6mmGK",
+    "ses_3a2b6ea47ffeQPuyeQNOzuQLpk",
+    "ses_3a29b33f5ffeqTKEtL7H0yERgC",
+    "ses_3a299a495ffeVbUwISDBAQqYhN"
   ],
-  "plan_name": "consolidate-watch-api",
-  "agent": "atlas"
+  "plan_name": "drama-api-sanitization",
+  "agent": "atlas",
+  "progress": {
+    "completed": 9,
+    "total": 23
+  }
+}
 }
