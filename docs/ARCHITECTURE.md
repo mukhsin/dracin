@@ -1069,7 +1069,209 @@ The fallback system ensures high availability using a **circuit breaker pattern*
 │  Status: 503                                                                │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
+
+### Drama Service Fallback
+
+In addition to the circuit breaker pattern for video URLs, the drama listing endpoint also implements fallback behavior:
+
+#### Fallback Triggers
+
+1. **Empty Database**: When `GET /api/dramas` is called and the database has no dramas
+2. **Empty Search**: When `GET /api/dramas?q={query}` returns no results
+
+#### Fallback Flow
+
 ```
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DRAMA SERVICE FALLBACK FLOW │
+│ │
+│ Client Request: GET /api/dramas?q=romance │
+│ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ DramaService.list() │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌──────────────────┐ ┌──────────────────┐ │
+│ │ Query Database │────►│ Results Found? │ │
+│ └──────────────────┘ └────────┬─────────┘ │
+│ │ │
+│ ┌─────────┴─────────┐ │
+│ ▼ ▼ │
+│ ┌──────────┐ ┌──────────────┐ │
+│ │ YES │ │ NO │ │
+│ └────┬─────┘ └──────┬───────┘ │
+│ │ │ │
+│ ▼ ▼ │
+│ Return from DB Check: Has search │
+│ source: "db" query? │
+│ │ │
+│ ┌─────────────┴─────────────┐ │
+│ ▼ ▼ │
+│ ┌──────────┐ ┌──────────┐ │
+│ │ YES │ │ NO │ │
+│ └────┬─────┘ └────┬─────┘ │
+│ │ │ │
+│ ▼ ▼ │
+│ Call api-proxy Call api-proxy │
+│ /drama/search /drama/latest │
+│ │
+│ │ │ │
+│ └─────────┬─────────┘ │
+│ ▼ │
+│ ┌──────────────────┐ │
+│ │ Transform & │ │
+│ │ Return to Client │ │
+│ │ source: │ │
+│ │ "api-proxy" │ │
+│ └────────┬─────────┘ │
+│ │ │
+│ ▼ │
+│ ┌──────────────────┐ │
+│ │ Fire-and-Forget: │ │
+│ │ Cache to DB │ │
+│ │ (background) │ │
+│ └──────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+### Fire-and-Forget Caching
+
+When dramas are fetched from the api-proxy, they are automatically cached to the local database using a fire-and-forget pattern:
+
+#### Why Fire-and-Forget?
+
+- **Non-blocking**: The API response returns immediately without waiting for DB insertion
+- **Fast**: Client gets data quickly while caching happens in background
+- **Resilient**: Caching failures don't affect the API response
+
+#### Caching Process
+
+1. **Transform**: Api-proxy drama format → Database drama format
+2. **Insert/Update**: Uses `ON CONFLICT(bookId) DO UPDATE` to handle duplicates
+3. **Update Fields**: On conflict, updates title, description, posterUrl, status, updatedAt
+4. **Logging**: Comprehensive logs for monitoring cache operations
+
+#### Progressive Enhancement
+
+Over time, the database populates itself:
+- First request: DB empty → fallback to api-proxy → cache to DB
+- Second request: Data in DB → serve from DB (fast)
+- Popular dramas get cached naturally through usage
+
+This approach ensures:
+- Zero cold start problems
+- Improved performance over time
+- Reduced dependency on external api-proxy
+- Better user experience
+```
+
+### Episode Validation & Synchronous Fetching
+
+For drama detail endpoints (`GET /api/dramas/:slug`), episode freshness is handled differently than the list endpoint:
+
+#### Validation Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    EPISODE VALIDATION FLOW                                  │
+│                                                                             │
+│  Request: GET /api/dramas/:slug                                             │
+│                                                                             │
+│       │                                                                     │
+│       ▼                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │              DramaService.getBySlugWithValidation()                 │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│       │                                                                     │
+│       ▼                                                                     │
+│  ┌──────────────────┐                                                       │
+│  │ Get drama &      │                                                       │
+│  │ episodes from DB │                                                       │
+│  └────────┬─────────┘                                                       │
+│            │                                                                │
+│            ▼                                                                │
+│  ┌─────────────────────────────────────────┐                                │
+│  │ Check: Has episodes with valid URLs?    │                                │
+│  └─────────────┬───────────────────────────┘                                │
+│                │                                                            │
+│      ┌─────────┴──────────┐                                                 │
+│      ▼                    ▼                                                 │
+│ ┌──────────┐      ┌──────────────┐                                          │
+│ │   YES    │      │     NO       │                                          │
+│ └────┬─────┘      └──────┬───────┘                                          │
+│      │                   │                                                  │
+│      ▼                   ▼                                                  │
+│ Validate URL    Synchronous Fetch                                           │
+│ (sample one)    from api-proxy                                              │
+│      │                   │                                                  │
+│      ▼                   ▼                                                  │
+│ ┌──────────┐      ┌──────────────┐                                          │
+│ │ Valid?   │      │ Await fresh  │                                          │
+│ └────┬─────┘      │ episodes     │                                          │
+│      │            └──────┬───────┘                                          │
+│  ┌───┴───┐               │                                                  │
+│  ▼       ▼               ▼                                                  │
+│ YES      NO         Return fresh                                            │
+│ │        │          data to client                                          │
+│ │        │          source: "fresh"                                         │
+│ ▼        ▼               │                                                  │
+│ Return   Synchronous     │                                                  │
+│ cache    fetch (await)   │                                                  │
+│ source:  source:         │                                                  │
+│ "cache"  "fresh"         │                                                  │
+│                          │                                                  │
+│                          ▼                                                  │
+│                   ┌──────────────┐                                          │
+│                   │ Cache to DB  │                                          │
+│                   │ (background) │                                          │
+│                   └──────────────┘                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Synchronous vs Fire-and-Forget
+
+The system uses two different strategies depending on the use case:
+
+| Strategy            | Use Case                       | Behavior                                        |
+| ------------------- | ------------------------------ | ----------------------------------------------- |
+| **Synchronous**     | Drama detail (`/dramas/:slug`) | Wait for api-proxy, return fresh data to client |
+| **Fire-and-Forget** | Drama list (`/dramas`)         | Return data immediately, cache in background    |
+
+**Why the difference?**
+
+- **Detail endpoint**: User expects to watch episodes immediately. Stale data would result in broken video URLs. Synchronous fetch ensures working videos.
+- **List endpoint**: User is browsing. Fast response is more important than fresh data. Fire-and-forget allows immediate response while data populates in background.
+
+#### Implementation
+
+```typescript
+// Synchronous fetch for detail endpoint
+private async fetchEpisodesSynchronously(
+  bookId: string,
+  dramaId: string,
+): Promise<Episode[] | null> {
+  const result = await getEpisodes(bookId);
+
+  if (!result.success) return null;
+
+  const freshEpisodes = result.data.episodes.map(apiEpisode => ({
+    // Transform api-proxy format to DB format
+    ...
+  }));
+
+  // Cache to DB (fire-and-forget)
+  this.cacheEpisodesToDb(bookId, dramaId, result.data.episodes);
+
+  return freshEpisodes;
+}
+```
+
+The synchronous approach ensures users always get working video URLs when viewing a drama detail page.
 
 ### Implementation
 

@@ -1,16 +1,8 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/sqlite-migration.md",
-  "started_at": "2026-02-10T16:20:00.443Z",
-  "session_ids": [
-    "ses_3b7d50a4effePyHxtIt95Bpykq",
-    "ses_3b4cc174affekaE8hOxS6qakmj",
-    "ses_3b4c7c794ffeq8qtyNycIrc3KQ",
-    "ses_3b4c2aa79ffe39eFvIFo4xt7fH",
-    "ses_3b4c778affe9ffecEeL8UtQGhmRgU",
-    "ses_3b4cc174affekaE8hOxS6qakmj",
-    "ses_3b4c7c794ffeq8qtyNycIrc3KQ",
-    "ses_3b4d0a975ffeKa6J4RoCnvz077"
-  ],
-  "plan_name": "sqlite-migration",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/api-proxy-fallback.md",
+  "started_at": "2026-02-13T23:58:20.503Z",
+  "completed_at": "2026-02-14T00:15:00.000Z",
+  "session_ids": ["ses_3a6b8ff6cffeeox2EQyzhjv2sv"],
+  "plan_name": "api-proxy-fallback",
   "status": "completed"
 }

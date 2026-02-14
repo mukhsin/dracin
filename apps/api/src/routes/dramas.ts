@@ -41,6 +41,7 @@ app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
   return c.json({
     success: true,
     data: result,
+    meta: { source: result.source || "db" },
   });
 });
 

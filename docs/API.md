@@ -209,34 +209,48 @@ List all dramas with pagination, search, and genre filtering.
 
 ```json
 {
-  "dramas": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440001",
-      "title": "Crash Landing on You",
-      "slug": "crash-landing-on-you",
-      "description": "A South Korean heiress falls in love with a North Korean officer...",
-      "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
-      "backdropUrl": "https://cdn.example.com/backdrops/crash-landing.jpg",
-      "releaseYear": 2019,
-      "rating": 8.7,
-      "genres": ["Romance", "Comedy", "Drama"],
-      "totalSeasons": 1,
-      "totalEpisodes": 16,
-      "status": "completed",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "updatedAt": "2024-01-15T10:30:00Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "title": "Crash Landing on You",
+        "slug": "crash-landing-on-you",
+        "description": "A South Korean heiress falls in love with a North Korean officer...",
+        "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
+        "backdropUrl": "https://cdn.example.com/backdrops/crash-landing.jpg",
+        "releaseYear": 2019,
+        "rating": 8.7,
+        "genres": ["Romance", "Comedy", "Drama"],
+        "totalSeasons": 1,
+        "totalEpisodes": 16,
+        "status": "completed",
+        "createdAt": "2024-01-15T10:30:00Z",
+        "updatedAt": "2024-01-15T10:30:00Z"
+      }
+    ],
     "total": 150,
-    "totalPages": 8,
-    "hasNext": true,
-    "hasPrev": false
+    "page": 1,
+    "pageSize": 20,
+    "hasMore": true
+  },
+  "meta": {
+    "source": "db"
   }
 }
 ```
+
+**Fallback Behavior:**
+
+When the database has no dramas or search returns no results, the API automatically falls back to the api-proxy service:
+
+- **DB Empty**: Falls back to `api-proxy/drama/latest`
+- **Search Empty**: Falls back to `api-proxy/drama/search?q={query}`
+- **Source Indicator**: Response includes `meta.source` field:
+  - `"db"` - Data came from local database
+  - `"api-proxy"` - Data came from external api-proxy service
+
+When data comes from api-proxy, it is automatically cached to the database (fire-and-forget) for future requests.
 
 **Status Codes:**
 
@@ -260,7 +274,7 @@ curl "http://localhost:3001/api/dramas?genre=romance&sort=rating"
 
 ### GET /api/dramas/:slug
 
-Get detailed information about a specific drama including all seasons.
+Get detailed information about a specific drama including all seasons and episodes.
 
 **Path Parameters:**
 
@@ -272,42 +286,68 @@ Get detailed information about a specific drama including all seasons.
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440001",
-  "title": "Crash Landing on You",
-  "slug": "crash-landing-on-you",
-  "description": "A South Korean heiress falls in love with a North Korean officer...",
-  "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
-  "backdropUrl": "https://cdn.example.com/backdrops/crash-landing.jpg",
-  "releaseYear": 2019,
-  "rating": 8.7,
-  "genres": ["Romance", "Comedy", "Drama"],
-  "totalSeasons": 1,
-  "totalEpisodes": 16,
-  "status": "completed",
-  "createdAt": "2024-01-15T10:30:00Z",
-  "updatedAt": "2024-01-15T10:30:00Z",
-  "seasons": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440002",
-      "number": 1,
-      "title": "Season 1",
-      "description": "The complete first season",
-      "episodeCount": 16,
-      "episodes": [
-        {
-          "id": "550e8400-e29b-41d4-a716-446655440003",
-          "number": 1,
-          "title": "Episode 1",
-          "description": "Yoon Se-ri's paragliding accident...",
-          "duration": 4200,
-          "thumbnailUrl": "https://cdn.example.com/thumbnails/ep1.jpg",
-          "airDate": "2019-12-14"
-        }
-      ]
-    }
-  ]
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "title": "Crash Landing on You",
+    "slug": "crash-landing-on-you",
+    "description": "A South Korean heiress falls in love with a North Korean officer...",
+    "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
+    "backdropUrl": "https://cdn.example.com/backdrops/crash-landing.jpg",
+    "releaseYear": 2019,
+    "rating": 8.7,
+    "genres": ["Romance", "Comedy", "Drama"],
+    "totalSeasons": 1,
+    "totalEpisodes": 16,
+    "status": "completed",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z",
+    "seasons": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "number": 1,
+        "title": "Season 1",
+        "description": "The complete first season",
+        "episodeCount": 16,
+        "episodes": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440003",
+            "number": 1,
+            "title": "Episode 1",
+            "description": "Yoon Se-ri's paragliding accident...",
+            "duration": 4200,
+            "thumbnailUrl": "https://cdn.example.com/thumbnails/ep1.jpg",
+            "airDate": "2019-12-14",
+            "videoUrls": {
+              "240p": "https://cdn.example.com/videos/ep1_240p.mp4",
+              "480p": "https://cdn.example.com/videos/ep1_480p.mp4",
+              "720p": "https://cdn.example.com/videos/ep1_720p.mp4",
+              "1080p": "https://cdn.example.com/videos/ep1_1080p.mp4"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "source": "cache"
+  }
 }
 ```
+
+**Episode Data Freshness:**
+
+The endpoint automatically validates cached episode video URLs:
+
+- **Cache Check**: Validates one cached video URL to ensure it's still accessible
+- **Synchronous Fetch**: If cache is stale or missing, fetches fresh episodes from api-proxy synchronously
+  - Client receives actual fresh data (not stale data)
+  - May take 1-3 seconds if api-proxy fetch is required
+- **Source Indicator**: Response includes `meta.source` field:
+  - `"cache"` - Episodes served from database cache (fast)
+  - `"fresh"` - Episodes freshly fetched from api-proxy
+
+**Note**: Fresh fetches are cached to the database for subsequent requests.
 
 **Status Codes:**
 

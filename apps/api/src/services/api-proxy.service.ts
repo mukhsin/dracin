@@ -175,12 +175,12 @@ function transformResponse<T>(response: ApiProxyResponse<T>): ApiResponse<T> {
 }
 
 export interface Drama {
-  id: string;
+  bookId: string;
   title: string;
   cover: string;
   intro: string;
-  book_id?: string;
-  source?: string;
+  chapterCount?: number;
+  playCount?: string;
 }
 
 export interface Episode {

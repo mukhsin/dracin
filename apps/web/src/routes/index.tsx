@@ -21,7 +21,8 @@ export function HomePage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Your Favorite Dramas,{" "}
+              Your Favorite Dramas
+              <br />
               <span className="text-primary">All in One Place</span>
             </h1>
 

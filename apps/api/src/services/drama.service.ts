@@ -4,7 +4,10 @@ import { dramas, episodes } from "../db/schema.js";
 import type { Drama, Episode, PaginatedResponse } from "@repo/shared/types";
 import {
   getEpisodes,
+  getLatest,
+  search,
   type Episode as ApiProxyEpisode,
+  type Drama as ApiProxyDrama,
 } from "./api-proxy.service.js";
 import {
   validateVideoUrl,
@@ -58,7 +61,7 @@ export class DramaService {
     page: number = 1,
     pageSize: number = 20,
     filters: DramaListFilters = {},
-  ): Promise<PaginatedResponse<Drama>> {
+  ): Promise<PaginatedResponse<Drama> & { source?: string }> {
     const offset = (page - 1) * pageSize;
 
     // Build where conditions
@@ -93,6 +96,64 @@ export class DramaService {
 
     const total = countResult?.count ?? 0;
 
+    // FALLBACK: If no results and search query provided, call api-proxy
+    if (total === 0 && filters.search) {
+      console.log(
+        `[DramaService] No DB results for search "${filters.search}", falling back to api-proxy`,
+      );
+      try {
+        const apiResult = await search(filters.search, page, pageSize);
+        if (apiResult.success && apiResult.data.length > 0) {
+          const transformedDramas = apiResult.data.map((d) =>
+            this.transformApiProxyDrama(d),
+          );
+
+          // Fire-and-forget: Cache dramas to DB
+          this.cacheDramasToDb(transformedDramas);
+
+          return {
+            items: transformedDramas,
+            total: apiResult.data.length,
+            page,
+            pageSize,
+            hasMore: false,
+            source: "api-proxy",
+          };
+        }
+      } catch (error) {
+        console.error(`[DramaService] Api-proxy search failed:`, error);
+      }
+    }
+
+    // FALLBACK: If no results at all, call api-proxy latest
+    if (total === 0) {
+      console.log(
+        `[DramaService] No dramas in DB, falling back to api-proxy latest`,
+      );
+      try {
+        const apiResult = await getLatest(page, pageSize);
+        if (apiResult.success && apiResult.data.length > 0) {
+          const transformedDramas = apiResult.data.map((d) =>
+            this.transformApiProxyDrama(d),
+          );
+
+          // Fire-and-forget: Cache dramas to DB
+          this.cacheDramasToDb(transformedDramas);
+
+          return {
+            items: transformedDramas,
+            total: apiResult.data.length,
+            page,
+            pageSize,
+            hasMore: apiResult.data.length === pageSize,
+            source: "api-proxy",
+          };
+        }
+      } catch (error) {
+        console.error(`[DramaService] Api-proxy getLatest failed:`, error);
+      }
+    }
+
     // Determine sort order
     const sortColumn =
       filters.sortBy === "title"
@@ -118,6 +179,7 @@ export class DramaService {
       page,
       pageSize,
       hasMore: offset + results.length < total,
+      source: "db",
     };
   }
 
@@ -309,10 +371,20 @@ export class DramaService {
 
     if (episodesWithUrls.length === 0 || !bookIdString) {
       console.log(
-        `[DramaService] No cached URLs for drama ${slug}, fetching fresh`,
+        `[DramaService] No cached URLs for drama ${slug}, fetching fresh synchronously`,
       );
       if (bookIdString) {
-        this.fetchAndCacheEpisodes(bookIdString);
+        const freshEpisodes = await this.fetchEpisodesSynchronously(
+          bookIdString,
+          drama.id,
+        );
+        if (freshEpisodes && freshEpisodes.length > 0) {
+          return {
+            ...drama,
+            episodes: freshEpisodes,
+            source: "fresh",
+          };
+        }
       }
       return { ...drama, source: "fresh" };
     }
@@ -322,10 +394,20 @@ export class DramaService {
 
     if (!urlToValidate) {
       console.log(
-        `[DramaService] No valid URL found for drama ${slug}, fetching fresh`,
+        `[DramaService] No valid URL found for drama ${slug}, fetching fresh synchronously`,
       );
       if (bookIdString) {
-        this.fetchAndCacheEpisodes(bookIdString);
+        const freshEpisodes = await this.fetchEpisodesSynchronously(
+          bookIdString,
+          drama.id,
+        );
+        if (freshEpisodes && freshEpisodes.length > 0) {
+          return {
+            ...drama,
+            episodes: freshEpisodes,
+            source: "fresh",
+          };
+        }
       }
       return { ...drama, source: "fresh" };
     }
@@ -340,10 +422,22 @@ export class DramaService {
       return { ...drama, source: "cache" };
     }
 
-    console.log(`[DramaService] Cache stale for drama ${slug}, fetching fresh`);
+    console.log(
+      `[DramaService] Cache stale for drama ${slug}, fetching fresh synchronously`,
+    );
 
     if (bookIdString) {
-      this.fetchAndCacheEpisodes(bookIdString);
+      const freshEpisodes = await this.fetchEpisodesSynchronously(
+        bookIdString,
+        drama.id,
+      );
+      if (freshEpisodes && freshEpisodes.length > 0) {
+        return {
+          ...drama,
+          episodes: freshEpisodes,
+          source: "fresh",
+        };
+      }
     }
 
     try {
@@ -486,6 +580,172 @@ export class DramaService {
     }
 
     return videoUrls;
+  }
+
+  private transformApiProxyDrama(apiDrama: ApiProxyDrama): Drama {
+    return {
+      id: crypto.randomUUID(),
+      bookId: apiDrama.bookId,
+      title: apiDrama.title,
+      slug: this.generateSlug(apiDrama.title),
+      description: apiDrama.intro,
+      posterUrl: apiDrama.cover,
+      status: "upcoming",
+      language: null,
+      playCount: apiDrama.playCount || null,
+      sourceEndpoint: null,
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  private generateSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  }
+
+  private async cacheDramasToDb(dramasToCache: Drama[]): Promise<void> {
+    console.log(
+      `[DramaService] Fire-and-forget: Caching ${dramasToCache.length} dramas to DB`,
+    );
+
+    try {
+      for (const drama of dramasToCache) {
+        await db
+          .insert(dramas)
+          .values({
+            id: drama.id,
+            bookId: drama.bookId,
+            title: drama.title,
+            slug: drama.slug,
+            description: drama.description,
+            posterUrl: drama.posterUrl,
+            status: drama.status,
+            language: drama.language,
+            playCount: drama.playCount,
+            sourceEndpoint: drama.sourceEndpoint,
+            metadata: drama.metadata,
+            createdAt: drama.createdAt,
+            updatedAt: drama.updatedAt,
+          })
+          .onConflictDoUpdate({
+            target: [dramas.bookId],
+            set: {
+              title: drama.title,
+              description: drama.description,
+              posterUrl: drama.posterUrl,
+              status: drama.status,
+              updatedAt: new Date(),
+            },
+          });
+
+        console.log(
+          `[DramaService] Fire-and-forget: Cached drama ${drama.title} (${drama.bookId})`,
+        );
+      }
+
+      console.log(
+        `[DramaService] Fire-and-forget: Successfully cached ${dramasToCache.length} dramas`,
+      );
+    } catch (error) {
+      console.error(
+        `[DramaService] Fire-and-forget: Failed to cache dramas:`,
+        error,
+      );
+    }
+  }
+
+  private async fetchEpisodesSynchronously(
+    bookId: string,
+    dramaId: string,
+  ): Promise<Episode[] | null> {
+    console.log(
+      `[DramaService] Synchronously fetching episodes for bookId ${bookId}`,
+    );
+
+    try {
+      const result = await getEpisodes(bookId);
+
+      if (!result.success || result.data.episodes.length === 0) {
+        console.log(
+          `[DramaService] No episodes found from api-proxy for bookId ${bookId}`,
+        );
+        return null;
+      }
+
+      const freshEpisodes = result.data.episodes.map(
+        (apiEpisode: ApiProxyEpisode) => ({
+          id: crypto.randomUUID(),
+          dramaId: dramaId,
+          bookId: bookId,
+          number: apiEpisode.index + 1,
+          title: apiEpisode.title,
+          description: null,
+          duration: null,
+          videoUrls: apiEpisode.url
+            ? this.transformApiProxyUrlToVideoUrls(apiEpisode.url)
+            : {},
+          sourceUrl: apiEpisode.url ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      console.log(
+        `[DramaService] Fetched ${freshEpisodes.length} episodes synchronously for bookId ${bookId}`,
+      );
+
+      this.cacheEpisodesToDb(bookId, dramaId, result.data.episodes);
+
+      return freshEpisodes;
+    } catch (error) {
+      console.error(
+        `[DramaService] Failed to fetch episodes synchronously for bookId ${bookId}:`,
+        error,
+      );
+      return null;
+    }
+  }
+
+  private async cacheEpisodesToDb(
+    bookId: string,
+    dramaId: string,
+    apiEpisodes: ApiProxyEpisode[],
+  ): Promise<void> {
+    try {
+      for (const apiEpisode of apiEpisodes) {
+        const videoUrls = apiEpisode.url
+          ? this.transformApiProxyUrlToVideoUrls(apiEpisode.url)
+          : {};
+
+        await db
+          .insert(episodes)
+          .values({
+            dramaId: dramaId,
+            bookId: bookId,
+            number: apiEpisode.index + 1,
+            title: apiEpisode.title ?? `Episode ${apiEpisode.index + 1}`,
+            description: null,
+            duration: null,
+            videoUrls: videoUrls,
+            sourceUrl: apiEpisode.url ?? null,
+          })
+          .onConflictDoUpdate({
+            target: [episodes.dramaId, episodes.number],
+            set: {
+              videoUrls: videoUrls,
+              sourceUrl: apiEpisode.url ?? null,
+            },
+          });
+      }
+    } catch (error) {
+      console.error(`[DramaService] Failed to cache episodes:`, error);
+    }
   }
 }
 
