@@ -1,5 +1,5 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/drama-api-sanitization.md",
+  "active_plan": null,
   "started_at": "2026-02-14T17:42:41.096Z",
   "session_ids": [
     "ses_3a2c8e2e6ffedGZJYOvLjojZQs",
@@ -16,8 +16,7 @@
   "plan_name": "drama-api-sanitization",
   "agent": "atlas",
   "progress": {
-    "completed": 9,
-    "total": 23
+    "completed": 10,
+    "total": 10
   }
-}
 }
