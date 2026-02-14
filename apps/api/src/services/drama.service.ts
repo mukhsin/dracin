@@ -39,7 +39,7 @@ export interface EpisodeSummary {
 }
 
 export interface EpisodeWithDramaAndNavigation extends Episode {
-  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl">;
+  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl" | "totalEpisodes">;
   navigation: {
     prevEpisode: EpisodeSummary | null;
     nextEpisode: EpisodeSummary | null;
@@ -276,6 +276,7 @@ export class DramaService {
         dramaTitle: dramas.title,
         dramaSlug: dramas.slug,
         dramaPosterUrl: dramas.posterUrl,
+        totalEpisodes: dramas.totalEpisodes,
       })
       .from(episodes)
       .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
@@ -326,6 +327,7 @@ export class DramaService {
         title: result.dramaTitle,
         slug: result.dramaSlug,
         posterUrl: result.dramaPosterUrl,
+        totalEpisodes: result.totalEpisodes,
       },
       navigation: {
         prevEpisode: prevEpisode || null,

@@ -28,6 +28,7 @@ const MOCK_EPISODE: EpisodeWithNavigation = {
     title: "Test Drama",
     slug: "test-drama",
     posterUrl: null,
+    totalEpisodes: 12,
   },
   navigation: {
     prevEpisode: null,
@@ -93,7 +94,7 @@ function WatchPage() {
   const prevEpisode = episode?.navigation?.prevEpisode;
   const nextEpisode = episode?.navigation?.nextEpisode;
 
-  const showMobileNav = Boolean(prevEpisode || nextEpisode);
+  const showMobileNav = true;
 
   if (isLoading) {
     return (
@@ -246,12 +247,12 @@ function WatchPage() {
         <div className="md:hidden">
           <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur shadow-lg">
             <div className="max-w-lg mx-auto px-4 py-4">
-              <div className="flex gap-3">
-                {prevEpisode && (
+              <div className="flex items-center gap-3">
+                {prevEpisode ? (
                   <Link
                     to="/watch/$episodeId"
                     params={{ episodeId: prevEpisode.id }}
-                    className="flex-1 rounded-xl border border-border/50 px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
+                    className="rounded-xl border border-border/50 px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
                   >
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-muted-foreground tracking-wider">
@@ -262,12 +263,35 @@ function WatchPage() {
                       </p>
                     </div>
                   </Link>
+                ) : (
+                  <div className="rounded-xl border border-border/30 px-4 py-3 text-left text-sm font-semibold text-muted-foreground/50 opacity-50">
+                    <div className="flex items-center">
+                      <span className="text-xs text-muted-foreground/50 tracking-wider">
+                        PREVIOUS
+                      </span>
+                    </div>
+                  </div>
                 )}
-                {nextEpisode && (
+                <div className="flex-1 flex items-center justify-center gap-2">
+                  <span className="text-3xl font-bold text-primary tracking-tight">
+                    {episode.number}
+                  </span>
+                  {episode.drama.totalEpisodes && (
+                    <>
+                      <span className="text-2xl text-muted-foreground/30">
+                        ·
+                      </span>
+                      <span className="text-xl font-medium text-muted-foreground/60 tracking-tight">
+                        {episode.drama.totalEpisodes}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {nextEpisode ? (
                   <Link
                     to="/watch/$episodeId"
                     params={{ episodeId: nextEpisode.id }}
-                    className="flex-1 rounded-xl border border-border/50 px-4 py-3 text-right text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
+                    className="rounded-xl border border-border/50 px-4 py-3 text-right text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
                   >
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-muted-foreground tracking-wider">
@@ -278,6 +302,14 @@ function WatchPage() {
                       </p>
                     </div>
                   </Link>
+                ) : (
+                  <div className="rounded-xl border border-border/30 px-4 py-3 text-right text-sm font-semibold text-muted-foreground/50 opacity-50">
+                    <div className="flex items-center justify-end">
+                      <span className="text-xs text-muted-foreground/50 tracking-wider">
+                        NEXT
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

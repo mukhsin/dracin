@@ -181,7 +181,7 @@ export interface VideoInfo {
  * Episode with drama info and navigation (prev/next episodes)
  */
 export interface EpisodeWithNavigation extends Episode {
-  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl">;
+  drama: Pick<Drama, "id" | "title" | "slug" | "posterUrl" | "totalEpisodes">;
   navigation: {
     prevEpisode: EpisodeSummary | null;
     nextEpisode: EpisodeSummary | null;
