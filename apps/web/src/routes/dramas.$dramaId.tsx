@@ -151,17 +151,6 @@ function DramaDetailsPage() {
                   <Film className="w-16 h-16 text-muted-foreground" />
                 </div>
               )}
-
-              {/* Status Badge */}
-              {status && (
-                <div className="absolute top-4 left-4">
-                  <span
-                    className={`text-xs px-3 py-1.5 rounded-full font-medium ${getStatusColor(status)}`}
-                  >
-                    {status.toUpperCase()}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -173,6 +162,13 @@ function DramaDetailsPage() {
               </h1>
 
               <div className="flex flex-wrap items-center gap-3 mb-6">
+                {status && (
+                  <span
+                    className={`text-sm px-3 py-1.5 rounded-full font-medium ${getStatusColor(status)}`}
+                  >
+                    {status.toUpperCase()}
+                  </span>
+                )}
                 {language && (
                   <span className="bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-full">
                     {language.toUpperCase()}
