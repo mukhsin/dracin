@@ -30,6 +30,11 @@ export interface Drama {
   playCount: string | null;
   sourceEndpoint: string | null;
   metadata: DramaMetadata | null;
+  totalEpisodes: number | null;
+  releaseYear: number | null;
+  country: string | null;
+  rating: number | null;
+  genres: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 }

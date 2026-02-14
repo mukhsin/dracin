@@ -530,6 +530,43 @@ export class DramaService {
     return { ...drama, source: "fresh" };
   }
 
+  async updateStatusIfCompleted(dramaId: string): Promise<void> {
+    const [drama] = await db
+      .select({
+        id: dramas.id,
+        bookId: dramas.bookId,
+        totalEpisodes: dramas.totalEpisodes,
+        status: dramas.status,
+      })
+      .from(dramas)
+      .where(eq(dramas.id, dramaId));
+
+    if (!drama || !drama.totalEpisodes || drama.status === "completed") {
+      return;
+    }
+
+    const [episodeCountResult] = await db
+      .select({ count: count() })
+      .from(episodes)
+      .where(eq(episodes.dramaId, dramaId));
+
+    const episodeCount = episodeCountResult?.count ?? 0;
+
+    if (episodeCount >= drama.totalEpisodes && episodeCount > 0) {
+      console.log(
+        `[DramaService] Updating drama ${dramaId} status to "completed" (${episodeCount}/${drama.totalEpisodes} episodes)`,
+      );
+
+      await db
+        .update(dramas)
+        .set({
+          status: "completed",
+          updatedAt: new Date(),
+        })
+        .where(eq(dramas.id, dramaId));
+    }
+  }
+
   private async fetchAndCacheEpisodes(bookId: string): Promise<void> {
     console.log(
       `[DramaService] Fire-and-forget: Fetching episodes for bookId ${bookId}`,
@@ -637,6 +674,11 @@ export class DramaService {
   }
 
   private transformApiProxyDrama(apiDrama: ApiProxyDrama): Drama {
+    const status =
+      apiDrama.chapterCount && apiDrama.chapterCount > 0
+        ? "ongoing"
+        : "upcoming";
+
     return {
       id: crypto.randomUUID(),
       bookId: apiDrama.bookId,
@@ -644,11 +686,16 @@ export class DramaService {
       slug: this.generateSlug(apiDrama.title),
       description: apiDrama.intro,
       posterUrl: apiDrama.cover,
-      status: "upcoming",
+      status,
       language: null,
       playCount: apiDrama.playCount || null,
       sourceEndpoint: null,
       metadata: null,
+      totalEpisodes: apiDrama.chapterCount || null,
+      releaseYear: null,
+      country: null,
+      rating: null,
+      genres: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -657,7 +704,7 @@ export class DramaService {
   private generateSlug(title: string): string {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9\\s-]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .trim();
@@ -684,6 +731,11 @@ export class DramaService {
             playCount: drama.playCount,
             sourceEndpoint: drama.sourceEndpoint,
             metadata: drama.metadata,
+            totalEpisodes: drama.totalEpisodes,
+            releaseYear: drama.releaseYear,
+            country: drama.country,
+            rating: drama.rating,
+            genres: drama.genres,
             createdAt: drama.createdAt,
             updatedAt: drama.updatedAt,
           })
@@ -691,9 +743,11 @@ export class DramaService {
             target: [dramas.bookId],
             set: {
               title: drama.title,
+              slug: drama.slug,
               description: drama.description,
               posterUrl: drama.posterUrl,
               status: drama.status,
+              totalEpisodes: drama.totalEpisodes,
               updatedAt: new Date(),
             },
           });

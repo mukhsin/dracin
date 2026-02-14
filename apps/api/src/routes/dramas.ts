@@ -56,6 +56,10 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     });
   }
 
+  dramaService.updateStatusIfCompleted(drama.id).catch((error) => {
+    console.error(`[DramasRoute] Failed to update status:`, error);
+  });
+
   // Hide videoUrls, sourceUrl, and bookId from episodes
   const sanitizedEpisodes = drama.episodes.map((ep) => {
     const {
