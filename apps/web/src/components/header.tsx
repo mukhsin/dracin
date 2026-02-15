@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Film, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { SearchIcon } from "./search-icon";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -67,6 +68,7 @@ export function Header() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
+            <SearchIcon />
             {/* Mobile Menu Button */}
             <button
               type="button"

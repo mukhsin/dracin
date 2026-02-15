@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { AlertCircle, Play, ArrowLeft, Film, Heart } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
@@ -22,6 +22,10 @@ function EpisodeCard({ episode }: { episode: any }) {
 
 function DramaDetailsPage() {
   const { dramaId } = Route.useParams();
+  const searchParams = useSearch({ from: "/dramas/$dramaId" }) as {
+    q?: string;
+  };
+  const search = searchParams.q || "";
   const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
 
   if (isLoading) {
@@ -63,7 +67,9 @@ function DramaDetailsPage() {
               </p>
               <Link
                 to="/dramas"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                search={search ? { q: search } : undefined}
+                resetScroll={true}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Dramas
@@ -88,7 +94,9 @@ function DramaDetailsPage() {
               </p>
               <Link
                 to="/dramas"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                search={search ? { q: search } : undefined}
+                resetScroll={true}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Dramas
@@ -129,6 +137,8 @@ function DramaDetailsPage() {
           <Link
             to="/dramas"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            search={search ? { q: search } : undefined}
+            resetScroll={true}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dramas
@@ -197,13 +207,6 @@ function DramaDetailsPage() {
             <div className="flex flex-wrap gap-4">
               {episodes && episodes.length > 0 && (
                 <>
-                  <Link
-                    to={`/watch/${episodes[0].id}`}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105 shadow-lg shadow-primary/25"
-                  >
-                    <Play className="w-5 h-5" />
-                    Play First Episode
-                  </Link>
                   <button className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-6 py-4 text-sm font-semibold hover:bg-accent transition-colors">
                     <Heart className="w-5 h-5" />
                     Add to Watchlist

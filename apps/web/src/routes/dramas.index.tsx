@@ -1,17 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import {
+  createFileRoute,
+  useSearch,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
-import { useDebounce } from "../hooks/use-debounce.js";
 import DramaCard from "../components/drama-card.js";
-import { Loader2, Search, AlertCircle, X } from "lucide-react";
+import { Loader2, AlertCircle, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dramas/")({
   component: DramasPage,
 });
 
 function DramasPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  const navigate = useNavigate();
+  const searchParams = useSearch({ from: "/dramas" }) as { q?: string };
+  const search = searchParams.q || "";
 
   const {
     data,
@@ -21,7 +25,7 @@ function DramasPage() {
     fetchNextPage,
     hasNextPage,
   } = useDramasInfinite({
-    search: debouncedSearch,
+    search,
     pageSize: 20,
   });
 
@@ -30,10 +34,11 @@ function DramasPage() {
     return data.pages.flatMap((page) => page.items);
   }, [data]);
 
-  const totalCount = data?.pages[0]?.total || 0;
-
   const handleClearSearch = () => {
-    setSearchTerm("");
+    navigate({
+      to: "/dramas",
+      search: {},
+    });
   };
 
   const handleLoadMore = () => {
@@ -73,6 +78,7 @@ function DramasPage() {
                   : "Unknown error occurred"}
               </p>
               <button
+                type="button"
                 onClick={() => window.location.reload()}
                 className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
@@ -96,28 +102,6 @@ function DramasPage() {
               Discover your next favorite series
             </p>
           </div>
-
-          {/* Search Input */}
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search dramas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Drama Grid */}
@@ -129,6 +113,7 @@ function DramasPage() {
                   key={drama.id}
                   drama={drama}
                   totalEpisodes={drama.metadata?.totalEpisodes}
+                  searchQuery={search}
                 />
               ))}
             </div>
@@ -137,6 +122,7 @@ function DramasPage() {
             {hasNextPage && (
               <div className="flex justify-center mt-12">
                 <button
+                  type="button"
                   onClick={handleLoadMore}
                   disabled={isFetchingNextPage}
                   className="flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -170,12 +156,13 @@ function DramasPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">No dramas found</h2>
             <p className="text-muted-foreground max-w-sm">
-              {searchTerm
+              {search
                 ? "Try adjusting your search terms or browse all dramas"
                 : "Check back later for new dramas"}
             </p>
-            {searchTerm && (
+            {search && (
               <button
+                type="button"
                 onClick={handleClearSearch}
                 className="mt-4 text-primary hover:underline text-sm"
               >

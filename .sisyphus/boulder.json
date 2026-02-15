@@ -1,22 +1,27 @@
 {
-  "active_plan": null,
-  "started_at": "2026-02-14T17:42:41.096Z",
-  "session_ids": [
-    "ses_3a2c8e2e6ffedGZJYOvLjojZQs",
-    "ses_3a2bd09d3ffeisbYJKf6duSw7A",
-    "ses_3a2bd09bcffegZHLgBCQRr40oO",
-    "ses_3a2bd09acffeyezMbmznzwNxto",
-    "ses_3a2b70eb8ffec068pfWek6mmGK",
-    "ses_3a2b6ea47ffeQPuyeQNOzuQLpk",
-    "ses_3a2b70eb8ffec068pfWek6mmGK",
-    "ses_3a2b6ea47ffeQPuyeQNOzuQLpk",
-    "ses_3a29b33f5ffeqTKEtL7H0yERgC",
-    "ses_3a299a495ffeVbUwISDBAQqYhN"
-  ],
-  "plan_name": "drama-api-sanitization",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/search-redesign.md",
+  "started_at": "2026-02-15T01:59:42.121Z",
+  "completed_at": "2026-02-15T17:30:00.000Z",
+  "session_ids": ["ses_3a0f9954effevauIzvN91aUFV1"],
+  "plan_name": "search-redesign",
+  "status": "completed",
   "agent": "atlas",
-  "progress": {
-    "completed": 10,
-    "total": 10
-  }
+  "tasks_completed": 9,
+  "tasks_total": 9,
+  "test_results": {
+    "search_icon": 6,
+    "search_box": 7,
+    "integration": 7,
+    "total": 20
+  },
+  "build_status": "success",
+  "typecheck_status": "clean",
+  "post_implementation_fixes": [
+    "Fixed SearchIcon redirect issue on all pages",
+    "Enabled TanStack Router scroll restoration",
+    "Converted 'Back to Dramas' buttons to plain text links",
+    "Removed 'Play First Episode' button",
+    "Made 'Back to Dramas' buttons monochrome with minimal styling",
+    "Fixed mobile search icon visibility issue"
+  ]
 }

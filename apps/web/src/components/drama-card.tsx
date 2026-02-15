@@ -14,9 +14,10 @@ interface DramaCardProps {
     status?: string;
   };
   totalEpisodes?: number;
+  searchQuery?: string;
 }
 
-function DramaCard({ drama, totalEpisodes }: DramaCardProps) {
+function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
   const { title, slug, posterUrl, playCount, language } = drama;
 
   // Handle missing poster URL
@@ -40,7 +41,9 @@ function DramaCard({ drama, totalEpisodes }: DramaCardProps) {
 
   return (
     <Link
-      to={`/dramas/${slug}`}
+      to="/dramas/$dramaId"
+      params={{ dramaId: slug }}
+      search={searchQuery ? { q: searchQuery } : undefined}
       className="group relative bg-card rounded-lg border overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 h-full"
     >
       {/* Image Container */}
