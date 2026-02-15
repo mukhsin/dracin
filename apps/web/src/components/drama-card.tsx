@@ -58,15 +58,6 @@ function DramaCard({ drama, totalEpisodes }: DramaCardProps) {
           </div>
         )}
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium">
-              View Details
-            </div>
-          </div>
-        </div>
-
         {/* Status Badge */}
         {drama.status && (
           <div className="absolute top-2 left-2">
