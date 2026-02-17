@@ -1,16 +1,24 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
-import { AlertCircle, Play, ArrowLeft, Film, Heart } from "lucide-react";
+import { AlertCircle, ArrowLeft, Film, Heart } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
 });
 
-function EpisodeCard({ episode }: { episode: any }) {
+function EpisodeCard({
+  episode,
+  searchQuery,
+}: {
+  episode: any;
+  searchQuery?: string;
+}) {
   return (
     <Link
-      to={`/watch/${episode.id}`}
+      to="/watch/$episodeId"
+      params={{ episodeId: episode.id }}
+      state={searchQuery ? { searchQuery } : undefined}
       className="group bg-card rounded-lg border aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
     >
       <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">
@@ -22,10 +30,8 @@ function EpisodeCard({ episode }: { episode: any }) {
 
 function DramaDetailsPage() {
   const { dramaId } = Route.useParams();
-  const searchParams = useSearch({ from: "/dramas/$dramaId" }) as {
-    q?: string;
-  };
-  const search = searchParams.q || "";
+  const location = useLocation();
+  const search = location.state?.searchQuery || "";
   const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
 
   if (isLoading) {
@@ -68,7 +74,7 @@ function DramaDetailsPage() {
               <Link
                 to="/dramas"
                 className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                search={search ? { q: search } : undefined}
+                state={search ? { searchQuery: search } : undefined}
                 resetScroll={true}
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -95,7 +101,7 @@ function DramaDetailsPage() {
               <Link
                 to="/dramas"
                 className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                search={search ? { q: search } : undefined}
+                state={search ? { searchQuery: search } : undefined}
                 resetScroll={true}
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -137,7 +143,7 @@ function DramaDetailsPage() {
           <Link
             to="/dramas"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            search={search ? { q: search } : undefined}
+            state={search ? { searchQuery: search } : undefined}
             resetScroll={true}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -230,7 +236,11 @@ function DramaDetailsPage() {
           {episodes && episodes.length > 0 ? (
             <div className="grid grid-cols-5 lg:grid-cols-10 gap-2">
               {episodes.map((episode) => (
-                <EpisodeCard key={episode.id} episode={episode} />
+                <EpisodeCard
+                  key={episode.id}
+                  episode={episode}
+                  searchQuery={search}
+                />
               ))}
             </div>
           ) : (

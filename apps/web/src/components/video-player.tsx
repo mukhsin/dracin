@@ -13,6 +13,7 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   startTime?: number;
   dramaSlug?: string;
+  searchQuery?: string;
 }
 
 export function VideoPlayer({
@@ -23,6 +24,7 @@ export function VideoPlayer({
   autoPlay = false,
   startTime = 0,
   dramaSlug,
+  searchQuery,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -336,6 +338,7 @@ export function VideoPlayer({
                 <Link
                   to="/dramas/$dramaId"
                   params={{ dramaId: dramaSlug }}
+                  state={searchQuery ? { searchQuery } : undefined}
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
                 >

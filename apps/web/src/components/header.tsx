@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useLocation } from "@tanstack/react-router";
 import { Film, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SearchIcon } from "./search-icon";
@@ -7,6 +7,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const routerState = useRouterState();
+  const location = useLocation();
   const currentPath = routerState.location.pathname;
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export function Header() {
                 <Link
                   key={link.to}
                   to={link.to}
+                  state={location.state}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     active
                       ? "text-foreground bg-accent"
@@ -95,6 +97,7 @@ export function Header() {
                   <Link
                     key={link.to}
                     to={link.to}
+                    state={location.state}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`px-4 py-3 text-sm font-medium transition-colors ${
                       active

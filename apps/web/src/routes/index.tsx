@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { Film, Heart, History, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -6,6 +6,7 @@ export const Route = createFileRoute("/")({
 });
 
 export function HomePage() {
+  const location = useLocation();
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -34,6 +35,7 @@ export function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/dramas"
+                state={location.state}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-105"
               >
                 <Film className="w-5 h-5" />
@@ -89,6 +91,7 @@ export function HomePage() {
             </p>
             <Link
               to="/dramas"
+              state={location.state}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-105"
             >
               Start Watching Now

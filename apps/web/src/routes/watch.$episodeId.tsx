@@ -1,5 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
@@ -49,6 +49,12 @@ export const Route = createFileRoute("/watch/$episodeId")({
 
 function WatchPage() {
   const { episodeId } = Route.useParams();
+  const location = useLocation();
+  const search = location.state?.searchQuery || "";
+  const [lastKnownDrama, setLastKnownDrama] = useState<{
+    title: string;
+    slug: string;
+  } | null>(null);
 
   const {
     data: episode,
@@ -75,9 +81,23 @@ function WatchPage() {
 
       if (result && typeof result === "object") {
         if ("data" in result && result.data) {
-          return result.data as EpisodeWithNavigation;
+          const episodeData = result.data as EpisodeWithNavigation;
+          if (episodeData.drama) {
+            setLastKnownDrama({
+              title: episodeData.drama.title,
+              slug: episodeData.drama.slug,
+            });
+          }
+          return episodeData;
         }
-        return result as EpisodeWithNavigation;
+        const episodeData = result as EpisodeWithNavigation;
+        if (episodeData.drama) {
+          setLastKnownDrama({
+            title: episodeData.drama.title,
+            slug: episodeData.drama.slug,
+          });
+        }
+        return episodeData;
       }
 
       throw new Error("Invalid response format");
@@ -108,6 +128,14 @@ function WatchPage() {
   }
 
   if (error || !episode) {
+    const backLink = lastKnownDrama
+      ? {
+          to: "/dramas/$dramaId" as const,
+          params: { dramaId: lastKnownDrama.slug },
+          text: `Back to ${lastKnownDrama.title}`,
+        }
+      : { to: "/" as const, params: undefined, text: "Back to Home" };
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -117,11 +145,12 @@ function WatchPage() {
             {error?.message || "The episode you're looking for doesn't exist."}
           </p>
           <Link
-            to="/"
+            to={backLink.to}
+            params={backLink.params}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Home
+            {backLink.text}
           </Link>
         </div>
       </div>
@@ -141,6 +170,7 @@ function WatchPage() {
             <Link
               to="/dramas/$dramaId"
               params={{ dramaId: episode.drama.slug }}
+              state={search ? { searchQuery: search } : undefined}
               className="inline-flex items-center text-white/90 hover:text-white transition-colors"
               aria-label={`Back to ${episode.drama.title}`}
             >
@@ -155,6 +185,7 @@ function WatchPage() {
             videoUrls={videoUrls}
             posterUrl={episode.drama.posterUrl || undefined}
             dramaSlug={episode.drama.slug}
+            searchQuery={search}
           />
         </div>
 

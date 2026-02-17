@@ -43,7 +43,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
     <Link
       to="/dramas/$dramaId"
       params={{ dramaId: slug }}
-      search={searchQuery ? { q: searchQuery } : undefined}
+      state={searchQuery ? { searchQuery } : undefined}
       className="group relative bg-card rounded-lg border overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 h-full"
     >
       {/* Image Container */}
