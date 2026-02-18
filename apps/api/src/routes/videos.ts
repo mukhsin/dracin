@@ -11,6 +11,7 @@ import {
   clearFallbackCache,
   resetFallbackService,
 } from "../middleware/fallback.js";
+import { requireAdminAuth } from "../middleware/admin-auth.js";
 
 function createResetRoute(app: Hono) {
   app.post("/admin/fallback/reset", (c) => {
@@ -259,6 +260,9 @@ function buildShortVideoUrls(
  */
 export function createFallbackAdminRoutes(): Hono {
   const app = new Hono();
+
+  // Apply admin authentication middleware to all routes in this router
+  app.use(requireAdminAuth);
 
   /**
    * GET /api/admin/fallback/status
