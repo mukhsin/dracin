@@ -141,7 +141,7 @@ export function SearchIcon() {
           className={`
             absolute right-full mr-2
             w-[200px] sm:w-[300px]
-            animate-in fade-in slide-in-from-right-2 duration-300
+            animate-in fade-in slide-in-from-right-2 duration-200
           `}
         >
           <SearchBox
