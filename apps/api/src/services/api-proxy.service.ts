@@ -324,3 +324,12 @@ export async function getDetail(
   );
   return transformResponse(response);
 }
+
+export async function fetchAllDramas(): Promise<ApiResponse<Drama[]>> {
+  const response = await fetchWithRetry<Drama[]>(
+    "/drama/fetch-all",
+    {},
+    EPISODES_TIMEOUT_MS,
+  );
+  return transformResponse(response);
+}
