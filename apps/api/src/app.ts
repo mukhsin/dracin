@@ -11,6 +11,7 @@ import { videoRoutes, fallbackAdminRoutes } from "./routes/videos.js";
 import { videoProxyRoutes } from "./routes/video-proxy.js";
 import { searchRoutes } from "./routes/search.js";
 import { catalogRoutes } from "./routes/catalog.js";
+import { adminDramasRouter } from "./routes/admin-dramas.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { auth } from "./lib/auth.js";
 
@@ -46,6 +47,7 @@ export function createApp() {
   app.route("/api", videoProxyRoutes);
   app.route("/api", videoRoutes);
   app.route("/api", fallbackAdminRoutes);
+  app.route("/api/admin/dramas", adminDramasRouter);
 
   app.notFound((c) => {
     return c.json(
