@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { watchHistory, episodes, dramas } from "../db/schema.js";
 import type { WatchHistory, Episode, Drama } from "@repo/shared/types";
@@ -39,8 +39,14 @@ export class HistoryService {
         drama: dramas,
       })
       .from(watchHistory)
-      .innerJoin(episodes, eq(watchHistory.episodeId, episodes.id))
-      .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
+      .innerJoin(dramas, eq(watchHistory.dramaSlug, dramas.slug))
+      .innerJoin(
+        episodes,
+        and(
+          eq(episodes.dramaId, dramas.id),
+          eq(watchHistory.episodeNumber, episodes.number),
+        ),
+      )
       .where(eq(watchHistory.userId, userId))
       .orderBy(desc(watchHistory.watchedAt));
 
@@ -71,8 +77,14 @@ export class HistoryService {
         drama: dramas,
       })
       .from(watchHistory)
-      .innerJoin(episodes, eq(watchHistory.episodeId, episodes.id))
-      .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
+      .innerJoin(dramas, eq(watchHistory.dramaSlug, dramas.slug))
+      .innerJoin(
+        episodes,
+        and(
+          eq(episodes.dramaId, dramas.id),
+          eq(watchHistory.episodeNumber, episodes.number),
+        ),
+      )
       .where(
         and(eq(watchHistory.userId, userId), eq(watchHistory.completed, false)),
       )
@@ -104,13 +116,27 @@ export class HistoryService {
     progress: number,
     completed: boolean = false,
   ): Promise<WatchHistoryWithEpisode> {
+    const [episodeWithDrama] = await db
+      .select({
+        episode: episodes,
+        drama: dramas,
+      })
+      .from(episodes)
+      .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
+      .where(eq(episodes.id, episodeId));
+
+    if (!episodeWithDrama) {
+      throw new Error(`Episode ${episodeId} not found`);
+    }
+
     const [existing] = await db
       .select()
       .from(watchHistory)
       .where(
         and(
           eq(watchHistory.userId, userId),
-          eq(watchHistory.episodeId, episodeId),
+          eq(watchHistory.dramaSlug, episodeWithDrama.drama.slug),
+          eq(watchHistory.episodeNumber, episodeWithDrama.episode.number),
         ),
       );
 
@@ -132,7 +158,8 @@ export class HistoryService {
         .insert(watchHistory)
         .values({
           userId,
-          episodeId,
+          dramaSlug: episodeWithDrama.drama.slug,
+          episodeNumber: episodeWithDrama.episode.number,
           progress,
           completed,
         })
@@ -167,13 +194,32 @@ export class HistoryService {
     userId: string,
     episodeId: string,
   ): Promise<WatchHistory | null> {
+    const [episode] = await db
+      .select()
+      .from(episodes)
+      .where(eq(episodes.id, episodeId));
+
+    if (!episode) {
+      return null;
+    }
+
+    const [drama] = await db
+      .select({ slug: dramas.slug })
+      .from(dramas)
+      .where(eq(dramas.id, episode.dramaId));
+
+    if (!drama) {
+      return null;
+    }
+
     const [result] = await db
       .select()
       .from(watchHistory)
       .where(
         and(
           eq(watchHistory.userId, userId),
-          eq(watchHistory.episodeId, episodeId),
+          eq(watchHistory.dramaSlug, drama.slug),
+          eq(watchHistory.episodeNumber, episode.number),
         ),
       );
 
@@ -188,25 +234,59 @@ export class HistoryService {
       return new Map();
     }
 
-    const results = await db
-      .select()
-      .from(watchHistory)
+    const episodesWithDrama = await db
+      .select({
+        episode: episodes,
+        drama: dramas,
+      })
+      .from(episodes)
+      .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
       .where(
-        and(
-          eq(watchHistory.userId, userId),
-          sql`${watchHistory.episodeId} IN (${sql.join(
-            episodeIds.map((id) => sql`${id}`),
-            sql`, `,
-          )})`,
-        ),
+        sql`${episodes.id} IN (${sql.join(
+          episodeIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})`,
       );
 
-    const progressMap = new Map<string, WatchHistory>();
-    for (const item of results) {
-      progressMap.set(item.episodeId, item);
+    const episodeMapping = new Map<
+      string,
+      { dramaSlug: string; episodeNumber: number }
+    >();
+    for (const item of episodesWithDrama) {
+      episodeMapping.set(item.episode.id, {
+        dramaSlug: item.drama.slug,
+        episodeNumber: item.episode.number,
+      });
     }
 
-    return progressMap;
+    const conditions = Array.from(episodeMapping.entries()).map(
+      ([episodeId, mapping]) =>
+        and(
+          eq(watchHistory.userId, userId),
+          eq(watchHistory.dramaSlug, mapping.dramaSlug),
+          eq(watchHistory.episodeNumber, mapping.episodeNumber),
+        ),
+    );
+
+    const historyResults = await db
+      .select()
+      .from(watchHistory)
+      .where(conditions.length > 0 ? or(...conditions) : sql`1=0`);
+
+    const episodeProgressMap = new Map<string, WatchHistory>();
+    for (const item of historyResults) {
+      for (const [episodeId, mapping] of episodeMapping.entries()) {
+        if (
+          mapping.dramaSlug === item.dramaSlug &&
+          mapping.episodeNumber === item.episodeNumber
+        ) {
+          episodeProgressMap.set(episodeId, item);
+          break;
+        }
+      }
+    }
+
+    return episodeProgressMap;
   }
 
   async markCompleted(

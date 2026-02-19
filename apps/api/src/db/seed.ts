@@ -153,20 +153,23 @@ async function seed() {
   await db.insert(watchHistory).values([
     {
       userId: user1.id,
-      episodeId: eps1[0].id,
+      dramaSlug: drama1.slug,
+      episodeNumber: eps1[0].number,
       progress: 3600,
       completed: true,
       watchedAt: new Date(Date.now() - 86400000),
     },
     {
       userId: user1.id,
-      episodeId: eps1[1].id,
+      dramaSlug: drama1.slug,
+      episodeNumber: eps1[1].number,
       progress: 1800,
       completed: false,
     },
     {
       userId: user2.id,
-      episodeId: eps2[0].id,
+      dramaSlug: drama2.slug,
+      episodeNumber: eps2[0].number,
       progress: 2700,
       completed: true,
       watchedAt: new Date(Date.now() - 172800000),
