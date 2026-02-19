@@ -320,6 +320,39 @@ export class DramaService {
       )
       .limit(1);
 
+    let totalEpisodes = result.totalEpisodes;
+
+    // If totalEpisodes is null, count episodes from the episodes table
+    if (totalEpisodes === null) {
+      const [episodeCountResult] = await db
+        .select({ count: count() })
+        .from(episodes)
+        .where(eq(episodes.dramaId, result.dramaId));
+
+      totalEpisodes = episodeCountResult?.count ?? 0;
+
+      // Update the dramas table with the count (fire-and-forget)
+      if (totalEpisodes > 0) {
+        db.update(dramas)
+          .set({
+            totalEpisodes,
+            updatedAt: new Date(),
+          })
+          .where(eq(dramas.id, result.dramaId))
+          .then(() => {
+            console.log(
+              `[DramaService] Updated totalEpisodes for drama ${result.dramaId} to ${totalEpisodes}`,
+            );
+          })
+          .catch((err) => {
+            console.error(
+              `[DramaService] Failed to update totalEpisodes for drama ${result.dramaId}:`,
+              err,
+            );
+          });
+      }
+    }
+
     return {
       ...episode,
       drama: {
@@ -327,7 +360,7 @@ export class DramaService {
         title: result.dramaTitle,
         slug: result.dramaSlug,
         posterUrl: result.dramaPosterUrl,
-        totalEpisodes: result.totalEpisodes,
+        totalEpisodes,
       },
       navigation: {
         prevEpisode: prevEpisode || null,
