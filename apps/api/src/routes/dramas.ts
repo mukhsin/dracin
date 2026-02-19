@@ -25,6 +25,11 @@ const GetEpisodesParamsSchema = z.object({
   slug: z.string().min(1),
 });
 
+const GetEpisodeByNumberParamsSchema = z.object({
+  slug: z.string().min(1),
+  number: z.coerce.number().int().positive(),
+});
+
 const app = new Hono();
 
 app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
@@ -197,6 +202,63 @@ app.get(
         drama: result.drama,
         episodes: sanitizedEpisodes,
       },
+    });
+  },
+);
+
+/**
+ * GET /api/dramas/:slug/episodes/:number
+ * Get an episode by drama slug and episode number with video URLs and drama info
+ */
+app.get(
+  "/:slug/episodes/:number",
+  zValidator("param", GetEpisodeByNumberParamsSchema),
+  async (c) => {
+    const { slug, number } = c.req.valid("param");
+
+    const episode = await dramaService.getEpisodeByNumber(slug, number);
+
+    if (!episode) {
+      throw new HTTPException(404, {
+        message: `Episode ${number} for drama "${slug}" not found`,
+      });
+    }
+
+    // Get full episode with navigation using the existing getEpisode method
+    const fullEpisode = await dramaService.getEpisode(episode.id);
+
+    if (!fullEpisode) {
+      throw new HTTPException(404, {
+        message: `Episode ${number} for drama "${slug}" not found`,
+      });
+    }
+
+    // Exclude videoUrls and sourceUrl from response, return pre-built video URLs instead
+    const { videoUrls: _v, sourceUrl: _s, ...episodeWithoutUrls } = fullEpisode;
+    (void _v, _s);
+
+    // Build pre-built video URLs for each quality
+    const videoUrls: Record<string, string> = {};
+    if (fullEpisode.videoUrls) {
+      for (const quality of Object.keys(fullEpisode.videoUrls)) {
+        videoUrls[quality] =
+          `/api/video/${fullEpisode.dramaId}.${fullEpisode.number}.${quality}.mp4`;
+      }
+    }
+
+    const episodeWithVideo = {
+      ...episodeWithoutUrls,
+      video: {
+        urls: videoUrls,
+      },
+    };
+
+    // Add short caching for episode data (30 seconds - shorter due to video URLs)
+    c.header("Cache-Control", "public, max-age=30");
+
+    return c.json({
+      success: true,
+      data: episodeWithVideo,
     });
   },
 );

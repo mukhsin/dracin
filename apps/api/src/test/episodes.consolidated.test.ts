@@ -72,12 +72,14 @@ describe("Episodes Consolidated Endpoint", () => {
     }
   });
 
-  describe("GET /api/episodes/:id", () => {
+  describe("GET /api/dramas/:slug/episodes/:number", () => {
     it("should return episode with drama info", async () => {
       const { drama, episodes: eps } = await seedTestDrama(3);
       const episode = eps[1]; // Episode 2
 
-      const res = await app.request(`/api/episodes/${episode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${episode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -91,10 +93,12 @@ describe("Episodes Consolidated Endpoint", () => {
     });
 
     it("should return navigation with prevEpisode and nextEpisode", async () => {
-      const { episodes: eps } = await seedTestDrama(3);
+      const { drama, episodes: eps } = await seedTestDrama(3);
       const episode = eps[1]; // Episode 2 (has both prev and next)
 
-      const res = await app.request(`/api/episodes/${episode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${episode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -107,10 +111,12 @@ describe("Episodes Consolidated Endpoint", () => {
     });
 
     it("should return null prevEpisode for first episode", async () => {
-      const { episodes: eps } = await seedTestDrama(3);
+      const { drama, episodes: eps } = await seedTestDrama(3);
       const firstEpisode = eps[0]; // Episode 1
 
-      const res = await app.request(`/api/episodes/${firstEpisode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${firstEpisode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -121,10 +127,12 @@ describe("Episodes Consolidated Endpoint", () => {
     });
 
     it("should return null nextEpisode for last episode", async () => {
-      const { episodes: eps } = await seedTestDrama(3);
+      const { drama, episodes: eps } = await seedTestDrama(3);
       const lastEpisode = eps[2]; // Episode 3
 
-      const res = await app.request(`/api/episodes/${lastEpisode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${lastEpisode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -135,10 +143,12 @@ describe("Episodes Consolidated Endpoint", () => {
     });
 
     it("should return pre-built video urls", async () => {
-      const { episodes: eps } = await seedTestDrama(1);
+      const { drama, episodes: eps } = await seedTestDrama(1);
       const episode = eps[0];
 
-      const res = await app.request(`/api/episodes/${episode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${episode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -152,10 +162,21 @@ describe("Episodes Consolidated Endpoint", () => {
       expect(result.data.video.urls[firstQuality]).toContain(".mp4");
     });
 
-    it("should return 404 for non-existent episode", async () => {
+    it("should return 404 for non-existent drama", async () => {
       const res = await app.request(
-        "/api/episodes/00000000-0000-0000-0000-000000000000",
+        "/api/dramas/non-existent-drama/episodes/1",
       );
+      expect(res.status).toBe(404);
+
+      const result = await res.json();
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return 404 for non-existent episode number", async () => {
+      const { drama } = await seedTestDrama(1);
+
+      const res = await app.request(`/api/dramas/${drama.slug}/episodes/999`);
       expect(res.status).toBe(404);
 
       const result = await res.json();
@@ -167,7 +188,9 @@ describe("Episodes Consolidated Endpoint", () => {
       const { drama, episodes: eps } = await seedTestDrama(1);
       const episode = eps[0];
 
-      const res = await app.request(`/api/episodes/${episode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${episode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();
@@ -175,10 +198,12 @@ describe("Episodes Consolidated Endpoint", () => {
     });
 
     it("should return consistent response format", async () => {
-      const { episodes: eps } = await seedTestDrama(1);
+      const { drama, episodes: eps } = await seedTestDrama(1);
       const episode = eps[0];
 
-      const res = await app.request(`/api/episodes/${episode.id}`);
+      const res = await app.request(
+        `/api/dramas/${drama.slug}/episodes/${episode.number}`,
+      );
       expect(res.status).toBe(200);
 
       const result = await res.json();

@@ -4,7 +4,6 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "./middleware/logger.js";
 import { healthRoutes } from "./routes/health.js";
 import { dramaRoutes } from "./routes/dramas.js";
-import { episodeRoutes } from "./routes/episodes.js";
 import { watchlistRoutes } from "./routes/watchlist.js";
 import { historyRoutes } from "./routes/history.js";
 import { videoRoutes, fallbackAdminRoutes } from "./routes/videos.js";
@@ -41,7 +40,6 @@ export function createApp() {
   app.route("/api/dramas", dramaRoutes);
   app.route("/api/search", searchRoutes);
   app.route("/api/catalog", catalogRoutes);
-  app.route("/api/episodes", episodeRoutes);
   app.route("/api/watchlist", watchlistRoutes);
   app.route("/api/history", historyRoutes);
   app.route("/api", videoProxyRoutes);
