@@ -154,7 +154,7 @@ function DramaDetailsPage() {
         </div>
 
         {/* Hero Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-0 md:mb-12">
           {/* Poster */}
           <div className="lg:col-span-1">
             <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl lg:h-full">
@@ -203,7 +203,7 @@ function DramaDetailsPage() {
                     {formatDramaPlayCount(playCount)}
                   </span>
                 )}
-                {episodes && episodes.length > 0 && (
+                {/*{episodes && episodes.length > 0 && (
                   <WatchlistButton
                     dramaId={dramaId}
                     variant="outline"
@@ -216,7 +216,7 @@ function DramaDetailsPage() {
                     variant="outline"
                     size="sm"
                   />
-                )}
+                )}*/}
               </div>
 
               {description && (
