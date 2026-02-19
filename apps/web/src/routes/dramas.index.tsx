@@ -29,7 +29,7 @@ function DramasPage() {
     hasNextPage,
   } = useDramasInfinite({
     search,
-    pageSize: 20,
+    pageSize: 18,
   });
 
   const dramas = useMemo(() => {
