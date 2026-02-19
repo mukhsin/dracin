@@ -141,9 +141,8 @@ export const watchHistory = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    episodeId: text("episode_id")
-      .notNull()
-      .references(() => episodes.id, { onDelete: "cascade" }),
+    dramaSlug: text("drama_slug").notNull(),
+    episodeNumber: integer("episode_number").notNull(),
     progress: integer("progress").notNull().default(0),
     watchedAt: integer("watched_at", { mode: "timestamp_ms" })
       .notNull()
@@ -153,16 +152,17 @@ export const watchHistory = sqliteTable(
       .default(false),
   },
   (table) => ({
-    userEpisodeIdx: uniqueIndex("watch_history_user_episode_idx").on(
+    userDramaEpisodeIdx: uniqueIndex("watch_history_user_drama_episode_idx").on(
       table.userId,
-      table.episodeId,
+      table.dramaSlug,
+      table.episodeNumber,
     ),
     userWatchedAtIdx: index("watch_history_user_watched_at_idx").on(
       table.userId,
       table.watchedAt,
     ),
     userIdx: index("watch_history_user_idx").on(table.userId),
-    episodeIdx: index("watch_history_episode_idx").on(table.episodeId),
+    dramaSlugIdx: index("watch_history_drama_slug_idx").on(table.dramaSlug),
   }),
 );
 
@@ -312,10 +312,6 @@ export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
   user: one(users, {
     fields: [watchHistory.userId],
     references: [users.id],
-  }),
-  episode: one(episodes, {
-    fields: [watchHistory.episodeId],
-    references: [episodes.id],
   }),
 }));
 
