@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Check, Loader2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import {
   useWatchlistStatus,
   useAddToWatchlist,
@@ -64,7 +64,7 @@ export function WatchlistButton({
     if (isInWatchlist) {
       return (
         <>
-          <Check size={iconSizes[size]} />
+          <BookmarkCheck size={iconSizes[size]} />
           <span>{isHovered ? "Remove" : "In Watchlist"}</span>
         </>
       );
@@ -72,7 +72,7 @@ export function WatchlistButton({
 
     return (
       <>
-        <Plus size={iconSizes[size]} />
+        <Bookmark size={iconSizes[size]} />
         <span>Add to Watchlist</span>
       </>
     );
@@ -96,6 +96,7 @@ export function WatchlistButton({
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -107,11 +108,9 @@ export function WatchlistButton({
         sizeClasses[size],
         getVariantClasses(),
         isError && "border-red-500 text-red-600",
-        className
+        className,
       )}
-      aria-label={
-        isInWatchlist ? "Remove from watchlist" : "Add to watchlist"
-      }
+      aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
     >
       {getButtonContent()}
     </button>

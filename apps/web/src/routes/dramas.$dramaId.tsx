@@ -202,22 +202,19 @@ function DramaDetailsPage() {
                     {formatDramaPlayCount(playCount)}
                   </span>
                 )}
+                {episodes && episodes.length > 0 && (
+                  <WatchlistButton
+                    dramaId={dramaId}
+                    variant="outline"
+                    size="sm"
+                  />
+                )}
               </div>
 
               {description && (
                 <p className="text-lg text-muted-foreground leading-relaxed mb-8">
                   {description}
                 </p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-4 mb-8">
-              {episodes && episodes.length > 0 && (
-                <WatchlistButton
-                  dramaId={dramaId}
-                  variant="outline"
-                  size="lg"
-                />
               )}
             </div>
 
