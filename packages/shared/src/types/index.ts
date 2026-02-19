@@ -114,7 +114,8 @@ export interface CreateWatchlistItemInput {
 export interface WatchHistory {
   id: string;
   userId: string;
-  episodeId: string;
+  dramaSlug: string;
+  episodeNumber: number;
   progress: number;
   watchedAt: Date;
   completed: boolean;
@@ -122,7 +123,8 @@ export interface WatchHistory {
 
 export interface CreateWatchHistoryInput {
   userId: string;
-  episodeId: string;
+  dramaSlug: string;
+  episodeNumber: number;
   progress: number;
   completed?: boolean;
 }

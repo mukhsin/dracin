@@ -14,8 +14,8 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DramasRouteImport } from './routes/dramas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DramasIndexRouteImport } from './routes/dramas.index'
-import { Route as WatchEpisodeIdRouteImport } from './routes/watch.$episodeId'
 import { Route as DramasDramaIdRouteImport } from './routes/dramas.$dramaId'
+import { Route as WatchDramaSlugEpisodeNumberRouteImport } from './routes/watch.$dramaSlug.$episodeNumber'
 
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
@@ -42,16 +42,17 @@ const DramasIndexRoute = DramasIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DramasRoute,
 } as any)
-const WatchEpisodeIdRoute = WatchEpisodeIdRouteImport.update({
-  id: '/watch/$episodeId',
-  path: '/watch/$episodeId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DramasDramaIdRoute = DramasDramaIdRouteImport.update({
   id: '/$dramaId',
   path: '/$dramaId',
   getParentRoute: () => DramasRoute,
 } as any)
+const WatchDramaSlugEpisodeNumberRoute =
+  WatchDramaSlugEpisodeNumberRouteImport.update({
+    id: '/watch/$dramaSlug/$episodeNumber',
+    path: '/watch/$dramaSlug/$episodeNumber',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,16 +60,16 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
-  '/watch/$episodeId': typeof WatchEpisodeIdRoute
   '/dramas/': typeof DramasIndexRoute
+  '/watch/$dramaSlug/$episodeNumber': typeof WatchDramaSlugEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
-  '/watch/$episodeId': typeof WatchEpisodeIdRoute
   '/dramas': typeof DramasIndexRoute
+  '/watch/$dramaSlug/$episodeNumber': typeof WatchDramaSlugEpisodeNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,8 +78,8 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
-  '/watch/$episodeId': typeof WatchEpisodeIdRoute
   '/dramas/': typeof DramasIndexRoute
+  '/watch/$dramaSlug/$episodeNumber': typeof WatchDramaSlugEpisodeNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,16 +89,16 @@ export interface FileRouteTypes {
     | '/history'
     | '/watchlist'
     | '/dramas/$dramaId'
-    | '/watch/$episodeId'
     | '/dramas/'
+    | '/watch/$dramaSlug/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/history'
     | '/watchlist'
     | '/dramas/$dramaId'
-    | '/watch/$episodeId'
     | '/dramas'
+    | '/watch/$dramaSlug/$episodeNumber'
   id:
     | '__root__'
     | '/'
@@ -105,8 +106,8 @@ export interface FileRouteTypes {
     | '/history'
     | '/watchlist'
     | '/dramas/$dramaId'
-    | '/watch/$episodeId'
     | '/dramas/'
+    | '/watch/$dramaSlug/$episodeNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -114,7 +115,7 @@ export interface RootRouteChildren {
   DramasRoute: typeof DramasRouteWithChildren
   HistoryRoute: typeof HistoryRoute
   WatchlistRoute: typeof WatchlistRoute
-  WatchEpisodeIdRoute: typeof WatchEpisodeIdRoute
+  WatchDramaSlugEpisodeNumberRoute: typeof WatchDramaSlugEpisodeNumberRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -154,19 +155,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DramasIndexRouteImport
       parentRoute: typeof DramasRoute
     }
-    '/watch/$episodeId': {
-      id: '/watch/$episodeId'
-      path: '/watch/$episodeId'
-      fullPath: '/watch/$episodeId'
-      preLoaderRoute: typeof WatchEpisodeIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dramas/$dramaId': {
       id: '/dramas/$dramaId'
       path: '/$dramaId'
       fullPath: '/dramas/$dramaId'
       preLoaderRoute: typeof DramasDramaIdRouteImport
       parentRoute: typeof DramasRoute
+    }
+    '/watch/$dramaSlug/$episodeNumber': {
+      id: '/watch/$dramaSlug/$episodeNumber'
+      path: '/watch/$dramaSlug/$episodeNumber'
+      fullPath: '/watch/$dramaSlug/$episodeNumber'
+      preLoaderRoute: typeof WatchDramaSlugEpisodeNumberRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -189,7 +190,7 @@ const rootRouteChildren: RootRouteChildren = {
   DramasRoute: DramasRouteWithChildren,
   HistoryRoute: HistoryRoute,
   WatchlistRoute: WatchlistRoute,
-  WatchEpisodeIdRoute: WatchEpisodeIdRoute,
+  WatchDramaSlugEpisodeNumberRoute: WatchDramaSlugEpisodeNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
