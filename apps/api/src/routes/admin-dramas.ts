@@ -151,8 +151,29 @@ async function syncDramas(
       // Clear and insert to latest_dramas table
       await db.delete(latest_dramas);
 
-      for (let i = 0; i < dramasFromApi.length; i++) {
-        const apiDrama = dramasFromApi[i];
+      const seenBookIds = new Set<string>();
+      const uniqueDramas = dramasFromApi.filter((drama) => {
+        if (seenBookIds.has(drama.bookId)) {
+          console.log(
+            `[AdminDramas] Skipping duplicate bookId in latest: ${drama.bookId} - "${drama.title}"`,
+          );
+          return false;
+        }
+        seenBookIds.add(drama.bookId);
+        return true;
+      });
+
+      const originalCount = stats.total;
+      stats.total = uniqueDramas.length;
+
+      if (originalCount > stats.total) {
+        console.log(
+          `[AdminDramas] Deduplicated ${originalCount - stats.total} duplicate dramas from latest sync`,
+        );
+      }
+
+      for (let i = 0; i < uniqueDramas.length; i++) {
+        const apiDrama = uniqueDramas[i];
         try {
           const position = i + 1;
 
@@ -174,8 +195,29 @@ async function syncDramas(
       // Clear and insert to featured_dramas table
       await db.delete(featured_dramas);
 
-      for (let i = 0; i < dramasFromApi.length; i++) {
-        const apiDrama = dramasFromApi[i];
+      const seenBookIds = new Set<string>();
+      const uniqueDramas = dramasFromApi.filter((drama) => {
+        if (seenBookIds.has(drama.bookId)) {
+          console.log(
+            `[AdminDramas] Skipping duplicate bookId in featured: ${drama.bookId} - "${drama.title}"`,
+          );
+          return false;
+        }
+        seenBookIds.add(drama.bookId);
+        return true;
+      });
+
+      const originalCount = stats.total;
+      stats.total = uniqueDramas.length;
+
+      if (originalCount > stats.total) {
+        console.log(
+          `[AdminDramas] Deduplicated ${originalCount - stats.total} duplicate dramas from featured sync`,
+        );
+      }
+
+      for (let i = 0; i < uniqueDramas.length; i++) {
+        const apiDrama = uniqueDramas[i];
         try {
           const position = i + 1;
 
