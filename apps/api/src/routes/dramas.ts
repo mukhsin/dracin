@@ -233,9 +233,14 @@ app.get(
       });
     }
 
-    // Exclude videoUrls and sourceUrl from response, return pre-built video URLs instead
-    const { videoUrls: _v, sourceUrl: _s, ...episodeWithoutUrls } = fullEpisode;
-    (void _v, _s);
+    // Exclude videoUrls, sourceUrl, and bookId from response, return pre-built video URLs instead
+    const {
+      videoUrls: _v,
+      sourceUrl: _s,
+      bookId: _b,
+      ...episodeWithoutUrls
+    } = fullEpisode;
+    (void _v, _s, _b);
 
     // Build pre-built video URLs for each quality
     const videoUrls: Record<string, string> = {};
