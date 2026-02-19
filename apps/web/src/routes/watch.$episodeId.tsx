@@ -304,14 +304,10 @@ function WatchPage() {
                   <span className="text-3xl font-bold text-primary tracking-tight">
                     {episode.number}
                   </span>
-                  {episode.drama.totalEpisodes && (
-                    <>
-                      <div className="w-8 h-px bg-muted-foreground/30" />
-                      <span className="text-sm font-medium text-muted-foreground/60 tracking-tight">
-                        {episode.drama.totalEpisodes}
-                      </span>
-                    </>
-                  )}
+                  <div className="w-8 h-0.5 bg-muted-foreground/40 rounded-full" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {episode.drama.totalEpisodes || "?"}
+                  </span>
                 </div>
                 {nextEpisode ? (
                   <Link
