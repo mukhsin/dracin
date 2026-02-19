@@ -1,27 +1,8 @@
 {
-  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/search-redesign.md",
-  "started_at": "2026-02-15T01:59:42.121Z",
-  "completed_at": "2026-02-15T17:30:00.000Z",
-  "session_ids": ["ses_3a0f9954effevauIzvN91aUFV1"],
-  "plan_name": "search-redesign",
+  "active_plan": "/Users/mukhsin/Code/sandbox/bun-dracin/.sisyphus/plans/drama-details-ui-revamp.md",
+  "started_at": "2026-02-18T22:22:27.072Z",
+  "session_ids": ["ses_38d419f4bffesWJqDuoLttfcGi"],
+  "plan_name": "drama-details-ui-revamp",
   "status": "completed",
-  "agent": "atlas",
-  "tasks_completed": 9,
-  "tasks_total": 9,
-  "test_results": {
-    "search_icon": 6,
-    "search_box": 7,
-    "integration": 7,
-    "total": 20
-  },
-  "build_status": "success",
-  "typecheck_status": "clean",
-  "post_implementation_fixes": [
-    "Fixed SearchIcon redirect issue on all pages",
-    "Enabled TanStack Router scroll restoration",
-    "Converted 'Back to Dramas' buttons to plain text links",
-    "Removed 'Play First Episode' button",
-    "Made 'Back to Dramas' buttons monochrome with minimal styling",
-    "Fixed mobile search icon visibility issue"
-  ]
+  "completed_at": "2026-02-19T03:05:00Z"
 }

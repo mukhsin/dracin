@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { Heart, Trash2, Play, Clock, Calendar, Film } from "lucide-react";
 import { formatDate } from "@repo/shared/utils";
 
@@ -228,10 +229,12 @@ function WatchlistCard({ item, onRemove, isRemoving }: WatchlistCardProps) {
       <Link to={`/dramas/${drama.slug}`} className="block">
         <div className="aspect-[2/3] relative overflow-hidden bg-muted">
           {drama.posterUrl ? (
-            <img
+            <Image
               src={drama.posterUrl}
               alt={drama.title}
+              layout="fullWidth"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
@@ -239,13 +242,15 @@ function WatchlistCard({ item, onRemove, isRemoving }: WatchlistCardProps) {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          
+
           <div className="absolute top-2 right-2">
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(drama.status)}`}>
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(drama.status)}`}
+            >
               {drama.status}
             </span>
           </div>
-          
+
           <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform">
             <span className="inline-flex items-center gap-1 text-white text-sm font-medium">
               <Play className="w-4 h-4" />

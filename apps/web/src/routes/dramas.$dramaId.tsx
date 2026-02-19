@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
@@ -159,10 +160,12 @@ function DramaDetailsPage() {
           <div className="lg:col-span-1">
             <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl lg:h-full">
               {posterUrl ? (
-                <img
+                <Image
                   src={posterUrl}
                   alt={title}
+                  layout="fullWidth"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full bg-muted flex items-center justify-center">

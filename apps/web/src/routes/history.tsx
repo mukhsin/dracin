@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import {
   useHistory,
   useDeleteHistoryEntry,
   useClearHistory,
 } from "../hooks/use-history.js";
-import { Trash2, Loader2, History, Play, AlertTriangle, Film } from "lucide-react";
+import {
+  Trash2,
+  Loader2,
+  History,
+  Play,
+  AlertTriangle,
+  Film,
+} from "lucide-react";
 
 export const Route = createFileRoute("/history")({
   component: HistoryPage,
@@ -116,7 +124,8 @@ function HistoryPage() {
           <div>
             <h1 className="text-3xl font-bold">Watch History</h1>
             <p className="text-muted-foreground mt-1">
-              {history.length} {history.length === 1 ? "episode" : "episodes"} watched
+              {history.length} {history.length === 1 ? "episode" : "episodes"}{" "}
+              watched
             </p>
           </div>
 
@@ -187,12 +196,14 @@ function HistoryPage() {
                 <div className="w-32 aspect-video bg-muted rounded-lg overflow-hidden relative">
                   {/* @ts-expect-error */}
                   {item.episode.drama?.posterUrl ? (
-                    <img
+                    <Image
                       /* @ts-expect-error */
                       src={item.episode.drama.posterUrl}
                       /* @ts-expect-error */
                       alt={item.episode.drama.title}
+                      layout="fullWidth"
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

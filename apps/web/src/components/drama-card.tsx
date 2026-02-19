@@ -1,5 +1,6 @@
 import { Play } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 
 interface DramaCardProps {
@@ -49,9 +50,10 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
       {/* Image Container */}
       <div className="relative aspect-[2/3] w-full overflow-hidden">
         {hasPoster ? (
-          <img
-            src={posterUrl}
+          <Image
+            src={posterUrl!}
             alt={title}
+            layout="fullWidth"
             className="w-full h-full object-cover"
             loading="lazy"
           />

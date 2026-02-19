@@ -1,5 +1,6 @@
 import { Play, Clock, Trash2, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import {
   useContinueWatching,
   useDeleteHistoryEntry,
@@ -83,10 +84,12 @@ export function ContinueWatching({
               <div className="flex gap-3 p-3">
                 <div className="relative w-24 h-16 flex-shrink-0 bg-muted rounded overflow-hidden">
                   {item.posterUrl ? (
-                    <img
+                    <Image
                       src={item.posterUrl}
                       alt={item.dramaTitle}
+                      layout="fullWidth"
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">
