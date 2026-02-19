@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
@@ -51,10 +51,6 @@ function WatchPage() {
   const { episodeId } = Route.useParams();
   const location = useLocation();
   const search = location.state?.searchQuery || "";
-  const [lastKnownDrama, setLastKnownDrama] = useState<{
-    title: string;
-    slug: string;
-  } | null>(null);
 
   const {
     data: episode,
@@ -81,23 +77,9 @@ function WatchPage() {
 
       if (result && typeof result === "object") {
         if ("data" in result && result.data) {
-          const episodeData = result.data as EpisodeWithNavigation;
-          if (episodeData.drama) {
-            setLastKnownDrama({
-              title: episodeData.drama.title,
-              slug: episodeData.drama.slug,
-            });
-          }
-          return episodeData;
+          return result.data as EpisodeWithNavigation;
         }
-        const episodeData = result as EpisodeWithNavigation;
-        if (episodeData.drama) {
-          setLastKnownDrama({
-            title: episodeData.drama.title,
-            slug: episodeData.drama.slug,
-          });
-        }
-        return episodeData;
+        return result as EpisodeWithNavigation;
       }
 
       throw new Error("Invalid response format");
@@ -125,14 +107,6 @@ function WatchPage() {
   }
 
   if (error || !episode) {
-    const backLink = lastKnownDrama
-      ? {
-          to: "/dramas/$dramaId" as const,
-          params: { dramaId: lastKnownDrama.slug },
-          text: `Back to ${lastKnownDrama.title}`,
-        }
-      : { to: "/" as const, params: undefined, text: "Back to Home" };
-
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -141,14 +115,13 @@ function WatchPage() {
           <p className="text-muted-foreground mb-6">
             {error?.message || "The episode you're looking for doesn't exist."}
           </p>
-          <Link
-            to={backLink.to}
-            params={backLink.params}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
-            {backLink.text}
-          </Link>
+            Refresh Page
+          </button>
         </div>
       </div>
     );
