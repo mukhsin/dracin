@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { dramas } from "../db/schema.js";
+import { dramas, latest_dramas, featured_dramas } from "../db/schema.js";
 import { requireAdminAuth } from "../middleware/admin-auth.js";
 import {
   fetchAllDramas,
@@ -81,68 +81,117 @@ async function syncDramas(
 
     console.log(`[AdminDramas] Fetched ${stats.total} dramas from api-proxy`);
 
-    for (const apiDrama of dramasFromApi) {
-      try {
-        const transformedDrama = transformApiProxyDrama(apiDrama);
+    if (syncType === "all") {
+      // Original behavior: upsert to dramas table
+      for (const apiDrama of dramasFromApi) {
+        try {
+          const transformedDrama = transformApiProxyDrama(apiDrama);
 
-        // Check if drama already exists BEFORE upsert
-        const existingDrama = await db
-          .select({ id: dramas.id })
-          .from(dramas)
-          .where(eq(dramas.bookId, transformedDrama.bookId))
-          .limit(1);
+          // Check if drama already exists BEFORE upsert
+          const existingDrama = await db
+            .select({ id: dramas.id })
+            .from(dramas)
+            .where(eq(dramas.bookId, transformedDrama.bookId))
+            .limit(1);
 
-        const isUpdate = existingDrama.length > 0;
+          const isUpdate = existingDrama.length > 0;
 
-        await db
-          .insert(dramas)
-          .values({
-            id: transformedDrama.id,
-            bookId: transformedDrama.bookId,
-            title: transformedDrama.title,
-            slug: transformedDrama.slug,
-            description: transformedDrama.description,
-            posterUrl: transformedDrama.posterUrl,
-            status: transformedDrama.status,
-            language: transformedDrama.language,
-            playCount: transformedDrama.playCount,
-            sourceEndpoint: transformedDrama.sourceEndpoint,
-            metadata: transformedDrama.metadata,
-            totalEpisodes: transformedDrama.totalEpisodes,
-            releaseYear: transformedDrama.releaseYear,
-            country: transformedDrama.country,
-            rating: transformedDrama.rating,
-            genres: transformedDrama.genres,
-            createdAt: transformedDrama.createdAt,
-            updatedAt: transformedDrama.updatedAt,
-          })
-          .onConflictDoUpdate({
-            target: [dramas.bookId],
-            set: {
+          await db
+            .insert(dramas)
+            .values({
+              id: transformedDrama.id,
+              bookId: transformedDrama.bookId,
               title: transformedDrama.title,
               slug: transformedDrama.slug,
               description: transformedDrama.description,
               posterUrl: transformedDrama.posterUrl,
               status: transformedDrama.status,
+              language: transformedDrama.language,
+              playCount: transformedDrama.playCount,
+              sourceEndpoint: transformedDrama.sourceEndpoint,
+              metadata: transformedDrama.metadata,
               totalEpisodes: transformedDrama.totalEpisodes,
-              updatedAt: new Date(),
-            },
+              releaseYear: transformedDrama.releaseYear,
+              country: transformedDrama.country,
+              rating: transformedDrama.rating,
+              genres: transformedDrama.genres,
+              createdAt: transformedDrama.createdAt,
+              updatedAt: transformedDrama.updatedAt,
+            })
+            .onConflictDoUpdate({
+              target: [dramas.bookId],
+              set: {
+                title: transformedDrama.title,
+                slug: transformedDrama.slug,
+                description: transformedDrama.description,
+                posterUrl: transformedDrama.posterUrl,
+                status: transformedDrama.status,
+                totalEpisodes: transformedDrama.totalEpisodes,
+                updatedAt: new Date(),
+              },
+            });
+
+          // Increment counter based on pre-check
+          if (isUpdate) {
+            stats.updated++;
+          } else {
+            stats.inserted++;
+          }
+        } catch (error) {
+          let errorDetails =
+            error instanceof Error ? error.message : String(error);
+          // Log full error object for debugging
+          console.error("[AdminDramas] Full error:", error);
+          const errorMsg = `Failed to sync drama "${apiDrama.title}" (${apiDrama.bookId}): ${errorDetails}`;
+          console.error(`[AdminDramas] ${errorMsg}`);
+          stats.errors.push(errorMsg);
+        }
+      }
+    } else if (syncType === "latest") {
+      // Clear and insert to latest_dramas table
+      await db.delete(latest_dramas);
+
+      for (let i = 0; i < dramasFromApi.length; i++) {
+        const apiDrama = dramasFromApi[i];
+        try {
+          const position = i + 1;
+
+          await db.insert(latest_dramas).values({
+            bookId: apiDrama.bookId,
+            position,
           });
 
-        // Increment counter based on pre-check
-        if (isUpdate) {
-          stats.updated++;
-        } else {
           stats.inserted++;
+        } catch (error) {
+          let errorDetails =
+            error instanceof Error ? error.message : String(error);
+          const errorMsg = `Failed to sync latest drama "${apiDrama.title}" (${apiDrama.bookId}): ${errorDetails}`;
+          console.error(`[AdminDramas] ${errorMsg}`);
+          stats.errors.push(errorMsg);
         }
-      } catch (error) {
-        let errorDetails =
-          error instanceof Error ? error.message : String(error);
-        // Log full error object for debugging
-        console.error("[AdminDramas] Full error:", error);
-        const errorMsg = `Failed to sync drama "${apiDrama.title}" (${apiDrama.bookId}): ${errorDetails}`;
-        console.error(`[AdminDramas] ${errorMsg}`);
-        stats.errors.push(errorMsg);
+      }
+    } else if (syncType === "featured") {
+      // Clear and insert to featured_dramas table
+      await db.delete(featured_dramas);
+
+      for (let i = 0; i < dramasFromApi.length; i++) {
+        const apiDrama = dramasFromApi[i];
+        try {
+          const position = i + 1;
+
+          await db.insert(featured_dramas).values({
+            bookId: apiDrama.bookId,
+            position,
+          });
+
+          stats.inserted++;
+        } catch (error) {
+          let errorDetails =
+            error instanceof Error ? error.message : String(error);
+          const errorMsg = `Failed to sync featured drama "${apiDrama.title}" (${apiDrama.bookId}): ${errorDetails}`;
+          console.error(`[AdminDramas] ${errorMsg}`);
+          stats.errors.push(errorMsg);
+        }
       }
     }
 

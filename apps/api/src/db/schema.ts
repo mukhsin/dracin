@@ -247,6 +247,38 @@ export const verifications = sqliteTable(
   }),
 );
 
+export const latest_dramas = sqliteTable(
+  "latest_dramas",
+  {
+    id: text("id").primaryKey().$defaultFn(uuidDefault),
+    bookId: text("book_id").notNull().unique(),
+    position: integer("position").notNull(),
+    syncedAt: integer("synced_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(nowEpoch()),
+  },
+  (table) => ({
+    bookIdIdx: uniqueIndex("latest_dramas_book_id_idx").on(table.bookId),
+    positionIdx: index("latest_dramas_position_idx").on(table.position),
+  }),
+);
+
+export const featured_dramas = sqliteTable(
+  "featured_dramas",
+  {
+    id: text("id").primaryKey().$defaultFn(uuidDefault),
+    bookId: text("book_id").notNull().unique(),
+    position: integer("position").notNull(),
+    syncedAt: integer("synced_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(nowEpoch()),
+  },
+  (table) => ({
+    bookIdIdx: uniqueIndex("featured_dramas_book_id_idx").on(table.bookId),
+    positionIdx: index("featured_dramas_position_idx").on(table.position),
+  }),
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   watchlist: many(watchlist),
   watchHistory: many(watchHistory),
@@ -301,3 +333,9 @@ export type NewWatchlistItem = typeof watchlist.$inferInsert;
 
 export type WatchHistoryItem = typeof watchHistory.$inferSelect;
 export type NewWatchHistoryItem = typeof watchHistory.$inferInsert;
+
+export type LatestDrama = typeof latest_dramas.$inferSelect;
+export type NewLatestDrama = typeof latest_dramas.$inferInsert;
+
+export type FeaturedDrama = typeof featured_dramas.$inferSelect;
+export type NewFeaturedDrama = typeof featured_dramas.$inferInsert;
