@@ -12,15 +12,17 @@ export const Route = createFileRoute("/dramas/$dramaId")({
 
 function EpisodeCard({
   episode,
+  dramaSlug,
   searchQuery,
 }: {
   episode: any;
+  dramaSlug: string;
   searchQuery?: string;
 }) {
   return (
     <Link
-      to="/watch/$episodeId"
-      params={{ episodeId: episode.id }}
+      to="/watch/$dramaSlug/$episodeNumber"
+      params={{ dramaSlug, episodeNumber: episode.number.toString() }}
       state={searchQuery ? { searchQuery } : undefined}
       className="group bg-card rounded-lg border aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
     >
@@ -245,6 +247,7 @@ function DramaDetailsPage() {
                       <EpisodeCard
                         key={episode.id}
                         episode={episode}
+                        dramaSlug={data.slug}
                         searchQuery={search}
                       />
                     ))}
@@ -277,6 +280,7 @@ function DramaDetailsPage() {
                 <EpisodeCard
                   key={episode.id}
                   episode={episode}
+                  dramaSlug={data.slug}
                   searchQuery={search}
                 />
               ))}

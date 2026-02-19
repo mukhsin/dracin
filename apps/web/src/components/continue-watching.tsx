@@ -80,7 +80,13 @@ export function ContinueWatching({
             key={item.historyId}
             className="group relative bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
           >
-            <Link to={`/watch/${item.episodeId}`}>
+            <Link
+              to="/watch/$dramaSlug/$episodeNumber"
+              params={{
+                dramaSlug: item.dramaSlug,
+                episodeNumber: item.episodeNumber.toString(),
+              }}
+            >
               <div className="flex gap-3 p-3">
                 <div className="relative w-24 h-16 flex-shrink-0 bg-muted rounded overflow-hidden">
                   {item.posterUrl ? (

@@ -192,14 +192,18 @@ function HistoryPage() {
               key={item.id}
               className="group flex gap-4 p-4 bg-card rounded-xl border hover:shadow-md transition-all"
             >
-              <Link to={`/watch/${item.episode.id}`} className="flex-shrink-0">
+              <Link
+                to="/watch/$dramaSlug/$episodeNumber"
+                params={{
+                  dramaSlug: item.episode.drama?.slug || "",
+                  episodeNumber: item.episode.number.toString(),
+                }}
+                className="flex-shrink-0"
+              >
                 <div className="w-32 aspect-video bg-muted rounded-lg overflow-hidden relative">
-                  {/* @ts-expect-error */}
                   {item.episode.drama?.posterUrl ? (
                     <Image
-                      /* @ts-expect-error */
                       src={item.episode.drama.posterUrl}
-                      /* @ts-expect-error */
                       alt={item.episode.drama.title}
                       layout="fullWidth"
                       className="w-full h-full object-cover"
@@ -218,12 +222,13 @@ function HistoryPage() {
 
               <div className="flex-1 min-w-0">
                 <Link
-                  /* @ts-expect-error */
-                  to={`/dramas/${item.episode.drama?.slug}`}
+                  to="/dramas/$dramaId"
+                  params={{
+                    dramaId: item.episode.dramaId,
+                  }}
                   className="font-semibold hover:text-primary transition-colors line-clamp-1"
                 >
-                  {/* @ts-expect-error */}
-                  {item.episode.drama?.title}
+                  {item.episode.drama?.title || "Unknown Drama"}
                 </Link>
 
                 <p className="text-sm text-muted-foreground mt-1">
