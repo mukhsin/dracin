@@ -157,7 +157,7 @@ function DramaDetailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {/* Poster */}
           <div className="lg:col-span-1">
-            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl">
+            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl lg:h-full">
               {posterUrl ? (
                 <img
                   src={posterUrl}
@@ -226,9 +226,8 @@ function DramaDetailsPage() {
               )}
             </div>
 
-            {/* Episode grid - NOW INSIDE INFO COLUMN */}
-            <div>
-              <div className="flex items-center gap-3 mb-6">
+            <div className="hidden lg:block overflow-hidden">
+              <div className="flex items-center gap-3 mb-4">
                 <Film className="w-6 h-6 text-primary" />
                 <h2 className="text-2xl font-bold">Episodes</h2>
                 <span className="text-muted-foreground">
@@ -237,14 +236,16 @@ function DramaDetailsPage() {
               </div>
 
               {episodes && episodes.length > 0 ? (
-                <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-                  {episodes.map((episode) => (
-                    <EpisodeCard
-                      key={episode.id}
-                      episode={episode}
-                      searchQuery={search}
-                    />
-                  ))}
+                <div className="overflow-y-auto max-h-[calc(100vh-400px)] pr-2">
+                  <div className="grid grid-cols-10 gap-2">
+                    {episodes.map((episode) => (
+                      <EpisodeCard
+                        key={episode.id}
+                        episode={episode}
+                        searchQuery={search}
+                      />
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12 bg-muted/50 rounded-xl">
@@ -256,6 +257,33 @@ function DramaDetailsPage() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="lg:hidden">
+          <div className="flex items-center gap-3 mb-6">
+            <Film className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl font-bold">Episodes</h2>
+            <span className="text-muted-foreground">
+              ({episodes?.length || 0})
+            </span>
+          </div>
+
+          {episodes && episodes.length > 0 ? (
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+              {episodes.map((episode) => (
+                <EpisodeCard
+                  key={episode.id}
+                  episode={episode}
+                  searchQuery={search}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-muted/50 rounded-xl">
+              <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No episodes available yet</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
