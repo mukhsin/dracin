@@ -181,11 +181,8 @@ function WatchPage() {
 
           {/* Video Player */}
           <VideoPlayer
-            episodeId={episode.id}
             videoUrls={videoUrls}
             posterUrl={episode.drama.posterUrl || undefined}
-            dramaSlug={episode.drama.slug}
-            searchQuery={search}
           />
         </div>
 

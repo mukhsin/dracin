@@ -1,30 +1,22 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
 import { VideoControls } from "./video-controls.js";
 import type { VideoQuality, VideoUrls } from "./quality-selector.js";
 import { decodeVideoUrls } from "../lib/utils.js";
 
 interface VideoPlayerProps {
-  episodeId: string;
   videoUrls?: VideoUrls;
   title?: string;
   posterUrl?: string;
   autoPlay?: boolean;
   startTime?: number;
-  dramaSlug?: string;
-  searchQuery?: string;
 }
 
 export function VideoPlayer({
-  episodeId,
   videoUrls: propVideoUrls,
   title,
   posterUrl,
   autoPlay = false,
   startTime = 0,
-  dramaSlug,
-  searchQuery,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -334,18 +326,16 @@ export function VideoPlayer({
               >
                 Retry
               </button>
-              {dramaSlug && (
-                <Link
-                  to="/dramas/$dramaId"
-                  params={{ dramaId: dramaSlug }}
-                  state={searchQuery ? { searchQuery } : undefined}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back to Drama Details
-                </Link>
-              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.reload();
+                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+              >
+                Refresh Page
+              </button>
             </div>
           </div>
         </div>
