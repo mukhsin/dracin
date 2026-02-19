@@ -41,7 +41,7 @@ export function FavouritesButton({
       return (
         <>
           <Loader2 className="animate-spin" size={iconSizes[size]} />
-          <span>Loading...</span>
+          <span className="lg:sr-only">Loading...</span>
         </>
       );
     }
@@ -50,7 +50,9 @@ export function FavouritesButton({
       return (
         <>
           <HeartOff size={iconSizes[size]} />
-          <span>{isHovered ? "Remove" : "Favourited"}</span>
+          <span className="lg:sr-only">
+            {isHovered ? "Remove" : "Favourited"}
+          </span>
         </>
       );
     }
@@ -58,7 +60,7 @@ export function FavouritesButton({
     return (
       <>
         <Heart size={iconSizes[size]} />
-        <span>Add to Favourites</span>
+        <span className="lg:sr-only">Add to Favourites</span>
       </>
     );
   };

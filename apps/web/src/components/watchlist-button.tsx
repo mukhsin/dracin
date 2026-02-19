@@ -56,7 +56,7 @@ export function WatchlistButton({
       return (
         <>
           <Loader2 className="animate-spin" size={iconSizes[size]} />
-          <span>Loading...</span>
+          <span className="lg:sr-only">Loading...</span>
         </>
       );
     }
@@ -65,7 +65,9 @@ export function WatchlistButton({
       return (
         <>
           <BookmarkCheck size={iconSizes[size]} />
-          <span>{isHovered ? "Remove" : "In Watchlist"}</span>
+          <span className="lg:sr-only">
+            {isHovered ? "Remove" : "In Watchlist"}
+          </span>
         </>
       );
     }
@@ -73,7 +75,7 @@ export function WatchlistButton({
     return (
       <>
         <Bookmark size={iconSizes[size]} />
-        <span>Add to Watchlist</span>
+        <span className="lg:sr-only">Add to Watchlist</span>
       </>
     );
   };
