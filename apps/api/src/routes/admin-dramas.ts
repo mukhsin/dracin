@@ -2,7 +2,11 @@ import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { dramas } from "../db/schema.js";
 import { requireAdminAuth } from "../middleware/admin-auth.js";
-import { fetchAllDramas } from "../services/api-proxy.service.js";
+import {
+  fetchAllDramas,
+  getLatest,
+  getFeatured,
+} from "../services/api-proxy.service.js";
 import { eq } from "drizzle-orm";
 
 export const adminDramasRouter = new Hono();
@@ -22,7 +26,23 @@ interface SyncResponse {
   data: SyncStats;
 }
 
+adminDramasRouter.post("/sync/latest", async (c) => {
+  return await syncDramas(c, "latest", () => getLatest(1, 1000));
+});
+
+adminDramasRouter.post("/sync/featured", async (c) => {
+  return await syncDramas(c, "featured", () => getFeatured(1, 1000));
+});
+
 adminDramasRouter.post("/sync", async (c) => {
+  return await syncDramas(c, "all", fetchAllDramas);
+});
+
+async function syncDramas(
+  c: any,
+  syncType: string,
+  fetchFn: () => Promise<{ success: boolean; data: any[]; message?: string }>,
+) {
   const startTime = Date.now();
   const stats: SyncStats = {
     total: 0,
@@ -33,7 +53,9 @@ adminDramasRouter.post("/sync", async (c) => {
   };
 
   try {
-    console.log("[AdminDramas] Starting drama sync from api-proxy...");
+    console.log(
+      `[AdminDramas] Starting ${syncType} drama sync from api-proxy...`,
+    );
 
     if (!process.env.ADMIN_AUTH_SECRET) {
       return c.json(
@@ -48,7 +70,7 @@ adminDramasRouter.post("/sync", async (c) => {
       );
     }
 
-    const apiResponse = await fetchAllDramas();
+    const apiResponse = await fetchFn();
 
     if (!apiResponse.success) {
       throw new Error(`API proxy returned error: ${apiResponse.message}`);
@@ -154,7 +176,7 @@ adminDramasRouter.post("/sync", async (c) => {
       500,
     );
   }
-});
+}
 
 function transformApiProxyDrama(apiDrama: any) {
   const status: "ongoing" | "upcoming" =
