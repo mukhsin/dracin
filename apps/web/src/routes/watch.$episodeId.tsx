@@ -1,7 +1,7 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 import type { EpisodeWithNavigation } from "@repo/shared";
@@ -110,11 +110,8 @@ function WatchPage() {
     return episode?.video?.urls as VideoUrls | undefined;
   }, [episode]);
 
-  // Use navigation from consolidated API response
   const prevEpisode = episode?.navigation?.prevEpisode;
   const nextEpisode = episode?.navigation?.nextEpisode;
-
-  const showMobileNav = true;
 
   if (isLoading) {
     return (
@@ -158,9 +155,7 @@ function WatchPage() {
   }
 
   return (
-    <div
-      className={`min-h-screen bg-background ${showMobileNav ? "pb-20" : ""}`}
-    >
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
       {/* Mobile-First Layout */}
       <div className="max-w-lg mx-auto">
         {/* Video Player Container - Full width on mobile */}
@@ -186,94 +181,8 @@ function WatchPage() {
           />
         </div>
 
-        {/* Episode Info - Below video on mobile */}
-        <div className="px-4 py-6 space-y-4">
-          {/*<div className="flex flex-col gap-2">
-            <Link
-              to="/dramas/$dramaId"
-              params={{ dramaId: episode.drama.slug }}
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-200 group"
-              aria-label={`View details for ${episode.drama.title}`}
-            >
-              <span className="text-primary-foreground/90 group-hover:text-primary transition-colors">
-                {episode.drama.title}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                • Episode {episode.number}
-              </span>
-              <ChevronLeft className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Link>
-          </div>*/}
-
-          {(prevEpisode || nextEpisode) && !showMobileNav && (
-            <div className="relative">
-              <div className="bg-background/50 rounded-xl p-4 border border-border/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {prevEpisode ? (
-                      <Link
-                        to="/watch/$episodeId"
-                        params={{ episodeId: prevEpisode.id }}
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95"
-                        aria-label={`Previous episode: Episode ${prevEpisode.number}`}
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </Link>
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
-                        <div className="w-5 h-5 bg-muted-foreground/20 rounded-full" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-center px-6">
-                    <div className="text-center">
-                      <span className="text-xs font-medium text-muted-foreground tracking-wider">
-                        EPISODE
-                      </span>
-                      <span className="text-2xl font-bold text-primary ml-2 tracking-tight">
-                        {episode.number}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end">
-                    {nextEpisode ? (
-                      <Link
-                        to="/watch/$episodeId"
-                        params={{ episodeId: nextEpisode.id }}
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95"
-                        aria-label={`Next episode: Episode ${nextEpisode.number}`}
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </Link>
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
-                        <div className="w-5 h-5 bg-muted-foreground/20 rounded-full" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {episode.description && (
-            <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Synopsis
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-                {episode.description}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {showMobileNav && (
-        <div className="md:hidden">
-          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur shadow-lg">
+        {(prevEpisode || nextEpisode) && (
+          <div className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-border md:bg-transparent bg-background/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none">
             <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
                 {prevEpisode ? (
@@ -336,8 +245,8 @@ function WatchPage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
