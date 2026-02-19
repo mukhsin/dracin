@@ -300,16 +300,14 @@ function WatchPage() {
                     </div>
                   </div>
                 )}
-                <div className="flex-1 flex items-center justify-center gap-2">
+                <div className="flex-1 flex flex-col items-center justify-center gap-1">
                   <span className="text-3xl font-bold text-primary tracking-tight">
                     {episode.number}
                   </span>
                   {episode.drama.totalEpisodes && (
                     <>
-                      <span className="text-2xl text-muted-foreground/30">
-                        ·
-                      </span>
-                      <span className="text-xl font-medium text-muted-foreground/60 tracking-tight">
+                      <div className="w-8 h-px bg-muted-foreground/30" />
+                      <span className="text-sm font-medium text-muted-foreground/60 tracking-tight">
                         {episode.drama.totalEpisodes}
                       </span>
                     </>
