@@ -3,6 +3,7 @@ import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 import { WatchlistButton } from "../components/watchlist-button.js";
+import { FavouritesButton } from "../components/favourites-button.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -204,6 +205,13 @@ function DramaDetailsPage() {
                 )}
                 {episodes && episodes.length > 0 && (
                   <WatchlistButton
+                    dramaId={dramaId}
+                    variant="outline"
+                    size="sm"
+                  />
+                )}
+                {episodes && episodes.length > 0 && (
+                  <FavouritesButton
                     dramaId={dramaId}
                     variant="outline"
                     size="sm"
