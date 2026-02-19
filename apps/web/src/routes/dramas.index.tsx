@@ -2,7 +2,6 @@ import {
   createFileRoute,
   useSearch,
   useNavigate,
-  useLocation,
 } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
@@ -15,10 +14,8 @@ export const Route = createFileRoute("/dramas/")({
 
 function DramasPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const searchParams = useSearch({ from: "/dramas" }) as { q?: string };
-  // Use state from location if available, otherwise fall back to URL search params
-  const search = location.state?.searchQuery || searchParams.q || "";
+  const search = searchParams.q || "";
 
   const {
     data,
@@ -41,7 +38,6 @@ function DramasPage() {
     navigate({
       to: "/dramas",
       search: {},
-      state: { searchQuery: "" },
     });
   };
 

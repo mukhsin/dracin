@@ -71,10 +71,9 @@ export function SearchIcon() {
       navigate({
         to: "/dramas",
         search: debouncedSearch ? { q: debouncedSearch } : {},
-        state: location.state,
       });
     }
-  }, [debouncedSearch, isExpanded, isHydrated, navigate, location.state]);
+  }, [debouncedSearch, isExpanded, isHydrated, navigate]);
 
   // Close when clicking outside
   useEffect(() => {
