@@ -16,7 +16,6 @@ function SearchBox({
 }: SearchBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when mounted
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -48,33 +47,34 @@ function SearchBox({
 export function SearchIcon() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [isHydrated, setIsHydrated] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as { q?: string };
   const location = useLocation();
   const isOnDramasPage = location.pathname === "/dramas";
 
-  // Debounce search value for URL updates
   const debouncedSearch = useDebounce(searchValue, 300);
 
-  // Initialize search value from URL on mount
   useEffect(() => {
-    if (searchParams.q) {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated && searchParams.q) {
       setSearchValue(searchParams.q);
     }
-  }, [searchParams.q]);
+  }, [isHydrated, searchParams.q]);
 
-  // Only navigate when search box is expanded - avoid redundant URL updates
-  // Search value in URL is the source of truth, no need to update it back
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && isHydrated) {
       navigate({
         to: "/dramas",
         search: debouncedSearch ? { q: debouncedSearch } : {},
         state: location.state,
       });
     }
-  }, [debouncedSearch, isExpanded, navigate, location.state]);
+  }, [debouncedSearch, isExpanded, isHydrated, navigate, location.state]);
 
   // Close when clicking outside
   useEffect(() => {
