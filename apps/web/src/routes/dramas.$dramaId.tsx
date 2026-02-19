@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
-import { AlertCircle, ArrowLeft, Film, Heart } from "lucide-react";
+import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
+import { WatchlistButton } from "../components/watchlist-button.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -152,7 +153,7 @@ function DramaDetailsPage() {
         </div>
 
         {/* Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {/* Poster */}
           <div className="lg:col-span-1">
             <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl">
@@ -171,7 +172,7 @@ function DramaDetailsPage() {
           </div>
 
           {/* Info */}
-          <div className="lg:col-span-2 flex flex-col">
+          <div className="md:col-span-1 lg:col-span-2 flex flex-col">
             <div className="flex-1">
               <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
                 {title}
@@ -210,45 +211,46 @@ function DramaDetailsPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 mb-8">
               {episodes && episodes.length > 0 && (
-                <>
-                  <button className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-6 py-4 text-sm font-semibold hover:bg-accent transition-colors">
-                    <Heart className="w-5 h-5" />
-                    Add to Watchlist
-                  </button>
-                </>
+                <WatchlistButton
+                  dramaId={dramaId}
+                  variant="outline"
+                  size="lg"
+                />
+              )}
+            </div>
+
+            {/* Episode grid - NOW INSIDE INFO COLUMN */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <Film className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold">Episodes</h2>
+                <span className="text-muted-foreground">
+                  ({episodes?.length || 0})
+                </span>
+              </div>
+
+              {episodes && episodes.length > 0 ? (
+                <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+                  {episodes.map((episode) => (
+                    <EpisodeCard
+                      key={episode.id}
+                      episode={episode}
+                      searchQuery={search}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-muted/50 rounded-xl">
+                  <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    No episodes available yet
+                  </p>
+                </div>
               )}
             </div>
           </div>
-        </div>
-
-        {/* Episodes Section */}
-        <div className="border-t pt-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Film className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl font-bold">Episodes</h2>
-            <span className="text-muted-foreground">
-              ({episodes?.length || 0})
-            </span>
-          </div>
-
-          {episodes && episodes.length > 0 ? (
-            <div className="grid grid-cols-5 lg:grid-cols-10 gap-2">
-              {episodes.map((episode) => (
-                <EpisodeCard
-                  key={episode.id}
-                  episode={episode}
-                  searchQuery={search}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-muted/50 rounded-xl">
-              <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No episodes available yet</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
