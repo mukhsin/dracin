@@ -25,7 +25,7 @@ const mockFullDrama: Drama = {
   posterUrl: "https://example.com/poster.jpg",
   status: "ongoing",
   language: "en",
-  playCount: "1000",
+  playCount: 1000,
   sourceEndpoint: "https://api.example.com/drama/123",
   releaseYear: 2024,
   country: "US",
@@ -386,7 +386,7 @@ describe("Drama Routes - List Endpoint Sanitization", () => {
       expect(firstItem.description).toBe("A test drama description");
       expect(firstItem.status).toBe("ongoing");
       expect(firstItem.language).toBe("en");
-      expect(firstItem.playCount).toBe("1000");
+      expect(firstItem.playCount).toBe(1000);
       expect(firstItem.sourceEndpoint).toBe(
         "https://api.example.com/drama/123",
       );
