@@ -71,3 +71,6 @@ test-results
 
 # Private Key
 private-key.pem
+
+# Notes
+notes.md
