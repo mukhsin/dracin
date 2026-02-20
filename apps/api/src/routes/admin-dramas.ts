@@ -270,8 +270,10 @@ async function syncDramas(
 }
 
 function transformApiProxyDrama(apiDrama: any) {
-  const status: "ongoing" | "upcoming" =
-    apiDrama.chapterCount && apiDrama.chapterCount > 0 ? "ongoing" : "upcoming";
+  const status: "completed" | "upcoming" =
+    apiDrama.chapterCount && apiDrama.chapterCount > 0
+      ? "completed"
+      : "upcoming";
 
   return {
     id: crypto.randomUUID(),
