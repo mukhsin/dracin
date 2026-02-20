@@ -29,6 +29,20 @@
       "when": 1771479073546,
       "tag": "0003_hot_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1740080400000,
+      "tag": "0004_watch_history_refactor",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1740080500000,
+      "tag": "0005_play_count_integer",
+      "breakpoints": true
     }
   ]
 }
