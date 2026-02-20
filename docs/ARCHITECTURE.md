@@ -223,20 +223,20 @@ apps/web/src/routes/
 ├── index.tsx               # Home page (/)
 ├── watchlist.tsx           # Watchlist page (/watchlist)
 ├── history.tsx             # History page (/history)
-└── watch.$episodeId.tsx    # Episode player (/watch/:episodeId)
+└── dramas.$dramaSlug.$episodeNumber.tsx  # Episode player (/dramas/:slug/:number)
 ```
 
 #### Route Configuration Example
 
 ```typescript
-// apps/web/src/routes/watch.$episodeId.tsx
+// apps/web/src/routes/dramas.$dramaSlug.$episodeNumber.tsx
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/watch/$episodeId")({
+export const Route = createFileRoute("/dramas/$dramaSlug/$episodeNumber")({
   component: WatchPage,
   loader: async ({ params }) => {
     // Server-side data fetching
-    return { episodeId: params.episodeId };
+    return { dramaSlug: params.dramaSlug, episodeNumber: params.episodeNumber };
   },
 });
 ```

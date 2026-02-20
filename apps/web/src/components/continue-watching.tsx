@@ -81,7 +81,7 @@ export function ContinueWatching({
             className="group relative bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
           >
             <Link
-              to="/watch/$dramaSlug/$episodeNumber"
+              to="/dramas/$dramaSlug/$episodeNumber"
               params={{
                 dramaSlug: item.dramaSlug,
                 episodeNumber: item.episodeNumber.toString(),

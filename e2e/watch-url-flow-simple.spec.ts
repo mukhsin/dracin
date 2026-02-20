@@ -65,7 +65,7 @@ test.describe("Watch URL Flow - Simple", () => {
     expect(hasEpisodes).toBeGreaterThan(0);
 
     // Verify watch links exist
-    const watchLinks = page.locator('a[href*="/watch/"]');
+    const watchLinks = page.locator('a[href*="/dramas/"]');
     const hasWatchLinks = await watchLinks.count().catch(() => 0);
     expect(hasWatchLinks).toBeGreaterThan(0);
 
@@ -77,7 +77,7 @@ test.describe("Watch URL Flow - Simple", () => {
 
   test("should show error for invalid watch URL", async ({ page }) => {
     // Navigate to invalid watch URL
-    await page.goto("/watch/nonexistent/999");
+    await page.goto("/dramas/nonexistent/999");
     await waitForPageLoad(page);
 
     // Verify error message appears

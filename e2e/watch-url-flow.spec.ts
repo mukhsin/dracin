@@ -48,7 +48,7 @@ test.describe("Watch URL Flow", () => {
       }
 
       const firstEpisode = episodeItems.first();
-      const watchLink = firstEpisode.locator('a[href*="/watch/"]').first();
+      const watchLink = firstEpisode.locator('a[href*="/dramas/"]').first();
 
       if (!(await watchLink.isVisible().catch(() => false))) {
         test.skip(true, "No watch link found");
@@ -63,11 +63,11 @@ test.describe("Watch URL Flow", () => {
         watchLink.click(),
       ]);
 
-      // 3. Verify URL is: /watch/:dramaSlug/1
-      await page.waitForURL(/\/watch\/.+\/1/, {
+      // 3. Verify URL is: /dramas/:dramaSlug/1
+      await page.waitForURL(/\/dramas\/.+\/1/, {
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await expect(page).toHaveURL(new RegExp(`\\/watch\\/${dramaSlug}\\/1`));
+      await expect(page).toHaveURL(new RegExp(`\\/dramas\\/${dramaSlug}\\/1`));
 
       // Take screenshot at watch page
       await page.screenshot({
@@ -98,11 +98,11 @@ test.describe("Watch URL Flow", () => {
         nextButton.click(),
       ]);
 
-      // 6. Verify URL changes to: /watch/:dramaSlug/2
-      await page.waitForURL(/\/watch\/.+\/2/, {
+      // 6. Verify URL changes to: /dramas/:dramaSlug/2
+      await page.waitForURL(/\/dramas\/.+\/2/, {
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await expect(page).toHaveURL(new RegExp(`\\/watch\\/${dramaSlug}\\/2`));
+      await expect(page).toHaveURL(new RegExp(`\\/dramas\\/${dramaSlug}\\/2`));
 
       // Take screenshot at next episode
       await page.screenshot({
@@ -119,7 +119,7 @@ test.describe("Watch URL Flow", () => {
     test("should navigate back to drama page using back button", async ({
       authenticatedPage: page,
     }) => {
-      // 1. Navigate to /watch/test-drama/1
+      // 1. Navigate to /dramas/test-drama/1
       await page.goto("/dramas");
       await waitForPageLoad(page);
       await page.waitForTimeout(2000);
@@ -149,7 +149,7 @@ test.describe("Watch URL Flow", () => {
       }
 
       const firstEpisode = episodeItems.first();
-      const watchLink = firstEpisode.locator('a[href*="/watch/"]').first();
+      const watchLink = firstEpisode.locator('a[href*="/dramas/"]').first();
 
       if (!(await watchLink.isVisible().catch(() => false))) {
         test.skip(true, "No watch link found");
@@ -164,7 +164,7 @@ test.describe("Watch URL Flow", () => {
         watchLink.click(),
       ]);
 
-      await page.waitForURL(/\/watch\/.+\/1/, {
+      await page.waitForURL(/\/dramas\/.+\/1/, {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
@@ -216,8 +216,8 @@ test.describe("Watch URL Flow", () => {
     test("should show error page for invalid episode URL", async ({
       authenticatedPage: page,
     }) => {
-      // 1. Navigate to /watch/nonexistent/999
-      await page.goto("/watch/nonexistent/999");
+      // 1. Navigate to /dramas/nonexistent/999
+      await page.goto("/dramas/nonexistent/999");
       await waitForPageLoad(page);
 
       // Take screenshot of error page

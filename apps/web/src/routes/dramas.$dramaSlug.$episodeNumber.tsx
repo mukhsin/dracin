@@ -43,7 +43,7 @@ const MOCK_EPISODE: EpisodeWithNavigation = {
   },
 };
 
-export const Route = createFileRoute("/watch/$dramaSlug/$episodeNumber")({
+export const Route = createFileRoute("/dramas/$dramaSlug/$episodeNumber")({
   component: WatchPage,
 });
 
@@ -163,7 +163,7 @@ function WatchPage() {
               <div className="flex items-center gap-3">
                 {prevEpisode ? (
                   <Link
-                    to="/watch/$dramaSlug/$episodeNumber"
+                    to="/dramas/$dramaSlug/$episodeNumber"
                     params={{
                       dramaSlug: dramaSlug,
                       episodeNumber: prevEpisode.number.toString(),
@@ -199,7 +199,7 @@ function WatchPage() {
                 </div>
                 {nextEpisode ? (
                   <Link
-                    to="/watch/$dramaSlug/$episodeNumber"
+                    to="/dramas/$dramaSlug/$episodeNumber"
                     params={{
                       dramaSlug: dramaSlug,
                       episodeNumber: nextEpisode.number.toString(),

@@ -282,7 +282,7 @@ test.describe("Watchlist Features", () => {
       }
 
       const firstEpisode = episodeItems.first();
-      const watchLink = firstEpisode.locator('a[href*="/watch/"]').first();
+      const watchLink = firstEpisode.locator('a[href*="/dramas/"]').first();
 
       if (await watchLink.isVisible().catch(() => false)) {
         await Promise.all([
@@ -346,7 +346,7 @@ test.describe("Watchlist Features", () => {
       }
 
       const firstEpisode = episodeItems.first();
-      const watchLink = firstEpisode.locator('a[href*="/watch/"]').first();
+      const watchLink = firstEpisode.locator('a[href*="/dramas/"]').first();
 
       if (await watchLink.isVisible().catch(() => false)) {
         await Promise.all([

@@ -8,7 +8,7 @@ test.describe("Drama Title Link Functionality", () => {
 
     // Navigate to test episode page
     console.log("STEP 1: Navigate to watch page");
-    await page.goto("/watch/test");
+    await page.goto("/dramas/test/1");
 
     // Wait for page to load
     await page.waitForLoadState("networkidle");

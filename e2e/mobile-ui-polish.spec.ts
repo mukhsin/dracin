@@ -129,12 +129,12 @@ test.describe("Mobile UI Polish Features", () => {
       // Click first episode's watch link
       const firstWatchLink = episodeItems
         .first()
-        .locator('a[href*="/watch/"]')
+        .locator('a[href*="/dramas/"]')
         .first();
 
       if (await firstWatchLink.isVisible().catch(() => false)) {
         await firstWatchLink.click();
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await waitForPageLoad(page);
@@ -246,12 +246,12 @@ test.describe("Mobile UI Polish Features", () => {
       // Click the second episode (index 1) to test both prev and next
       const secondEpisode = episodeItems.nth(1);
       const secondWatchLink = secondEpisode
-        .locator('a[href*="/watch/"]')
+        .locator('a[href*="/dramas/"]')
         .first();
 
       if (await secondWatchLink.isVisible().catch(() => false)) {
         await secondWatchLink.click();
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await waitForPageLoad(page);
@@ -316,7 +316,7 @@ test.describe("Mobile UI Polish Features", () => {
         await prevButton.click();
 
         // Wait for URL to change
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
 
@@ -343,7 +343,7 @@ test.describe("Mobile UI Polish Features", () => {
         await nextButton.click();
 
         // Wait for URL to change
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
 
@@ -370,12 +370,12 @@ test.describe("Mobile UI Polish Features", () => {
       const episodeItems = page.locator('[class*="episode"]');
       const firstWatchLink = episodeItems
         .first()
-        .locator('a[href*="/watch/"]')
+        .locator('a[href*="/dramas/"]')
         .first();
 
       if (await firstWatchLink.isVisible().catch(() => false)) {
         await firstWatchLink.click();
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await waitForPageLoad(page);
@@ -427,12 +427,12 @@ test.describe("Mobile UI Polish Features", () => {
       // Click last episode
       const lastWatchLink = episodeItems
         .nth(count - 1)
-        .locator('a[href*="/watch/"]')
+        .locator('a[href*="/dramas/"]')
         .first();
 
       if (await lastWatchLink.isVisible().catch(() => false)) {
         await lastWatchLink.click();
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await waitForPageLoad(page);
@@ -520,12 +520,12 @@ test.describe("Mobile UI Polish Features", () => {
       const episodeItems = page.locator('[class*="episode"]');
       const firstWatchLink = episodeItems
         .first()
-        .locator('a[href*="/watch/"]')
+        .locator('a[href*="/dramas/"]')
         .first();
 
       if (await firstWatchLink.isVisible().catch(() => false)) {
         await firstWatchLink.click();
-        await page.waitForURL(/\/watch\/.+/, {
+        await page.waitForURL(/\/dramas\/.+/, {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await waitForPageLoad(page);
@@ -565,12 +565,12 @@ test.describe("Mobile UI Polish Features", () => {
         if ((await episodeItems.count()) > 0) {
           const watchLink = episodeItems
             .first()
-            .locator('a[href*="/watch/"]')
+            .locator('a[href*="/dramas/"]')
             .first();
 
           if (await watchLink.isVisible().catch(() => false)) {
             await watchLink.click();
-            await page.waitForURL(/\/watch\/.+/, {
+            await page.waitForURL(/\/dramas\/.+/, {
               timeout: TEST_TIMEOUTS.navigation,
             });
             await waitForPageLoad(page);

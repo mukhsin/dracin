@@ -21,7 +21,7 @@ function EpisodeCard({
 }) {
   return (
     <Link
-      to="/watch/$dramaSlug/$episodeNumber"
+      to="/dramas/$dramaSlug/$episodeNumber"
       params={{ dramaSlug, episodeNumber: episode.number.toString() }}
       state={searchQuery ? { searchQuery } : undefined}
       className="group bg-card rounded-lg border aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"

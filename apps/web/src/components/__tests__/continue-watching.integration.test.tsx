@@ -138,7 +138,7 @@ describe("Continue Watching Flow Integration Tests", () => {
     const dramaTitle = screen.getByText("Love in the Moonlight");
     await user.click(dramaTitle);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/watch/ep-001");
+    expect(mockNavigate).toHaveBeenCalledWith("/dramas/ep-001");
   });
 
   it("shows Continue Watching header only when items exist", async () => {

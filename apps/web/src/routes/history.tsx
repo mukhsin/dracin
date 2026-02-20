@@ -193,7 +193,7 @@ function HistoryPage() {
               className="group flex gap-4 p-4 bg-card rounded-xl border hover:shadow-md transition-all"
             >
               <Link
-                to="/watch/$dramaSlug/$episodeNumber"
+                to="/dramas/$dramaSlug/$episodeNumber"
                 params={{
                   dramaSlug: item.episode.drama?.slug || "",
                   episodeNumber: item.episode.number.toString(),

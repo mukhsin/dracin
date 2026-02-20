@@ -33,7 +33,7 @@ test.describe("Video Player", () => {
     }
 
     const firstEpisode = episodeItems.first();
-    const watchLink = firstEpisode.locator('a[href*="/watch/"]').first();
+    const watchLink = firstEpisode.locator('a[href*="/dramas/"]').first();
 
     if (await watchLink.isVisible().catch(() => false)) {
       await Promise.all([
@@ -44,7 +44,7 @@ test.describe("Video Player", () => {
         watchLink.click(),
       ]);
 
-      await page.waitForURL(/\/watch\/.+/, {
+      await page.waitForURL(/\/dramas\/.+/, {
         timeout: TEST_TIMEOUTS.navigation,
       });
     }
