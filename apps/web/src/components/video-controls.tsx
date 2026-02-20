@@ -9,7 +9,11 @@ import {
   SkipBack,
   SkipForward,
 } from "lucide-react";
-import { QualitySelector, type VideoQuality, type VideoUrls } from "./quality-selector.js";
+import {
+  QualitySelector,
+  type VideoQuality,
+  type VideoUrls,
+} from "./quality-selector.js";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -33,6 +37,8 @@ interface VideoControlsProps {
   showControls: boolean;
   onShowControls: () => void;
   isVertical?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -49,7 +55,6 @@ function formatTime(seconds: number): string {
 }
 
 export function VideoControls({
-  videoRef,
   videoUrls,
   currentQuality,
   onQualityChange,
@@ -69,7 +74,8 @@ export function VideoControls({
   title,
   showControls,
   onShowControls,
-  isVertical = false,
+  onMouseEnter,
+  onMouseLeave,
 }: VideoControlsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -85,14 +91,14 @@ export function VideoControls({
       const newTime = pos * duration;
       onSeek(newTime);
     },
-    [duration, onSeek]
+    [duration, onSeek],
   );
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       handleProgressInteraction(e.clientX);
     },
-    [handleProgressInteraction]
+    [handleProgressInteraction],
   );
 
   const handleTouchStart = useCallback(
@@ -100,7 +106,7 @@ export function VideoControls({
       setIsDragging(true);
       handleProgressInteraction(e.touches[0].clientX);
     },
-    [handleProgressInteraction]
+    [handleProgressInteraction],
   );
 
   const handleTouchMove = useCallback(
@@ -109,7 +115,7 @@ export function VideoControls({
         handleProgressInteraction(e.touches[0].clientX);
       }
     },
-    [isDragging, handleProgressInteraction]
+    [isDragging, handleProgressInteraction],
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -122,7 +128,7 @@ export function VideoControls({
       const newTime = Math.max(0, Math.min(duration, currentTime + seconds));
       onSeek(newTime);
     },
-    [currentTime, duration, onSeek]
+    [currentTime, duration, onSeek],
   );
 
   // Keyboard shortcuts
@@ -171,14 +177,21 @@ export function VideoControls({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onPlayPause, skip, onVolumeChange, volume, onFullscreenToggle, onMuteToggle]);
+  }, [
+    onPlayPause,
+    skip,
+    onVolumeChange,
+    volume,
+    onFullscreenToggle,
+    onMuteToggle,
+  ]);
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
 
   if (!showControls) {
     return (
-      <div 
+      <div
         className="absolute inset-0 cursor-pointer"
         onClick={onShowControls}
         data-controls="true"
@@ -190,12 +203,16 @@ export function VideoControls({
     <div
       className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent"
       onClick={(e) => e.stopPropagation()}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       data-controls="true"
     >
       {/* Title */}
       {title && (
         <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
-          <h2 className="text-white font-medium text-base sm:text-lg truncate">{title}</h2>
+          <h2 className="text-white font-medium text-base sm:text-lg truncate">
+            {title}
+          </h2>
         </div>
       )}
 
@@ -254,9 +271,11 @@ export function VideoControls({
                        transform -translate-x-1/2 active:scale-125"
             style={{ left: `${progressPercent}%` }}
           >
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90
+            <div
+              className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90
                             text-white text-xs rounded opacity-0 group-hover:opacity-100
-                            transition-opacity whitespace-nowrap pointer-events-none">
+                            transition-opacity whitespace-nowrap pointer-events-none"
+            >
               {formatTime(currentTime)}
             </div>
           </div>

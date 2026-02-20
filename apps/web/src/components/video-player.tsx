@@ -42,6 +42,8 @@ export function VideoPlayer({
 
   // Auto-hide controls timer
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMouseOverControlsRef = useRef(false);
+  const lastActivityRef = useRef(Date.now());
 
   // Video event handlers
   const handleLoadedMetadata = useCallback(() => {
@@ -185,18 +187,53 @@ export function VideoPlayer({
 
   // Auto-hide controls
   const showControlsTemporarily = useCallback(() => {
+    lastActivityRef.current = Date.now();
     setShowControls(true);
 
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
 
+    if (isPlaying && !isMouseOverControlsRef.current) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  }, [isPlaying]);
+
+  // Handle mouse move to show controls
+  const handleMouseMove = useCallback(() => {
+    showControlsTemporarily();
+  }, [showControlsTemporarily]);
+
+  // Handle mouse enter/leave on controls
+  const handleControlsMouseEnter = useCallback(() => {
+    isMouseOverControlsRef.current = true;
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+  }, []);
+
+  const handleControlsMouseLeave = useCallback(() => {
+    isMouseOverControlsRef.current = false;
     if (isPlaying) {
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     }
   }, [isPlaying]);
+
+  // Start auto-hide timer when video starts playing
+  useEffect(() => {
+    if (isPlaying) {
+      showControlsTemporarily();
+    } else {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    }
+  }, [isPlaying, showControlsTemporarily]);
 
   // Touch/double-tap handlers
   const lastTapRef = useRef(0);
@@ -269,6 +306,7 @@ export function VideoPlayer({
       className={`relative w-full bg-black overflow-hidden rounded-xl shadow-2xl ${aspectRatioClass}`}
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
+      onMouseMove={handleMouseMove}
     >
       {/* Video element */}
       <video
@@ -364,6 +402,8 @@ export function VideoPlayer({
         showControls={showControls}
         onShowControls={showControlsTemporarily}
         isVertical={isVertical}
+        onMouseEnter={handleControlsMouseEnter}
+        onMouseLeave={handleControlsMouseLeave}
       />
     </div>
   );
