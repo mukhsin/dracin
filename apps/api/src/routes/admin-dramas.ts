@@ -9,6 +9,25 @@ import {
 } from "../services/api-proxy.service.js";
 import { eq } from "drizzle-orm";
 
+function parsePlayCount(
+  playCountStr: string | null | undefined,
+): number | null {
+  if (!playCountStr) return null;
+
+  const str = playCountStr.toString().trim().toUpperCase();
+  const match = str.match(/^(\d+\.?\d*)([MK])$/);
+
+  if (!match) return null;
+
+  const value = parseFloat(match[1]);
+  const suffix = match[2];
+
+  if (suffix === "M") return Math.round(value * 1_000_000);
+  if (suffix === "K") return Math.round(value * 1_000);
+
+  return null;
+}
+
 export const adminDramasRouter = new Hono();
 
 adminDramasRouter.use("*", requireAdminAuth);
@@ -284,7 +303,7 @@ function transformApiProxyDrama(apiDrama: any) {
     posterUrl: apiDrama.cover,
     status,
     language: apiDrama.language || null,
-    playCount: apiDrama.playCount || null,
+    playCount: apiDrama.playCount ? parsePlayCount(apiDrama.playCount) : null,
     sourceEndpoint: null,
     metadata: null,
     totalEpisodes: apiDrama.chapterCount || null,

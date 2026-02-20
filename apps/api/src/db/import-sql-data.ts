@@ -14,6 +14,16 @@ interface DramaData {
   language: string;
 }
 
+interface ParsedDramaData {
+  bookId: string;
+  title: string;
+  cover: string;
+  intro: string;
+  chapterCount: number;
+  playCount: number | null;
+  language: string;
+}
+
 interface EpisodeData {
   bookId: string;
   episodeIndex: number;
@@ -38,8 +48,8 @@ function parsePlayCount(playCountStr: string | null): number | null {
   return null;
 }
 
-function parseDramas(sqlContent: string): DramaData[] {
-  const dramas: DramaData[] = [];
+function parseDramas(sqlContent: string): ParsedDramaData[] {
+  const dramas: ParsedDramaData[] = [];
   const dramaRegex =
     /INSERT INTO dramas \(bookId, title, cover, intro, chapterCount, playCount, language, source_endpoint\) VALUES \((\d+), '((?:[^']|'')*)', '((?:[^']|'')*)', '((?:[^']|'')*)', (\d+), (NULL|\d+), '((?:[^']|'')*)', (NULL|'(?:[^']|'')*')\)/g;
 
@@ -53,7 +63,7 @@ function parseDramas(sqlContent: string): DramaData[] {
       cover: match[3],
       intro: match[4].replace(/''/g, "'"),
       chapterCount: parseInt(match[5], 10),
-      playCount: match[6] === "NULL" ? null : match[6],
+      playCount: match[6] === "NULL" ? null : parsePlayCount(match[6]),
       language: match[7],
     });
   }
@@ -102,10 +112,10 @@ async function importLanguageData(
 
   const episodeData = parseEpisodes(sqlContent);
 
-  const playCountMap = new Map<string, string | null>();
+  const playCountMap = new Map<string, number | null>();
   for (const drama of jsonData) {
     if (drama.language === language) {
-      playCountMap.set(drama.bookId, drama.playCount);
+      playCountMap.set(drama.bookId, parsePlayCount(drama.playCount));
     }
   }
 

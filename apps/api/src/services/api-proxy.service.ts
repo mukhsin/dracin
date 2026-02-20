@@ -180,7 +180,7 @@ export interface Drama {
   cover: string;
   intro: string;
   chapterCount?: number;
-  playCount?: string;
+  playCount?: number;
 }
 
 export interface Episode {
