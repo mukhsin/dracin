@@ -3,8 +3,6 @@ import { Image } from "@unpic/react";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
-import { WatchlistButton } from "../components/watchlist-button.js";
-import { FavouritesButton } from "../components/favourites-button.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -147,8 +145,8 @@ function DramaDetailsPage() {
         <div className="mb-6">
           <Link
             to="/dramas"
+            search={search ? { q: search } : undefined}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            state={search ? { searchQuery: search } : undefined}
             resetScroll={true}
           >
             <ArrowLeft className="w-4 h-4" />
