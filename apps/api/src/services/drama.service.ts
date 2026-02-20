@@ -50,7 +50,7 @@ export interface DramaListFilters {
   search?: string;
   status?: "ongoing" | "completed" | "upcoming";
   language?: string;
-  sortBy?: "title" | "createdAt" | "updatedAt";
+  sortBy?: "title" | "createdAt" | "updatedAt" | "playCount";
   sortOrder?: "asc" | "desc";
 }
 
@@ -174,7 +174,9 @@ export class DramaService {
         ? dramas.title
         : filters.sortBy === "updatedAt"
           ? dramas.updatedAt
-          : dramas.createdAt;
+          : filters.sortBy === "playCount"
+            ? dramas.playCount
+            : dramas.createdAt;
 
     const sortFn = filters.sortOrder === "asc" ? asc : desc;
 

@@ -13,7 +13,9 @@ const ListDramasQuerySchema = z.object({
   q: z.string().optional(),
   status: z.enum(["ongoing", "completed", "upcoming"]).optional(),
   language: z.string().optional(),
-  sortBy: z.enum(["title", "createdAt", "updatedAt"]).default("createdAt"),
+  sortBy: z
+    .enum(["title", "createdAt", "updatedAt", "playCount"])
+    .default("playCount"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
