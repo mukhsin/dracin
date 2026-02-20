@@ -52,7 +52,7 @@ export const dramas = sqliteTable(
       .notNull()
       .default("upcoming"),
     language: text("language"),
-    playCount: text("play_count"),
+    playCount: integer("play_count"),
     sourceEndpoint: text("source_endpoint"),
     releaseYear: integer("release_year").$type<number | null>(),
     country: text("country").$type<string | null>(),

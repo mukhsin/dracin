@@ -42,7 +42,7 @@ export const DramaSchema = z.object({
   posterUrl: z.string().nullable(),
   status: DramaStatusSchema,
   language: z.string().nullable(),
-  playCount: z.string().nullable(),
+  playCount: z.number().nullable(),
   sourceEndpoint: z.string().nullable(),
   metadata: DramaMetadataSchema.nullable(),
   createdAt: z.date(),

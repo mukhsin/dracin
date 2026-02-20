@@ -27,7 +27,7 @@ export interface Drama {
   posterUrl: string | null;
   status: DramaStatus;
   language: string | null;
-  playCount: string | null;
+  playCount: number | null;
   sourceEndpoint: string | null;
   metadata: DramaMetadata | null;
   totalEpisodes: number | null;
