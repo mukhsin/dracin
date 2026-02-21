@@ -98,12 +98,12 @@ body {
   scrollbar-width: none;
 }
 
-*:focus-visible {
-  outline: 2px solid hsl(346 100% 58%);
+/**:focus-visible {
+  outline: 2px solid #c9a962;
   outline-offset: 2px;
 }
 
 ::selection {
-  background: hsl(346 100% 58% / 0.3);
+  background: #c9a96233;
   color: hsl(0 0% 98%);
-}
+}*/
