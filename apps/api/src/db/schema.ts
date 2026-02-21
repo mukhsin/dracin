@@ -15,6 +15,7 @@ const nowEpoch = () =>
 const uuidDefault = () => randomUUID();
 
 export const dramaStatusEnum = ["ongoing", "completed", "upcoming"] as const;
+export const dramaListTypeEnum = ["latest", "featured", "rank_1", "rank_2", "rank_3"] as const;
 
 export const users = sqliteTable(
   "users",
@@ -247,35 +248,20 @@ export const verifications = sqliteTable(
   }),
 );
 
-export const latest_dramas = sqliteTable(
-  "latest_dramas",
+export const drama_lists = sqliteTable(
+  "drama_lists",
   {
     id: text("id").primaryKey().$defaultFn(uuidDefault),
-    bookId: text("book_id").notNull().unique(),
+    bookId: text("book_id").notNull(),
+    type: text("type", { enum: dramaListTypeEnum }).notNull(),
     position: integer("position").notNull(),
     syncedAt: integer("synced_at", { mode: "timestamp_ms" })
       .notNull()
       .default(nowEpoch()),
   },
   (table) => ({
-    bookIdIdx: uniqueIndex("latest_dramas_book_id_idx").on(table.bookId),
-    positionIdx: index("latest_dramas_position_idx").on(table.position),
-  }),
-);
-
-export const featured_dramas = sqliteTable(
-  "featured_dramas",
-  {
-    id: text("id").primaryKey().$defaultFn(uuidDefault),
-    bookId: text("book_id").notNull().unique(),
-    position: integer("position").notNull(),
-    syncedAt: integer("synced_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(nowEpoch()),
-  },
-  (table) => ({
-    bookIdIdx: uniqueIndex("featured_dramas_book_id_idx").on(table.bookId),
-    positionIdx: index("featured_dramas_position_idx").on(table.position),
+    bookIdTypeIdx: uniqueIndex("drama_lists_book_id_type_idx").on(table.bookId, table.type),
+    positionIdx: index("drama_lists_position_idx").on(table.position),
   }),
 );
 
@@ -330,8 +316,5 @@ export type NewWatchlistItem = typeof watchlist.$inferInsert;
 export type WatchHistoryItem = typeof watchHistory.$inferSelect;
 export type NewWatchHistoryItem = typeof watchHistory.$inferInsert;
 
-export type LatestDrama = typeof latest_dramas.$inferSelect;
-export type NewLatestDrama = typeof latest_dramas.$inferInsert;
-
-export type FeaturedDrama = typeof featured_dramas.$inferSelect;
-export type NewFeaturedDrama = typeof featured_dramas.$inferInsert;
+export type DramaList = typeof drama_lists.$inferSelect;
+export type NewDramaList = typeof drama_lists.$inferInsert;
