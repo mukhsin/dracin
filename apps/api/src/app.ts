@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "./middleware/logger.js";
 import { healthRoutes } from "./routes/health.js";
 import { dramaRoutes } from "./routes/dramas.js";
+import { homeRoutes } from "./routes/home.js";
 import { watchlistRoutes } from "./routes/watchlist.js";
 import { historyRoutes } from "./routes/history.js";
 import { fallbackAdminRoutes } from "./routes/videos.js";
@@ -35,6 +36,7 @@ export function createApp() {
   app.use("*", authMiddleware);
 
   app.route("/health", healthRoutes);
+  app.route("/api/dramas", homeRoutes);
   app.route("/api/dramas", dramaRoutes);
   app.route("/api/watchlist", watchlistRoutes);
   app.route("/api/history", historyRoutes);
