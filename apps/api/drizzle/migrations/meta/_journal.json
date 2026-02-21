@@ -43,6 +43,13 @@
       "when": 1740080500000,
       "tag": "0005_play_count_integer",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1740685500000,
+      "tag": "0006_merge_drama_lists",
+      "breakpoints": true
     }
   ]
 }
