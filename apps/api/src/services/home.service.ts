@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { featured_dramas, latest_dramas, dramas } from "../db/schema.js";
+import { drama_lists, dramas } from "../db/schema.js";
 import { eq, asc, desc } from "drizzle-orm";
 import type { Drama } from "@repo/shared/types";
 
@@ -34,9 +34,10 @@ export async function getFeatured(): Promise<HomeResponse> {
       createdAt: dramas.createdAt,
       updatedAt: dramas.updatedAt,
     })
-    .from(featured_dramas)
-    .innerJoin(dramas, eq(featured_dramas.bookId, dramas.bookId))
-    .orderBy(asc(featured_dramas.position))
+    .from(drama_lists)
+    .where(eq(drama_lists.type, 'featured'))
+    .innerJoin(dramas, eq(drama_lists.bookId, dramas.bookId))
+    .orderBy(asc(drama_lists.position))
     .limit(12);
 
   return {
@@ -66,9 +67,10 @@ export async function getLatest(): Promise<HomeResponse> {
       createdAt: dramas.createdAt,
       updatedAt: dramas.updatedAt,
     })
-    .from(latest_dramas)
-    .innerJoin(dramas, eq(latest_dramas.bookId, dramas.bookId))
-    .orderBy(asc(latest_dramas.position))
+    .from(drama_lists)
+    .where(eq(drama_lists.type, 'latest'))
+    .innerJoin(dramas, eq(drama_lists.bookId, dramas.bookId))
+    .orderBy(asc(drama_lists.position))
     .limit(12);
 
   return {

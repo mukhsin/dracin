@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { dramas, latest_dramas, featured_dramas } from "../db/schema.js";
+import { dramas, drama_lists } from "../db/schema.js";
 import { requireAdminAuth } from "../middleware/admin-auth.js";
 import {
   fetchAllDramas,
@@ -168,7 +168,7 @@ async function syncDramas(
       }
     } else if (syncType === "latest") {
       // Clear and insert to latest_dramas table
-      await db.delete(latest_dramas);
+      await db.delete(drama_lists).where(eq(drama_lists.type, 'latest'));
 
       const seenBookIds = new Set<string>();
       const uniqueDramas = dramasFromApi.filter((drama) => {
@@ -196,8 +196,9 @@ async function syncDramas(
         try {
           const position = i + 1;
 
-          await db.insert(latest_dramas).values({
+          await db.insert(drama_lists).values({
             bookId: apiDrama.bookId,
+            type: 'latest',
             position,
           });
 
@@ -212,7 +213,7 @@ async function syncDramas(
       }
     } else if (syncType === "featured") {
       // Clear and insert to featured_dramas table
-      await db.delete(featured_dramas);
+      await db.delete(drama_lists).where(eq(drama_lists.type, 'featured'));
 
       const seenBookIds = new Set<string>();
       const uniqueDramas = dramasFromApi.filter((drama) => {
@@ -240,8 +241,9 @@ async function syncDramas(
         try {
           const position = i + 1;
 
-          await db.insert(featured_dramas).values({
+          await db.insert(drama_lists).values({
             bookId: apiDrama.bookId,
+            type: 'featured',
             position,
           });
 
