@@ -100,10 +100,10 @@ function WatchPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading episode...</p>
+          <p className="text-gray-500">Loading episode...</p>
         </div>
       </div>
     );
@@ -111,17 +111,20 @@ function WatchPage() {
 
   if (error || !episode) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Episode Not Found</h1>
-          <p className="text-muted-foreground mb-6">
+          <AlertCircle className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Episode Not Found
+          </h1>
+          <p className="text-gray-500 mb-6">
             {error?.message || "The episode you're looking for doesn't exist."}
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-black font-semibold hover:bg-[#B89452] transition-colors"
+            style={{ borderRadius: "0" }}
           >
             Refresh Page
           </button>
@@ -131,7 +134,7 @@ function WatchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className="min-h-screen bg-[#0A0A0A] pb-24 md:pb-0">
       {/* Mobile-First Layout */}
       <div className="max-w-lg mx-auto">
         {/* Video Player Container - Full width on mobile */}
@@ -158,7 +161,7 @@ function WatchPage() {
         </div>
 
         {(prevEpisode || nextEpisode) && (
-          <div className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-border md:bg-transparent bg-background/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none">
+          <div className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none">
             <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
                 {prevEpisode ? (
@@ -168,21 +171,25 @@ function WatchPage() {
                       dramaSlug: dramaSlug,
                       episodeNumber: prevEpisode.number.toString(),
                     }}
-                    className="rounded-xl border border-border/50 px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
+                    className="border border-transparent px-4 py-3 text-left text-sm font-semibold text-gray-400 hover:border-primary hover:bg-primary/10 transition-all duration-200 active:scale-95"
+                    style={{ borderRadius: "0" }}
                   >
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-muted-foreground tracking-wider">
+                      <span className="text-xs text-gray-500 tracking-wider">
                         PREVIOUS
                       </span>
-                      <p className="text-sm font-bold text-primary-foreground">
+                      <p className="text-sm font-bold text-white">
                         Episode {prevEpisode.number}
                       </p>
                     </div>
                   </Link>
                 ) : (
-                  <div className="rounded-xl border border-border/30 px-4 py-3 text-left text-sm font-semibold text-muted-foreground/50 opacity-50">
+                  <div
+                    className="border border-gray-700 px-4 py-3 text-left text-sm font-semibold text-gray-600 opacity-50"
+                    style={{ borderRadius: "0" }}
+                  >
                     <div className="flex items-center">
-                      <span className="text-xs text-muted-foreground/50 tracking-wider">
+                      <span className="text-xs text-gray-600 tracking-wider">
                         PREVIOUS
                       </span>
                     </div>
@@ -192,8 +199,11 @@ function WatchPage() {
                   <span className="text-3xl font-bold text-primary tracking-tight">
                     {episode.number}
                   </span>
-                  <div className="w-8 h-0.5 bg-muted-foreground/40 rounded-full" />
-                  <span className="text-sm font-medium text-muted-foreground">
+                  <div
+                    className="w-8 h-0.5 bg-gray-600"
+                    style={{ borderRadius: "0" }}
+                  />
+                  <span className="text-sm font-medium text-gray-500">
                     {episode.drama.totalEpisodes || "?"}
                   </span>
                 </div>
@@ -204,21 +214,25 @@ function WatchPage() {
                       dramaSlug: dramaSlug,
                       episodeNumber: nextEpisode.number.toString(),
                     }}
-                    className="rounded-xl border border-border/50 px-4 py-3 text-right text-sm font-semibold text-muted-foreground hover:border-primary hover:bg-muted/50 transition-all duration-200 active:scale-95"
+                    className="border border-transparent px-4 py-3 text-right text-sm font-semibold text-gray-400 hover:border-primary hover:bg-primary/10 transition-all duration-200 active:scale-95"
+                    style={{ borderRadius: "0" }}
                   >
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-muted-foreground tracking-wider">
+                      <span className="text-xs text-gray-500 tracking-wider">
                         NEXT
                       </span>
-                      <p className="text-sm font-bold text-primary-foreground">
+                      <p className="text-sm font-bold text-white">
                         Episode {nextEpisode.number}
                       </p>
                     </div>
                   </Link>
                 ) : (
-                  <div className="rounded-xl border border-border/30 px-4 py-3 text-right text-sm font-semibold text-muted-foreground/50 opacity-50">
+                  <div
+                    className="border border-gray-700 px-4 py-3 text-right text-sm font-semibold text-gray-600 opacity-50"
+                    style={{ borderRadius: "0" }}
+                  >
                     <div className="flex items-center justify-end">
-                      <span className="text-xs text-muted-foreground/50 tracking-wider">
+                      <span className="text-xs text-gray-600 tracking-wider">
                         NEXT
                       </span>
                     </div>

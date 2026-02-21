@@ -1,0 +1,89 @@
+import { db } from "../db/index.js";
+import { featured_dramas, latest_dramas, dramas } from "../db/schema.js";
+import { eq, asc, desc } from "drizzle-orm";
+import type { Drama } from "@repo/shared/types";
+
+export interface HomeResponse {
+  items: Omit<Drama, "bookId">[];
+}
+
+function sanitizeDrama(drama: Drama) {
+  const { bookId: _b, ...rest } = drama;
+  return rest;
+}
+
+export async function getFeatured(): Promise<HomeResponse> {
+  const results = await db
+    .select({
+      id: dramas.id,
+      bookId: dramas.bookId,
+      title: dramas.title,
+      slug: dramas.slug,
+      description: dramas.description,
+      posterUrl: dramas.posterUrl,
+      status: dramas.status,
+      language: dramas.language,
+      playCount: dramas.playCount,
+      sourceEndpoint: dramas.sourceEndpoint,
+      releaseYear: dramas.releaseYear,
+      country: dramas.country,
+      rating: dramas.rating,
+      totalEpisodes: dramas.totalEpisodes,
+      genres: dramas.genres,
+      metadata: dramas.metadata,
+      createdAt: dramas.createdAt,
+      updatedAt: dramas.updatedAt,
+    })
+    .from(featured_dramas)
+    .innerJoin(dramas, eq(featured_dramas.bookId, dramas.bookId))
+    .orderBy(asc(featured_dramas.position))
+    .limit(12);
+
+  return {
+    items: results.map(sanitizeDrama),
+  };
+}
+
+export async function getLatest(): Promise<HomeResponse> {
+  const results = await db
+    .select({
+      id: dramas.id,
+      bookId: dramas.bookId,
+      title: dramas.title,
+      slug: dramas.slug,
+      description: dramas.description,
+      posterUrl: dramas.posterUrl,
+      status: dramas.status,
+      language: dramas.language,
+      playCount: dramas.playCount,
+      sourceEndpoint: dramas.sourceEndpoint,
+      releaseYear: dramas.releaseYear,
+      country: dramas.country,
+      rating: dramas.rating,
+      totalEpisodes: dramas.totalEpisodes,
+      genres: dramas.genres,
+      metadata: dramas.metadata,
+      createdAt: dramas.createdAt,
+      updatedAt: dramas.updatedAt,
+    })
+    .from(latest_dramas)
+    .innerJoin(dramas, eq(latest_dramas.bookId, dramas.bookId))
+    .orderBy(asc(latest_dramas.position))
+    .limit(12);
+
+  return {
+    items: results.map(sanitizeDrama),
+  };
+}
+
+export async function getPopular(): Promise<HomeResponse> {
+  const results = await db
+    .select()
+    .from(dramas)
+    .orderBy(desc(dramas.playCount))
+    .limit(12);
+
+  return {
+    items: results.map(sanitizeDrama),
+  };
+}

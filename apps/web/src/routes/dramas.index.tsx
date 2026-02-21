@@ -3,7 +3,7 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { Loader2, AlertCircle, Search } from "lucide-react";
@@ -16,10 +16,18 @@ function DramasPage() {
   const navigate = useNavigate();
   const searchParams = useSearch({ from: "/dramas" }) as { q?: string };
   const search = searchParams.q || "";
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const {
     data,
-    isLoading,
+    isLoading: dataLoading,
     error,
     isFetchingNextPage,
     fetchNextPage,
@@ -28,6 +36,8 @@ function DramasPage() {
     search,
     pageSize: 18,
   });
+
+  const isLoading = !showContent || dataLoading;
 
   const dramas = useMemo(() => {
     if (!data) return [];
@@ -49,13 +59,20 @@ function DramasPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#0A0A0A]">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading dramas...</p>
-            </div>
+          <div className="mb-8">
+            <div className="h-8 w-48 bg-gray-800 animate-pulse mb-2" />
+            <div className="h-4 w-64 bg-gray-800 animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[2/3] bg-gray-800 mb-3" />
+                <div className="h-4 w-full bg-gray-800 mb-2" />
+                <div className="h-3 w-2/3 bg-gray-800" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -80,7 +97,8 @@ function DramasPage() {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="bg-primary hover:bg-[#B89452] text-black font-semibold px-6 py-3 transition-colors duration-200"
+                style={{ borderRadius: "0" }}
               >
                 Try Again
               </button>
@@ -125,7 +143,8 @@ function DramasPage() {
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isFetchingNextPage}
-                  className="flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ borderRadius: "0" }}
                 >
                   {isFetchingNextPage ? (
                     <>

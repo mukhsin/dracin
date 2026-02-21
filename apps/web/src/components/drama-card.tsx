@@ -45,7 +45,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
       to="/dramas/$dramaId"
       params={{ dramaId: slug }}
       state={searchQuery ? { searchQuery } : undefined}
-      className="group relative bg-card rounded-lg border overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 h-full"
+      className="group relative bg-card overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 h-full"
     >
       {/* Image Container */}
       <div className="relative aspect-[2/3] w-full overflow-hidden">
@@ -66,7 +66,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
         {/* Status Badge */}
         {drama.status && (
           <div className="absolute top-2 left-2">
-            <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+            <span className="bg-black/70 text-white text-xs px-2 py-1">
               {drama.status.toUpperCase()}
             </span>
           </div>
@@ -74,7 +74,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
 
         {language && (
           <div className="absolute top-2 right-2">
-            <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+            <span className="bg-black/70 text-white text-xs px-2 py-1">
               {languageBadges[languageCode] || languageCode.toUpperCase()}
             </span>
           </div>

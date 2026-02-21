@@ -302,7 +302,7 @@ function transformApiProxyDrama(apiDrama: any) {
     description: apiDrama.intro,
     posterUrl: apiDrama.cover,
     status,
-    language: apiDrama.language || null,
+    language: apiDrama.language === "in" ? "id" : apiDrama.language || null,
     playCount: apiDrama.playCount ? parsePlayCount(apiDrama.playCount) : null,
     sourceEndpoint: null,
     metadata: null,

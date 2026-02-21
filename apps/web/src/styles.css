@@ -9,7 +9,7 @@
   --card-foreground: hsl(0 0% 98%);
   --popover: hsl(240 10% 6%);
   --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(346 100% 58%);
+  --primary: #c9a962;
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(240 4% 16%);
   --secondary-foreground: hsl(0 0% 98%);
@@ -21,7 +21,7 @@
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(240 4% 16%);
   --input: hsl(240 4% 16%);
-  --ring: hsl(346 100% 58%);
+  --ring: #c9a962;
   --radius: 0.5rem;
 }
 
@@ -98,12 +98,12 @@ body {
   scrollbar-width: none;
 }
 
-*:focus-visible {
-  outline: 2px solid hsl(346 100% 58%);
+/**:focus-visible {
+  outline: 2px solid #c9a962;
   outline-offset: 2px;
 }
 
 ::selection {
-  background: hsl(346 100% 58% / 0.3);
+  background: #c9a96233;
   color: hsl(0 0% 98%);
-}
+}*/

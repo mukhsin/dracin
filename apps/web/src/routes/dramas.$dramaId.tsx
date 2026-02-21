@@ -22,9 +22,10 @@ function EpisodeCard({
       to="/dramas/$dramaSlug/$episodeNumber"
       params={{ dramaSlug, episodeNumber: episode.number.toString() }}
       state={searchQuery ? { searchQuery } : undefined}
-      className="group bg-card rounded-lg border aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+      className="group bg-card border border-gray-700 aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
+      style={{ borderRadius: "0" }}
     >
-      <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">
+      <span className="text-sm font-bold text-gray-400 group-hover:text-primary transition-colors">
         {episode.number}
       </span>
     </Link>
@@ -127,15 +128,11 @@ function DramaDetailsPage() {
     playCount,
   } = data;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ongoing":
-        return "bg-green-500/90 text-white";
-      case "completed":
-        return "bg-blue-500/90 text-white";
-      default:
-        return "bg-amber-500/90 text-white";
+  const getStatusStyle = (status: string) => {
+    if (status === "completed") {
+      return "bg-primary text-black font-semibold";
     }
+    return "border border-primary text-primary font-semibold";
   };
 
   return (
@@ -158,7 +155,10 @@ function DramaDetailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-0 md:mb-12">
           {/* Poster */}
           <div className="lg:col-span-1">
-            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl lg:h-full">
+            <div
+              className="relative aspect-[2/3] w-full overflow-hidden shadow-2xl lg:h-full"
+              style={{ borderRadius: "0" }}
+            >
               {posterUrl ? (
                 <Image
                   src={posterUrl}
@@ -185,18 +185,25 @@ function DramaDetailsPage() {
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 {status && (
                   <span
-                    className={`text-sm px-3 py-1.5 rounded-full font-medium ${getStatusColor(status)}`}
+                    className={`text-sm px-3 py-1.5 font-medium ${getStatusStyle(status)}`}
+                    style={{ borderRadius: "0" }}
                   >
                     {status.toUpperCase()}
                   </span>
                 )}
                 {language && (
-                  <span className="bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-full">
+                  <span
+                    className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5"
+                    style={{ borderRadius: "0" }}
+                  >
                     {language.toUpperCase()}
                   </span>
                 )}
                 {episodes && (
-                  <span className="bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+                  <span
+                    className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1"
+                    style={{ borderRadius: "0" }}
+                  >
                     <Film className="w-3 h-3" />
                     {episodes.length} Episodes
                   </span>
@@ -230,16 +237,11 @@ function DramaDetailsPage() {
             </div>
 
             <div className="hidden lg:block overflow-hidden">
-              <div className="flex items-center gap-3 mb-4">
-                <Film className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold">Episodes</h2>
-                <span className="text-muted-foreground">
-                  ({episodes?.length || 0})
-                </span>
-              </div>
-
               {episodes && episodes.length > 0 ? (
-                <div className="overflow-y-auto max-h-[calc(100vh-400px)] pr-2">
+                <div
+                  className="overflow-y-auto pr-2"
+                  style={{ maxHeight: "180px" }}
+                >
                   <div className="grid grid-cols-10 gap-2">
                     {episodes.map((episode) => (
                       <EpisodeCard
@@ -264,24 +266,18 @@ function DramaDetailsPage() {
         </div>
 
         <div className="lg:hidden">
-          <div className="flex items-center gap-3 mb-6">
-            <Film className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl font-bold">Episodes</h2>
-            <span className="text-muted-foreground">
-              ({episodes?.length || 0})
-            </span>
-          </div>
-
           {episodes && episodes.length > 0 ? (
-            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-              {episodes.map((episode) => (
-                <EpisodeCard
-                  key={episode.id}
-                  episode={episode}
-                  dramaSlug={data.slug}
-                  searchQuery={search}
-                />
-              ))}
+            <div className="overflow-y-auto" style={{ maxHeight: "240px" }}>
+              <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+                {episodes.map((episode) => (
+                  <EpisodeCard
+                    key={episode.id}
+                    episode={episode}
+                    dramaSlug={data.slug}
+                    searchQuery={search}
+                  />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/50 rounded-xl">

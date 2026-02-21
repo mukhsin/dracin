@@ -33,7 +33,7 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm border-b"
+          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-primary/20"
           : "bg-transparent"
       }`}
     >
@@ -41,10 +41,15 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Film className="w-5 h-5 text-primary-foreground" />
+            <div
+              className="w-8 h-8 bg-primary flex items-center justify-center group-hover:scale-105 transition-transform"
+              style={{ borderRadius: "0" }}
+            >
+              <Film className="w-5 h-5 text-black" />
             </div>
-            <span className="font-bold text-lg hidden sm:block">Dracin</span>
+            <span className="font-bold text-lg hidden sm:block text-white">
+              Dracin
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -56,11 +61,12 @@ export function Header() {
                   key={link.to}
                   to={link.to}
                   state={location.state}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={`px-4 py-2 text-sm font-medium tracking-wider uppercase transition-all ${
                     active
-                      ? "text-foreground bg-accent"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-gray-400 hover:text-white"
                   }`}
+                  style={{ borderRadius: "0" }}
                 >
                   {link.label}
                 </Link>
@@ -75,7 +81,8 @@ export function Header() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              className="md:hidden p-2 text-gray-400 hover:text-white transition-all"
+              style={{ borderRadius: "0" }}
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
@@ -89,7 +96,7 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t bg-background/95 backdrop-blur-md">
+          <div className="md:hidden bg-[#0A0A0A]/95 backdrop-blur-md border-t border-primary/20">
             <nav className="flex flex-col py-4">
               {navLinks.map((link) => {
                 const active = isActive(link.to);
@@ -99,10 +106,10 @@ export function Header() {
                     to={link.to}
                     state={location.state}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium transition-colors ${
+                    className={`px-4 py-3 text-sm font-medium tracking-wider uppercase transition-colors ${
                       active
-                        ? "text-foreground bg-accent"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        ? "text-primary border-l-2 border-primary"
+                        : "text-gray-400 hover:text-white"
                     }`}
                   >
                     {link.label}

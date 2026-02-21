@@ -69,6 +69,8 @@ export function useDramaDetails(id: string) {
     queryKey: ["drama", id],
     queryFn: () => fetchDramaDetails(id),
     enabled: !!id,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
 
