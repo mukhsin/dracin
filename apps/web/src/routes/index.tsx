@@ -21,7 +21,7 @@ function HeroSkeleton() {
               <div className="h-4 w-3/4 bg-gray-700" />
               <div className="h-4 w-1/2 bg-gray-700" />
             </div>
-            <div className="h-12 w-40 bg-[#C9A962]/50" />
+            <div className="h-12 w-40 bg-primary/50" />
           </div>
         </div>
       </div>
@@ -60,8 +60,8 @@ function ErrorState({
     <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
       <div className="text-center max-w-md">
         <div className="mb-4">
-          <div className="inline-block p-4 border border-[#C9A962]">
-            <RefreshCw className="w-8 h-8 text-[#C9A962]" />
+          <div className="inline-block p-4 border border-primary">
+            <RefreshCw className="w-8 h-8 text-primary" />
           </div>
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">
@@ -71,7 +71,7 @@ function ErrorState({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 bg-[#C9A962] hover:bg-[#B89452] text-black font-semibold px-6 py-3 transition-colors duration-200"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-6 py-3 transition-colors duration-200"
           style={{ borderRadius: "0" }}
         >
           <RefreshCw className="w-4 h-4" />

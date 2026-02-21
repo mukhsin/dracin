@@ -260,8 +260,8 @@ export function VideoControls({
 
           {/* Played progress */}
           <div
-            className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-150"
-            style={{ width: `${progressPercent}%` }}
+            className="absolute inset-y-0 left-0 bg-primary transition-all duration-150"
+            style={{ width: `${progressPercent}%`, borderRadius: "0" }}
           />
 
           {/* Scrubber handle - Bigger for touch */}
@@ -363,8 +363,8 @@ export function VideoControls({
             </div>
 
             {/* Time display */}
-            <div className="text-white/90 text-sm font-medium tabular-nums ml-1 sm:ml-2">
-              <span>{formatTime(currentTime)}</span>
+            <div className="text-sm font-medium tabular-nums ml-1 sm:ml-2">
+              <span className="text-primary">{formatTime(currentTime)}</span>
               <span className="text-white/50 mx-1">/</span>
               <span className="text-white/70">{formatTime(duration)}</span>
             </div>

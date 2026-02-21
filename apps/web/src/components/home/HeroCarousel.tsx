@@ -113,7 +113,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
                     <Link
                       to="/dramas/$dramaId"
                       params={{ dramaId: drama.slug }}
-                      className="inline-flex items-center gap-2 bg-[#C9A962] hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200"
+                      className="inline-flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200"
                       style={{ borderRadius: "0" }}
                     >
                       <span>Play Now</span>
@@ -154,7 +154,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
             onClick={() => scrollTo(index)}
             className={`w-8 h-1 transition-all duration-200 ${
               index === selectedIndex
-                ? "bg-[#C9A962]"
+                ? "bg-primary"
                 : "bg-white/40 hover:bg-white/60"
             }`}
             style={{ borderRadius: "0" }}

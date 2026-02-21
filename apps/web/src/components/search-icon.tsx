@@ -28,7 +28,7 @@ function SearchBox({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-2.5 bg-[#1a1a1a] text-white text-sm focus:outline-none border border-gray-700 focus-visible:border-[#C9A962]"
+        className="w-full px-4 py-2.5 bg-[#1a1a1a] text-white text-sm focus:outline-none border border-gray-700 focus-visible:border-primary"
         style={{ borderRadius: "0" }}
       />
       {value && (
@@ -128,8 +128,8 @@ export function SearchIcon() {
         className={`
           flex items-center justify-center p-2
           transition-all duration-200 ease-out
-          hover:text-[#C9A962]
-          ${isExpanded ? "text-[#C9A962]" : "text-gray-400"}
+          hover:text-primary
+          ${isExpanded ? "text-primary" : "text-gray-400"}
         `}
         style={{ borderRadius: "0" }}
       >

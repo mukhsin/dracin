@@ -136,7 +136,9 @@ export function ThemeSwitcher() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{info.name}</span>
-                      {isSelected && <Check className="w-4 h-4 text-primary" />}
+                      {isSelected && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       {info.description}

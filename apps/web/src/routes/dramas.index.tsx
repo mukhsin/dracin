@@ -97,7 +97,7 @@ function DramasPage() {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="bg-[#C9A962] hover:bg-[#B89452] text-black font-semibold px-6 py-3 transition-colors duration-200"
+                className="bg-primary hover:bg-[#B89452] text-black font-semibold px-6 py-3 transition-colors duration-200"
                 style={{ borderRadius: "0" }}
               >
                 Try Again
@@ -143,7 +143,7 @@ function DramasPage() {
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isFetchingNextPage}
-                  className="flex items-center gap-2 bg-[#C9A962] hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ borderRadius: "0" }}
                 >
                   {isFetchingNextPage ? (

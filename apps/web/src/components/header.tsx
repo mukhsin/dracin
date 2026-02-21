@@ -33,7 +33,7 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#C9A962]/20"
+          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-primary/20"
           : "bg-transparent"
       }`}
     >
@@ -42,7 +42,7 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div
-              className="w-8 h-8 bg-[#C9A962] flex items-center justify-center group-hover:scale-105 transition-transform"
+              className="w-8 h-8 bg-primary flex items-center justify-center group-hover:scale-105 transition-transform"
               style={{ borderRadius: "0" }}
             >
               <Film className="w-5 h-5 text-black" />
@@ -63,7 +63,7 @@ export function Header() {
                   state={location.state}
                   className={`px-4 py-2 text-sm font-medium tracking-wider uppercase transition-all ${
                     active
-                      ? "text-[#C9A962] border-b-2 border-[#C9A962]"
+                      ? "text-primary border-b-2 border-primary"
                       : "text-gray-400 hover:text-white"
                   }`}
                   style={{ borderRadius: "0" }}
@@ -96,7 +96,7 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#0A0A0A]/95 backdrop-blur-md border-t border-[#C9A962]/20">
+          <div className="md:hidden bg-[#0A0A0A]/95 backdrop-blur-md border-t border-primary/20">
             <nav className="flex flex-col py-4">
               {navLinks.map((link) => {
                 const active = isActive(link.to);
@@ -108,7 +108,7 @@ export function Header() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`px-4 py-3 text-sm font-medium tracking-wider uppercase transition-colors ${
                       active
-                        ? "text-[#C9A962] border-l-2 border-[#C9A962]"
+                        ? "text-primary border-l-2 border-primary"
                         : "text-gray-400 hover:text-white"
                     }`}
                   >
