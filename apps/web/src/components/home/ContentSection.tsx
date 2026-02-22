@@ -1,4 +1,5 @@
 import useEmblaCarousel from "embla-carousel-react";
+import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import DramaCard from "../drama-card";
@@ -21,11 +22,14 @@ interface ContentSectionProps {
 }
 
 function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
-  const [emblaRef] = useEmblaCarousel({
-    align: "start",
-    dragFree: true,
-    containScroll: "trimSnaps",
-  });
+  const [emblaRef] = useEmblaCarousel(
+    {
+      align: "start",
+      dragFree: true,
+      containScroll: "trimSnaps",
+    },
+    [WheelGesturesPlugin()]
+  );
 
   return (
     <section className="py-6">

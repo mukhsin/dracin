@@ -336,14 +336,18 @@ function DramaDetailsPage() {
 }
 
 import useEmblaCarousel from "embla-carousel-react";
+import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 
 function SuggestionsSection({ dramaSlug }: { dramaSlug: string }) {
   const { data: suggestions, isLoading } = useDramaSuggestions(dramaSlug);
-  const [emblaRef] = useEmblaCarousel({
-    align: "start",
-    dragFree: true,
-    containScroll: "trimSnaps",
-  });
+  const [emblaRef] = useEmblaCarousel(
+    {
+      align: "start",
+      dragFree: true,
+      containScroll: "trimSnaps",
+    },
+    [WheelGesturesPlugin()]
+  );
 
   if (isLoading || !suggestions || suggestions.length === 0) {
     return null;
