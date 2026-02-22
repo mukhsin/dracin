@@ -248,3 +248,42 @@ app.get(
 
 export const dramaRoutes = app;
 export type DramaRoutes = typeof app;
+
+
+// GET /api/dramas/:slug/suggestions - Get drama suggestions based on title
+app.get("/:slug/suggestions", zValidator("param", GetDramaParamsSchema), async (c) => {
+  const { slug } = c.req.valid("param");
+
+  // Get the drama to fetch suggestions based on its title
+  const drama = await dramaService.getDramaMetadataBySlug(slug);
+
+  if (!drama) {
+    throw new HTTPException(404, {
+      message: `Drama with slug "${slug}" not found`,
+    });
+  }
+
+  // Fetch suggestions based on the drama title, excluding current drama, max 10
+  const suggestions = await dramaService.getSuggestionsByTitle(drama.title, drama.slug, 10);
+
+  // Sanitize suggestions (map posterUrl)
+  const sanitizedSuggestions = suggestions.map((suggestion) => ({
+    id: suggestion.id,
+    title: suggestion.title,
+    slug: suggestion.slug,
+    description: suggestion.description,
+    posterUrl: `/api/dramas/${suggestion.slug}/poster.jpg`,
+    status: suggestion.status,
+    language: suggestion.language,
+    playCount: suggestion.playCount,
+    totalEpisodes: suggestion.totalEpisodes,
+  }));
+
+  // Add caching headers (5 minutes - suggestions don't change often)
+  c.header("Cache-Control", "public, max-age=300");
+
+  return c.json({
+    success: true,
+    data: sanitizedSuggestions,
+  });
+});

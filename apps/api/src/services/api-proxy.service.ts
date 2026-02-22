@@ -184,6 +184,15 @@ export interface Drama {
   language?: string;
 }
 
+export interface SuggestDrama {
+  bookId: string;
+  bookName: string;
+  introduction: string;
+  cover: string;
+  inLibraryCount?: number;
+  tagNames?: string[];
+}
+
 export interface Episode {
   id: string;
   title: string;
@@ -279,8 +288,8 @@ export async function search(
   return transformResponse(response);
 }
 
-export async function suggest(q: string): Promise<ApiResponse<Drama[]>> {
-  const response = await fetchWithRetry<Drama[]>("/drama/suggest", { q });
+export async function suggest(q: string): Promise<ApiResponse<SuggestDrama[]>> {
+  const response = await fetchWithRetry<SuggestDrama[]>("/drama/suggest", { q });
   return transformResponse(response);
 }
 

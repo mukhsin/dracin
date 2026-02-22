@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useLocation, useRouter } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
+import { useDramaSuggestions } from "../hooks/use-drama-suggestions.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
+import DramaCard from "../components/drama-card.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -324,6 +326,54 @@ function DramaDetailsPage() {
               <p className="text-muted-foreground">No episodes available yet</p>
             </div>
           )}
+        </div>
+
+        {/* Suggestions Section */}
+        <SuggestionsSection dramaSlug={dramaId} />
+      </div>
+    </div>
+  );
+}
+
+import useEmblaCarousel from "embla-carousel-react";
+
+function SuggestionsSection({ dramaSlug }: { dramaSlug: string }) {
+  const { data: suggestions, isLoading } = useDramaSuggestions(dramaSlug);
+  const [emblaRef] = useEmblaCarousel({
+    align: "start",
+    dragFree: true,
+    containScroll: "trimSnaps",
+  });
+
+  if (isLoading || !suggestions || suggestions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-12 pt-8 border-t border-gray-800">
+      <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex py-4">
+          {suggestions.map((drama) => (
+            <div
+              key={drama.id}
+              className="flex-[0_0_auto] w-44 md:w-52 px-2 hover:scale-105 transition-transform duration-300 origin-center"
+            >
+              <DramaCard
+                drama={{
+                  id: drama.id,
+                  title: drama.title,
+                  slug: drama.slug,
+                  description: drama.description,
+                  posterUrl: drama.posterUrl,
+                  playCount: drama.playCount,
+                  language: drama.language,
+                  status: drama.status,
+                }}
+                totalEpisodes={drama.totalEpisodes}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>

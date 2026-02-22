@@ -1,4 +1,4 @@
-import { eq, sql, like, desc, asc, and, or, count } from "drizzle-orm";
+import { eq, sql, like, desc, asc, and, or, count, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { dramas, episodes, drama_lists } from "../db/schema.js";
 import type { Drama, Episode, PaginatedResponse } from "@repo/shared/types";
@@ -6,8 +6,10 @@ import {
   getEpisodes,
   getLatest,
   search,
+  suggest,
   type Episode as ApiProxyEpisode,
   type Drama as ApiProxyDrama,
+  type SuggestDrama as ApiProxySuggestDrama,
 } from "./api-proxy.service.js";
 import {
   validateVideoUrl,
@@ -1223,6 +1225,95 @@ export class DramaService {
       }
     } catch (error) {
       console.error(`[DramaService] Failed to cache episodes:`, error);
+    }
+  }
+
+  /**
+   * Get drama suggestions based on title from api-proxy
+   * Returns sanitized drama list (without bookId, etc.)
+   * Looks up slugs from database for proper linking
+   */
+  async getSuggestionsByTitle(
+    title: string, 
+    excludeSlug?: string, 
+    limit: number = 10
+  ): Promise<Array<Pick<Drama, 'id' | 'title' | 'slug' | 'description' | 'posterUrl' | 'status' | 'language' | 'playCount' | 'totalEpisodes'>>> {
+    console.log(`[DramaService] Fetching suggestions for title: ${title}${excludeSlug ? ` (excluding ${excludeSlug})` : ''}`);
+    
+    try {
+      // 1. Get bookIds from api-proxy suggest endpoint
+      const result = await suggest(title);
+      
+      if (!result.success || !result.data) {
+        console.log(`[DramaService] No suggestions from api-proxy for: ${title}`);
+        return [];
+      }
+      
+      // Handle different response formats - get bookIds
+      let bookIds: string[] = [];
+      if (Array.isArray(result.data)) {
+        bookIds = result.data.map((d: ApiProxySuggestDrama) => d.bookId);
+      } else if (typeof result.data === 'object') {
+        // Try to find array in the data object
+        const possibleArrays = Object.values(result.data).filter(v => Array.isArray(v));
+        if (possibleArrays.length > 0) {
+          bookIds = (possibleArrays[0] as ApiProxySuggestDrama[]).map(d => d.bookId);
+        }
+      }
+      
+      if (bookIds.length === 0) {
+        console.log(`[DramaService] No bookIds found in suggest response`);
+        return [];
+      }
+      
+      console.log(`[DramaService] Found ${bookIds.length} bookIds from api-proxy`);
+      
+      // 2. Query dramas from database using those bookIds
+      const existingDramas = await db
+        .select({
+          id: dramas.id,
+          bookId: dramas.bookId,
+          title: dramas.title,
+          slug: dramas.slug,
+          description: dramas.description,
+          posterUrl: dramas.posterUrl,
+          status: dramas.status,
+          language: dramas.language,
+          playCount: dramas.playCount,
+          totalEpisodes: dramas.totalEpisodes,
+        })
+        .from(dramas)
+        .where(inArray(dramas.bookId, bookIds));
+      
+      console.log(`[DramaService] Found ${existingDramas.length} dramas in database`);
+      
+      // 3. Filter out current drama if excludeSlug provided
+      let filteredDramas = existingDramas;
+      if (excludeSlug) {
+        filteredDramas = existingDramas.filter(d => d.slug !== excludeSlug);
+        console.log(`[DramaService] Filtered out current drama, ${filteredDramas.length} remaining`);
+      }
+      
+      // 4. Limit results
+      filteredDramas = filteredDramas.slice(0, limit);
+      
+      // 5. Return dramas from database (sanitized - no sensitive fields)
+      const suggestions = filteredDramas.map(drama => ({
+        id: drama.id,
+        title: drama.title,
+        slug: drama.slug,
+        description: drama.description,
+        posterUrl: drama.posterUrl,
+        status: drama.status,
+        language: drama.language,
+        playCount: drama.playCount,
+        totalEpisodes: drama.totalEpisodes,
+      }));
+      
+      return suggestions;
+    } catch (error) {
+      console.error(`[DramaService] Failed to fetch suggestions:`, error);
+      return [];
     }
   }
 }
