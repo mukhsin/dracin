@@ -39,6 +39,7 @@ interface SyncStats {
   updated: number;
   errors: string[];
   duration: number;
+  rankType?: number;
 }
 
 interface SyncResponse {
@@ -108,7 +109,11 @@ async function syncDramas(
       throw new Error(`API proxy returned error: ${apiResponse.message}`);
     }
 
-    const dramasFromApi = apiResponse.data;
+    if (apiResponse.data === null || apiResponse.data === undefined) {
+      throw new Error("API proxy returned null data");
+    }
+
+    const dramasFromApi = apiResponse.data || [];
     stats.total = dramasFromApi.length;
 
     console.log(`[AdminDramas] Fetched ${stats.total} dramas from api-proxy`);
@@ -343,13 +348,14 @@ async function syncRankDramas(
       throw new Error(`API proxy returned error: ${apiResponse.message}`);
     }
 
-    const dramasFromApi = apiResponse.data;
+    if (apiResponse.data === null || apiResponse.data === undefined) {
+      throw new Error("API proxy returned null data");
+    }
+
+    const dramasFromApi = apiResponse.data || [];
     stats.total = dramasFromApi.length;
 
     console.log(`[AdminDramas] Fetched ${stats.total} dramas from api-proxy for rank-${rankType}`);
-
-    // Clear existing entries for the rank type
-    await db.delete(drama_lists).where(eq(drama_lists.type, typeString));
 
     // Deduplicate by bookId
     const seenBookIds = new Set<string>();
@@ -373,6 +379,16 @@ async function syncRankDramas(
       );
     }
 
+    // Get existing entries for this rank type
+    const existingEntries = await db
+      .select({ bookId: drama_lists.bookId })
+      .from(drama_lists)
+      .where(eq(drama_lists.type, typeString));
+    const existingBookIds = new Set(existingEntries.map(e => e.bookId));
+
+    // Clear existing entries for the rank type
+    await db.delete(drama_lists).where(eq(drama_lists.type, typeString));
+
     // Insert with position (index + 1)
     for (let i = 0; i < uniqueDramas.length; i++) {
       const apiDrama = uniqueDramas[i];
@@ -385,7 +401,12 @@ async function syncRankDramas(
           position,
         });
 
-        stats.inserted++;
+        // Count as update if bookId existed in this rank before, otherwise insert
+        if (existingBookIds.has(apiDrama.bookId)) {
+          stats.updated++;
+        } else {
+          stats.inserted++;
+        }
       } catch (error) {
         let errorDetails =
           error instanceof Error ? error.message : String(error);
@@ -401,6 +422,8 @@ async function syncRankDramas(
       `[AdminDramas] Rank-${rankType} sync completed: ${stats.total} total, ${stats.inserted} inserted, ${stats.updated} updated, ${stats.errors.length} errors, ${stats.duration}ms`,
     );
 
+    stats.rankType = rankType;
+
     const response: SyncResponse = {
       success: true,
       data: stats,
@@ -409,6 +432,7 @@ async function syncRankDramas(
     return c.json(response, 200);
   } catch (error) {
     stats.duration = Date.now() - startTime;
+    stats.rankType = rankType;
     const errorMsg = `Rank-${rankType} sync failed: ${error instanceof Error ? error.message : String(error)}`;
     stats.errors.push(errorMsg);
 
