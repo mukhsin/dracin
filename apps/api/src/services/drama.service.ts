@@ -15,6 +15,7 @@ import {
   hasAnyVideoUrl,
   decodeHtmlEntities,
 } from "../lib/url-validator.js";
+import { parsePlayCount } from "@repo/shared/utils";
 
 // ============================================
 // Types for Service Responses
@@ -646,7 +647,7 @@ export class DramaService {
       posterUrl: apiDrama.cover,
       status,
       language: null,
-      playCount: apiDrama.playCount || null,
+      playCount: parsePlayCount(apiDrama.playCount),
       sourceEndpoint: null,
       metadata: null,
       totalEpisodes: apiDrama.chapterCount || null,
