@@ -11,11 +11,24 @@ import {
 import { eq } from "drizzle-orm";
 
 function parsePlayCount(
-  playCountStr: string | null | undefined,
+  playCountStr: string | number | null | undefined,
 ): number | null {
   if (!playCountStr) return null;
 
+  // If it's already a number, return it
+  if (typeof playCountStr === 'number') {
+    return Math.round(playCountStr);
+  }
+
   const str = playCountStr.toString().trim().toUpperCase();
+
+  // Try to parse as plain number first
+  const plainNumber = parseFloat(str);
+  if (!isNaN(plainNumber) && !str.match(/[MK]$/)) {
+    return Math.round(plainNumber);
+  }
+
+  // Handle K/M suffixes
   const match = str.match(/^(\d+\.?\d*)([MK])$/);
 
   if (!match) return null;
@@ -186,7 +199,7 @@ async function syncDramas(
       }
     } else if (syncType === "latest") {
       // Clear and insert to latest_dramas table
-      await db.delete(drama_lists).where(eq(drama_lists.type, 'latest'));
+      await db.delete(drama_lists).where(eq(drama_lists.type, "latest"));
 
       const seenBookIds = new Set<string>();
       const uniqueDramas = dramasFromApi.filter((drama) => {
@@ -216,7 +229,7 @@ async function syncDramas(
 
           await db.insert(drama_lists).values({
             bookId: apiDrama.bookId,
-            type: 'latest',
+            type: "latest",
             position,
           });
 
@@ -231,7 +244,7 @@ async function syncDramas(
       }
     } else if (syncType === "featured") {
       // Clear and insert to featured_dramas table
-      await db.delete(drama_lists).where(eq(drama_lists.type, 'featured'));
+      await db.delete(drama_lists).where(eq(drama_lists.type, "featured"));
 
       const seenBookIds = new Set<string>();
       const uniqueDramas = dramasFromApi.filter((drama) => {
@@ -261,7 +274,7 @@ async function syncDramas(
 
           await db.insert(drama_lists).values({
             bookId: apiDrama.bookId,
-            type: 'featured',
+            type: "featured",
             position,
           });
 
@@ -308,10 +321,7 @@ async function syncDramas(
   }
 }
 
-async function syncRankDramas(
-  c: any,
-  rankType: number,
-): Promise<Response> {
+async function syncRankDramas(c: any, rankType: number): Promise<Response> {
   const startTime = Date.now();
   const stats: SyncStats = {
     total: 0,
@@ -324,7 +334,7 @@ async function syncRankDramas(
   try {
     // Map rank type to type string
     const typeString = `rank_${rankType}` as "rank_1" | "rank_2" | "rank_3";
-    
+
     console.log(
       `[AdminDramas] Starting rank-${rankType} drama sync from api-proxy...`,
     );
@@ -355,7 +365,9 @@ async function syncRankDramas(
     const dramasFromApi = apiResponse.data || [];
     stats.total = dramasFromApi.length;
 
-    console.log(`[AdminDramas] Fetched ${stats.total} dramas from api-proxy for rank-${rankType}`);
+    console.log(
+      `[AdminDramas] Fetched ${stats.total} dramas from api-proxy for rank-${rankType}`,
+    );
 
     // Deduplicate by bookId
     const seenBookIds = new Set<string>();
@@ -384,7 +396,7 @@ async function syncRankDramas(
       .select({ bookId: drama_lists.bookId })
       .from(drama_lists)
       .where(eq(drama_lists.type, typeString));
-    const existingBookIds = new Set(existingEntries.map(e => e.bookId));
+    const existingBookIds = new Set(existingEntries.map((e) => e.bookId));
 
     // Clear existing entries for the rank type
     await db.delete(drama_lists).where(eq(drama_lists.type, typeString));
