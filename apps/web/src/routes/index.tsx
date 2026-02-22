@@ -83,14 +83,14 @@ function ErrorState({
 }
 
 export function HomePage() {
-  const { rank1, featured, latest, popular, isError, isLoading: isLoadingData } = useHomeData();
+  const { rank1, featured, latest, popular, isError } = useHomeData();
   
-  // Check if we have any cached data available immediately
+  // Check if any data is already available (cached)
   const hasAnyData = !!(rank1.data || featured.data || latest.data || popular.data);
   
-  // Show skeleton only when loading fresh data (no cache)
-  // If cached data exists, show content immediately
-  const isLoading = !hasAnyData && isLoadingData;
+  // Only show skeleton on initial load when no data exists yet
+  // If we have cached data, show it immediately even if some sections are still loading
+  const isInitialLoading = !hasAnyData && (rank1.isLoading || featured.isLoading || latest.isLoading || popular.isLoading);
 
   if (isError) {
     return (
@@ -103,7 +103,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
-      {isLoading ? (
+      {isInitialLoading ? (
         <HeroSkeleton />
       ) : rank1.data && rank1.data.items.length > 0 ? (
         <HeroCarousel
@@ -118,7 +118,7 @@ export function HomePage() {
       ) : null}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading ? (
+        {isInitialLoading ? (
           <SectionSkeleton />
         ) : popular.data && popular.data.items.length > 0 ? (
           <ContentSection
@@ -137,7 +137,7 @@ export function HomePage() {
           />
         ) : null}
 
-        {isLoading ? (
+        {isInitialLoading ? (
           <SectionSkeleton />
         ) : featured.data && featured.data.items.length > 0 ? (
           <ContentSection
@@ -156,7 +156,7 @@ export function HomePage() {
           />
         ) : null}
 
-        {isLoading ? (
+        {isInitialLoading ? (
           <SectionSkeleton />
         ) : latest.data && latest.data.items.length > 0 ? (
           <ContentSection
