@@ -63,6 +63,10 @@ async function applyMigration0004() {
       `DROP INDEX IF EXISTS "watch_history_user_episode_idx"`,
     );
     await client.execute(`DROP INDEX IF EXISTS "watch_history_episode_idx"`);
+    
+    // Disable foreign keys temporarily to allow dropping column with FK
+    await client.execute(`PRAGMA foreign_keys = OFF`);
+    
     await client.execute(
       `ALTER TABLE "watch_history" ADD COLUMN "drama_slug" text NOT NULL DEFAULT ''`,
     );
@@ -79,6 +83,9 @@ async function applyMigration0004() {
         `ALTER TABLE "watch_history" DROP COLUMN "episode_id"`,
       );
     }
+    
+    // Re-enable foreign keys
+    await client.execute(`PRAGMA foreign_keys = ON`);
 
     await client.execute(
       `CREATE UNIQUE INDEX IF NOT EXISTS "watch_history_user_drama_episode_idx" ON "watch_history" ("user_id", "drama_slug", "episode_number")`,
