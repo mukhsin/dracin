@@ -83,7 +83,7 @@ function ErrorState({
 }
 
 export function HomePage() {
-  const { featured, latest, popular, isError } = useHomeData();
+  const { rank1, featured, latest, popular, isError } = useHomeData();
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -103,15 +103,19 @@ export function HomePage() {
   }
 
   const isLoading =
-    !showContent || featured.isLoading || latest.isLoading || popular.isLoading;
+    !showContent ||
+    rank1.isLoading ||
+    featured.isLoading ||
+    latest.isLoading ||
+    popular.isLoading;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       {isLoading ? (
         <HeroSkeleton />
-      ) : featured.data && featured.data.items.length > 0 ? (
+      ) : rank1.data && rank1.data.items.length > 0 ? (
         <HeroCarousel
-          dramas={featured.data.items.map((item) => ({
+          dramas={rank1.data.items.map((item) => ({
             id: item.id,
             title: item.title,
             slug: item.slug,

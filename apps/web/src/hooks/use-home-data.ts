@@ -23,6 +23,19 @@ interface DramasResponse {
   total: number;
 }
 
+async function fetchRank1Dramas(): Promise<DramasResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/dramas/rank-1`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch rank-1 dramas");
+  }
+
+  const data = await res.json();
+  return data.data;
+}
+
 async function fetchFeaturedDramas(): Promise<DramasResponse> {
   const res = await fetch(`${API_BASE_URL}/api/dramas/featured`, {
     credentials: "include",
@@ -66,6 +79,13 @@ export function useHomeData() {
   const queries = useQueries({
     queries: [
       {
+        queryKey: ["dramas", "rank-1"],
+        queryFn: fetchRank1Dramas,
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        retry: 2,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      },
+      {
         queryKey: ["dramas", "featured"],
         queryFn: fetchFeaturedDramas,
         staleTime: 10 * 60 * 1000, // 10 minutes
@@ -89,9 +109,15 @@ export function useHomeData() {
     ],
   });
 
-  const [featured, latest, popular] = queries;
+  const [rank1, featured, latest, popular] = queries;
 
   return {
+    rank1: {
+      data: rank1.data,
+      isLoading: rank1.isLoading,
+      isError: rank1.isError,
+      error: rank1.error,
+    },
     featured: {
       data: featured.data,
       isLoading: featured.isLoading,
