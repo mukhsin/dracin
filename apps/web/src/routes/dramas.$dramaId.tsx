@@ -192,12 +192,12 @@ function DramaDetailsPage() {
           </Link>
         </div>
 
-        {/* Hero Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-0 md:mb-12">
-          {/* Poster */}
-          <div className="lg:col-span-1">
+        {/* Hero Section - Mobile: Full width poster stacked, Desktop: Side by side */}
+        <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-0 md:mb-12">
+          {/* Poster - Full width on mobile */}
+          <div className="lg:col-span-1 -mx-4 md:mx-0">
             <div
-              className="relative aspect-[2/3] w-full overflow-hidden shadow-2xl lg:h-full"
+              className="relative aspect-[2/3] w-full overflow-hidden shadow-2xl md:aspect-[2/3]"
               style={{ borderRadius: "0" }}
             >
               {posterUrl ? (

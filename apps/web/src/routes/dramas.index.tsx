@@ -70,15 +70,6 @@ function DramasPage() {
       ? searchParams.t
       : "";
 
-  const [showContent, setShowContent] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowContent(true);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
-
   const {
     data,
     isLoading: dataLoading,
@@ -92,7 +83,8 @@ function DramasPage() {
     pageSize: 18,
   });
 
-  const isLoading = !showContent || dataLoading;
+  // Only show loading skeleton when actually loading without cached data
+  const isLoading = dataLoading && !data;
 
   const dramas = useMemo(() => {
     if (!data) return [];

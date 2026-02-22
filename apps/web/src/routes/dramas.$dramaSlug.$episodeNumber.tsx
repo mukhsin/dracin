@@ -101,9 +101,9 @@ function WatchPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A]">
-        {/* Video Skeleton */}
-        <div className="relative bg-black">
-          <div className="aspect-video bg-gray-800 animate-pulse" />
+        {/* Video Skeleton - Vertical format */}
+        <div className="relative bg-black flex justify-center">
+          <div className="aspect-[9/16] max-h-[70vh] w-full max-w-md bg-gray-800 animate-pulse" />
         </div>
         
         {/* Navigation Skeleton */}
