@@ -1,7 +1,7 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 import type { EpisodeWithNavigation } from "@repo/shared";
@@ -100,10 +100,37 @@ function WatchPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-gray-500">Loading episode...</p>
+      <div className="min-h-screen bg-[#0A0A0A]">
+        {/* Video Skeleton */}
+        <div className="relative bg-black">
+          <div className="aspect-video bg-gray-800 animate-pulse" />
+        </div>
+        
+        {/* Navigation Skeleton */}
+        <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
+          <div className="max-w-lg mx-auto px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+              </div>
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <div className="h-8 w-24 bg-gray-800 animate-pulse" />
+                <div className="h-4 w-16 bg-gray-800 animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Title & Description Skeleton */}
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <div className="h-6 w-3/4 bg-gray-800 animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-gray-800 animate-pulse" />
+            <div className="h-4 w-2/3 bg-gray-800 animate-pulse" />
+          </div>
         </div>
       </div>
     );
