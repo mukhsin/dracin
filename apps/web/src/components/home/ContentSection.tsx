@@ -38,7 +38,7 @@ function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
         {viewAllLink && (
           <Link
             to={viewAllLink}
-            className="inline-flex items-center gap-1 text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
             See all
             <ArrowRight className="w-4 h-4" />
