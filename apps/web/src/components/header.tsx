@@ -68,8 +68,9 @@ export function Header() {
             >
               <LogoIcon className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg hidden sm:block text-white">
-              DraSyn
+            <span className="font-bold text-lg hidden sm:block">
+              <span className="text-primary">Dra</span>
+              <span className="text-white">Syn</span>
             </span>
           </Link>
 
