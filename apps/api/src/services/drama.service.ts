@@ -322,6 +322,23 @@ export class DramaService {
   }
 
   /**
+   * Get drama metadata by slug without fetching episodes
+   * Used for drama details page where episodes are rendered client-side
+   */
+  async getDramaMetadataBySlug(slug: string): Promise<Drama | null> {
+    const [dramaRow] = await db
+      .select()
+      .from(dramas)
+      .where(eq(dramas.slug, slug));
+
+    if (!dramaRow) {
+      return null;
+    }
+
+    return mapDramaRowToShared(dramaRow);
+  }
+
+  /**
    * Get episodes by drama slug
    */
   async getEpisodesByDramaSlug(dramaSlug: string): Promise<{
@@ -504,6 +521,308 @@ export class DramaService {
         slug: dramaRow.slug,
       },
     };
+  }
+
+  /**
+   * Get episode by drama slug and episode number with validation
+   * If cached video URLs are invalid, fetches fresh episodes from API proxy
+   * Saves fresh episodes to database (fire-and-forget) and returns immediately
+   */
+  async getEpisodeByNumberWithValidation(
+    dramaSlug: string,
+    episodeNumber: number,
+  ): Promise<(EpisodeWithDramaAndNavigation & { source: "cache" | "fresh" }) | null> {
+    // First get the episode from database
+    let episodeWithDrama = await this.getEpisodeByNumber(dramaSlug, episodeNumber);
+
+    // Helper function to get navigation (prev/next episodes)
+    const getNavigation = async (dramaId: string, currentNumber: number): Promise<{ prevEpisode: EpisodeSummary | null; nextEpisode: EpisodeSummary | null }> => {
+      const [prevEpisode] = await db
+        .select({ id: episodes.id, number: episodes.number, title: episodes.title })
+        .from(episodes)
+        .where(and(eq(episodes.dramaId, dramaId), eq(episodes.number, currentNumber - 1)))
+        .limit(1);
+
+      const [nextEpisode] = await db
+        .select({ id: episodes.id, number: episodes.number, title: episodes.title })
+        .from(episodes)
+        .where(and(eq(episodes.dramaId, dramaId), eq(episodes.number, currentNumber + 1)))
+        .limit(1);
+
+      return { prevEpisode: prevEpisode || null, nextEpisode: nextEpisode || null };
+    };
+
+    // If episode not in database, fetch fresh from API proxy
+    if (!episodeWithDrama) {
+      console.log(`[DramaService] Episode ${episodeNumber} not in DB for ${dramaSlug}, fetching fresh`);
+      
+      // Get drama to get bookId
+      const dramaFull = await this.getBySlug(dramaSlug);
+      if (!dramaFull || !dramaFull.bookId) {
+        console.log(`[DramaService] Cannot fetch episodes - no bookId for ${dramaSlug}`);
+        return null;
+      }
+
+      const bookIdString = dramaFull.bookId.toString();
+      
+      try {
+        const result = await getEpisodes(bookIdString);
+        
+        if (!result.success || result.data.episodes.length === 0) {
+          console.log(`[DramaService] No episodes found from api-proxy for bookId ${bookIdString}`);
+          return null;
+        }
+
+        // Transform fresh episodes
+        const freshEpisodes = result.data.episodes.map((apiEpisode: ApiProxyEpisode) => ({
+          id: crypto.randomUUID(),
+          dramaId: dramaFull.id,
+          bookId: bookIdString,
+          number: apiEpisode.index + 1,
+          title: apiEpisode.title,
+          description: null,
+          duration: null,
+          videoUrls: apiEpisode.url
+            ? this.transformApiProxyUrlToVideoUrls(apiEpisode.url)
+            : {},
+          sourceUrl: apiEpisode.url ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+
+        // Find the specific episode we need
+        const freshEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber);
+        
+        if (!freshEpisode) {
+          console.log(`[DramaService] Episode ${episodeNumber} not found in fresh data`);
+          return null;
+        }
+
+        // FIRE-AND-FORGET: Save fresh episodes to database (don't await)
+        console.log(`[DramaService] Fire-and-forget: Saving ${freshEpisodes.length} fresh episodes to DB`);
+        this.saveEpisodesToDbFireAndForget(dramaFull.id, bookIdString, freshEpisodes);
+
+        // Build navigation from fresh episodes data
+        const prevEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber - 1);
+        const nextEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber + 1);
+
+        // Return fresh episode immediately without waiting for DB save
+        return {
+          ...freshEpisode,
+          drama: {
+            id: dramaFull.id,
+            title: dramaFull.title,
+            slug: dramaFull.slug,
+            posterUrl: dramaFull.posterUrl,
+            totalEpisodes: dramaFull.totalEpisodes,
+          },
+          navigation: {
+            prevEpisode: prevEpisode ? { id: prevEpisode.id, number: prevEpisode.number, title: prevEpisode.title } : null,
+            nextEpisode: nextEpisode ? { id: nextEpisode.id, number: nextEpisode.number, title: nextEpisode.title } : null,
+          },
+          source: "fresh",
+        };
+      } catch (error) {
+        console.error(`[DramaService] Failed to fetch fresh episodes for ${dramaSlug}:`, error);
+        return null;
+      }
+    }
+
+    const { drama, ...episode } = episodeWithDrama;
+
+    // Check if episode has valid video URLs
+    if (hasAnyVideoUrl(episode.videoUrls)) {
+      const urlToValidate = getHighestQualityUrl(episode.videoUrls);
+
+      if (urlToValidate) {
+        console.log(
+          `[DramaService] Validating URL for episode ${episodeNumber} of ${dramaSlug}: ${urlToValidate.substring(0, 50)}...`,
+        );
+        const isValid = await validateVideoUrl(urlToValidate);
+
+        if (isValid) {
+          console.log(`[DramaService] Cache valid for episode ${episodeNumber} of ${dramaSlug}`);
+          // Get full drama details for posterUrl and totalEpisodes
+          const [dramaDetails] = await db
+            .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
+            .from(dramas)
+            .where(eq(dramas.id, drama.id))
+            .limit(1);
+          const navigation = await getNavigation(drama.id, episode.number);
+          return {
+            ...episode,
+            drama: { ...drama, posterUrl: dramaDetails?.posterUrl ?? null, totalEpisodes: dramaDetails?.totalEpisodes ?? null },
+            navigation,
+            source: "cache",
+          };
+        }
+
+        console.log(
+          `[DramaService] Cache stale for episode ${episodeNumber} of ${dramaSlug}, fetching fresh`,
+        );
+      }
+    } else {
+      console.log(
+        `[DramaService] No cached URLs for episode ${episodeNumber} of ${dramaSlug}, fetching fresh`,
+      );
+    }
+
+    // Need to fetch fresh episodes
+    // Get full drama to get bookId
+    const dramaFull = await this.getBySlug(dramaSlug);
+    if (!dramaFull || !dramaFull.bookId) {
+      console.log(`[DramaService] Cannot fetch fresh episodes - no bookId for ${dramaSlug}`);
+      const navigation = await getNavigation(drama.id, episode.number);
+      const [dramaDetails] = await db
+        .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
+        .from(dramas)
+        .where(eq(dramas.id, drama.id))
+        .limit(1);
+      return {
+        ...episode,
+        drama: { ...drama, posterUrl: dramaDetails?.posterUrl ?? null, totalEpisodes: dramaDetails?.totalEpisodes ?? null },
+        navigation,
+        source: "cache",
+      };
+    }
+
+    const bookIdString = dramaFull.bookId.toString();
+
+    // Fetch fresh episodes from API proxy
+    console.log(`[DramaService] Fetching fresh episodes for bookId ${bookIdString}`);
+    try {
+      const result = await getEpisodes(bookIdString);
+
+      if (!result.success || result.data.episodes.length === 0) {
+        console.log(`[DramaService] No episodes found from api-proxy for bookId ${bookIdString}`);
+        const navigation = await getNavigation(drama.id, episode.number);
+        const [dramaDetails] = await db
+          .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
+          .from(dramas)
+          .where(eq(dramas.id, drama.id))
+          .limit(1);
+        return {
+          ...episode,
+          drama: { ...drama, posterUrl: dramaDetails?.posterUrl ?? null, totalEpisodes: dramaDetails?.totalEpisodes ?? null },
+          navigation,
+          source: "cache",
+        };
+      }
+
+      // Transform fresh episodes
+      const freshEpisodes = result.data.episodes.map((apiEpisode: ApiProxyEpisode) => ({
+        id: crypto.randomUUID(),
+        dramaId: dramaFull.id,
+        bookId: bookIdString,
+        number: apiEpisode.index + 1,
+        title: apiEpisode.title,
+        description: null,
+        duration: null,
+        videoUrls: apiEpisode.url
+          ? this.transformApiProxyUrlToVideoUrls(apiEpisode.url)
+          : {},
+        sourceUrl: apiEpisode.url ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
+      // Find the specific episode we need
+      const freshEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber);
+
+      if (!freshEpisode) {
+        console.log(`[DramaService] Episode ${episodeNumber} not found in fresh data`);
+        const navigation = await getNavigation(drama.id, episode.number);
+        const [dramaDetails] = await db
+          .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
+          .from(dramas)
+          .where(eq(dramas.id, drama.id))
+          .limit(1);
+        return {
+          ...episode,
+          drama: { ...drama, posterUrl: dramaDetails?.posterUrl ?? null, totalEpisodes: dramaDetails?.totalEpisodes ?? null },
+          navigation,
+          source: "cache",
+        };
+      }
+
+      // FIRE-AND-FORGET: Save fresh episodes to database (don't await)
+      console.log(`[DramaService] Fire-and-forget: Saving ${freshEpisodes.length} fresh episodes to DB`);
+      this.saveEpisodesToDbFireAndForget(dramaFull.id, bookIdString, freshEpisodes);
+
+      // Build navigation from fresh episodes data
+      const prevEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber - 1);
+      const nextEpisode = freshEpisodes.find((ep) => ep.number === episodeNumber + 1);
+
+      // Return fresh episode immediately without waiting for DB save
+      return {
+        ...freshEpisode,
+        drama: {
+          id: dramaFull.id,
+          title: dramaFull.title,
+          slug: dramaFull.slug,
+          posterUrl: dramaFull.posterUrl,
+          totalEpisodes: dramaFull.totalEpisodes,
+        },
+        navigation: {
+          prevEpisode: prevEpisode ? { id: prevEpisode.id, number: prevEpisode.number, title: prevEpisode.title } : null,
+          nextEpisode: nextEpisode ? { id: nextEpisode.id, number: nextEpisode.number, title: nextEpisode.title } : null,
+        },
+        source: "fresh",
+      };
+    } catch (error) {
+      console.error(`[DramaService] Failed to fetch fresh episodes for ${dramaSlug}:`, error);
+      const navigation = await getNavigation(drama.id, episode.number);
+      const [dramaDetails] = await db
+        .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
+        .from(dramas)
+        .where(eq(dramas.id, drama.id))
+        .limit(1);
+      return {
+        ...episode,
+        drama: { ...drama, posterUrl: dramaDetails?.posterUrl ?? null, totalEpisodes: dramaDetails?.totalEpisodes ?? null },
+        navigation,
+        source: "cache",
+      };
+    }
+  }
+
+  /**
+   * Fire-and-forget: Save episodes to database without blocking
+   */
+  private saveEpisodesToDbFireAndForget(
+    dramaId: string,
+    bookId: string,
+    episodesToSave: Episode[],
+  ): void {
+    // Run in background without awaiting
+    (async () => {
+      try {
+        for (const episode of episodesToSave) {
+          await db
+            .insert(episodes)
+            .values({
+              dramaId: dramaId,
+              bookId: bookId,
+              number: episode.number,
+              title: episode.title ?? `Episode ${episode.number}`,
+              description: null,
+              duration: null,
+              videoUrls: episode.videoUrls,
+              sourceUrl: episode.sourceUrl,
+            })
+            .onConflictDoUpdate({
+              target: [episodes.dramaId, episodes.number],
+              set: {
+                videoUrls: episode.videoUrls,
+                sourceUrl: episode.sourceUrl,
+              },
+            });
+        }
+        console.log(`[DramaService] Fire-and-forget: Saved ${episodesToSave.length} episodes to DB`);
+      } catch (error) {
+        console.error(`[DramaService] Fire-and-forget: Failed to save episodes:`, error);
+      }
+    })();
   }
 
   /**

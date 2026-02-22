@@ -16,14 +16,20 @@ interface DramaCardProps {
   };
   totalEpisodes?: number;
   searchQuery?: string;
+  referrer?: string;
 }
 
-function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
+function DramaCard({ drama, totalEpisodes, searchQuery, referrer }: DramaCardProps) {
   const { title, slug, posterUrl, playCount, language } = drama;
 
   // Handle missing poster URL
   const hasPoster = posterUrl && posterUrl.trim() !== "";
   const languageCode = language?.toLowerCase() || "unknown";
+  
+  // Build state object
+  const linkState: { searchQuery?: string; referrer?: string } = {};
+  if (searchQuery) linkState.searchQuery = searchQuery;
+  if (referrer) linkState.referrer = referrer;
 
   // Language badge mapping
   const languageBadges: Record<string, string> = {
@@ -44,7 +50,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery }: DramaCardProps) {
     <Link
       to="/dramas/$dramaId"
       params={{ dramaId: slug }}
-      state={searchQuery ? { searchQuery } : undefined}
+      state={Object.keys(linkState).length > 0 ? linkState : undefined}
       className="group relative bg-card overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 h-full"
     >
       {/* Image Container */}

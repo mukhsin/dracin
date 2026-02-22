@@ -113,6 +113,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
                     <Link
                       to="/dramas/$dramaId"
                       params={{ dramaId: drama.slug }}
+                      state={{ referrer: "/" }}
                       className="inline-flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200"
                       style={{ borderRadius: "0" }}
                     >

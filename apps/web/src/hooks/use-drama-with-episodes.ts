@@ -2,16 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-interface Episode {
-  id: string;
-  number: number;
-  title?: string;
-  description?: string;
-  duration?: number;
-  videoUrls?: Record<string, string>;
-  sourceUrl?: string;
-}
-
 interface DramaWithEpisodes {
   id: string;
   title: string;
@@ -21,7 +11,7 @@ interface DramaWithEpisodes {
   playCount?: string;
   language?: string;
   status?: string;
-  episodes: Episode[];
+  totalEpisodes: number;
 }
 
 async function fetchDramaWithEpisodes(id: string): Promise<DramaWithEpisodes> {

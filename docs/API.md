@@ -274,7 +274,7 @@ curl "http://localhost:3001/api/dramas?genre=romance&sort=rating"
 
 ### GET /api/dramas/:slug
 
-Get detailed information about a specific drama including all seasons and episodes.
+Get detailed information about a specific drama. Episodes are not included - use the episode list endpoint or construct episode buttons using `totalEpisodes`.
 
 **Path Parameters:**
 
@@ -292,62 +292,23 @@ Get detailed information about a specific drama including all seasons and episod
     "title": "Crash Landing on You",
     "slug": "crash-landing-on-you",
     "description": "A South Korean heiress falls in love with a North Korean officer...",
-    "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
-    "backdropUrl": "https://cdn.example.com/backdrops/crash-landing.jpg",
+    "posterUrl": "/api/dramas/crash-landing-on-you/poster.jpg",
     "releaseYear": 2019,
     "rating": 8.7,
     "genres": ["Romance", "Comedy", "Drama"],
-    "totalSeasons": 1,
     "totalEpisodes": 16,
-    "status": "completed",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:30:00Z",
-    "seasons": [
-      {
-        "id": "550e8400-e29b-41d4-a716-446655440002",
-        "number": 1,
-        "title": "Season 1",
-        "description": "The complete first season",
-        "episodeCount": 16,
-        "episodes": [
-          {
-            "id": "550e8400-e29b-41d4-a716-446655440003",
-            "number": 1,
-            "title": "Episode 1",
-            "description": "Yoon Se-ri's paragliding accident...",
-            "duration": 4200,
-            "thumbnailUrl": "https://cdn.example.com/thumbnails/ep1.jpg",
-            "airDate": "2019-12-14",
-            "videoUrls": {
-              "240p": "https://cdn.example.com/videos/ep1_240p.mp4",
-              "480p": "https://cdn.example.com/videos/ep1_480p.mp4",
-              "720p": "https://cdn.example.com/videos/ep1_720p.mp4",
-              "1080p": "https://cdn.example.com/videos/ep1_1080p.mp4"
-            }
-          }
-        ]
-      }
-    ]
-  },
-  "meta": {
-    "source": "cache"
+    "status": "completed"
   }
 }
 ```
 
-**Episode Data Freshness:**
+**Optimization Notes**:
 
-The endpoint automatically validates cached episode video URLs:
-
-- **Cache Check**: Validates one cached video URL to ensure it's still accessible
-- **Synchronous Fetch**: If cache is stale or missing, fetches fresh episodes from api-proxy synchronously
-  - Client receives actual fresh data (not stale data)
-  - May take 1-3 seconds if api-proxy fetch is required
-- **Source Indicator**: Response includes `meta.source` field:
-  - `"cache"` - Episodes served from database cache (fast)
-  - `"fresh"` - Episodes freshly fetched from api-proxy
-
-**Note**: Fresh fetches are cached to the database for subsequent requests.
+- This endpoint returns drama metadata only (no episodes array)
+- Frontend should use `totalEpisodes` to construct episode buttons 1..totalEpisodes
+- Episode data is fetched separately when user clicks via `GET /api/dramas/:slug/episodes/:number`
+- This avoids fetching episode data when user is just browsing drama details
+- The endpoint does not perform video URL validation - that's done on the episode endpoint when user actually watches
 
 **Status Codes:**
 
@@ -358,6 +319,89 @@ The endpoint automatically validates cached episode video URLs:
 
 ```bash
 curl http://localhost:3001/api/dramas/crash-landing-on-you
+```
+
+---
+
+### GET /api/dramas/:slug/episodes/:number
+
+Get a specific episode by drama slug and episode number. This endpoint is used for the video player page.
+
+**Path Parameters:**
+
+| Parameter | Type    | Required | Description                |
+| --------- | ------- | -------- | -------------------------- |
+| slug      | string  | Yes      | Drama URL slug             |
+| number    | integer | Yes      | Episode number             |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "dramaId": "550e8400-e29b-41d4-a716-446655440001",
+    "number": 1,
+    "title": "Episode 1",
+    "description": "Yoon Se-ri's paragliding accident...",
+    "duration": 4200,
+    "drama": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "title": "Crash Landing on You",
+      "slug": "crash-landing-on-you",
+      "posterUrl": "https://cdn.example.com/posters/crash-landing.jpg",
+      "totalEpisodes": 16
+    },
+    "navigation": {
+      "prevEpisode": null,
+      "nextEpisode": {
+        "id": "550e8400-e29b-41d4-a716-446655440005",
+        "number": 2,
+        "title": "Episode 2"
+      }
+    },
+    "video": {
+      "urls": {
+        "240p": "/api/video/550e8400-e29b-41d4-a716-446655440001.1.240p.mp4",
+        "480p": "/api/video/550e8400-e29b-41d4-a716-446655440001.1.480p.mp4",
+        "720p": "/api/video/550e8400-e29b-41d4-a716-446655440001.1.720p.mp4",
+        "1080p": "/api/video/550e8400-e29b-41d4-a716-446655440001.1.1080p.mp4"
+      }
+    }
+  },
+  "meta": {
+    "source": "cache"
+  }
+}
+```
+
+**Episode Data Freshness:**
+
+The endpoint automatically validates cached video URLs before returning:
+
+- **Cache Validation**: Checks if the cached video URLs are still accessible by making a HEAD request to the highest quality URL
+- **Synchronous Fetch**: If cache is stale or missing video URLs, fetches fresh episodes from api-proxy synchronously
+  - Client receives actual fresh data (not stale data)
+  - May take 1-3 seconds if api-proxy fetch is required
+- **Fire-and-Forget Save**: Fresh episodes are saved to the database in the background without blocking the response
+- **Source Indicator**: Response includes `meta.source` field:
+  - `"cache"` - Episode served from database cache with valid URLs (fast)
+  - `"fresh"` - Episode freshly fetched from api-proxy with new video URLs
+
+**Cache Headers:**
+
+- `Cache-Control: public, max-age=30` - Client-side caching for 30 seconds
+
+**Status Codes:**
+
+- `200` - Success
+- `404` - Drama or episode not found
+
+**Example:**
+
+```bash
+curl http://localhost:3001/api/dramas/crash-landing-on-you/episodes/1
 ```
 
 ---

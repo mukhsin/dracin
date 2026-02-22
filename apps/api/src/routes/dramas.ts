@@ -127,7 +127,7 @@ app.get("/:slug/poster.jpg", async (c) => {
 app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
   const { slug } = c.req.valid("param");
 
-  const drama = await dramaService.getBySlugWithValidation(slug);
+  const drama = await dramaService.getDramaMetadataBySlug(slug);
 
   if (!drama) {
     throw new HTTPException(404, {
@@ -135,38 +135,17 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     });
   }
 
-  dramaService.updateStatusIfCompleted(drama.id).catch((error) => {
-    console.error(`[DramasRoute] Failed to update status:`, error);
-  });
-
-  // Hide videoUrls, sourceUrl, and bookId from episodes
-  const sanitizedEpisodes = drama.episodes.map((ep) => {
-    const {
-      videoUrls: _v,
-      sourceUrl: _s,
-      bookId: _b,
-      dramaId: _d,
-      description: _d1,
-      duration: _d2,
-      createdAt: _c,
-      ...rest
-    } = ep;
-    return rest;
-  });
-
   // Sanitize drama: hide bookId, createdAt, updatedAt (keep posterUrl)
   const {
     bookId: _bookId,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
-    episodes: _episodes,
     ...sanitizedDrama
   } = drama;
 
   const dramaResponse = {
     ...sanitizedDrama,
     posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
-    episodes: sanitizedEpisodes,
   };
 
   c.header("Cache-Control", "public, max-age=60");
@@ -174,7 +153,6 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
   return c.json({
     success: true,
     data: dramaResponse,
-    meta: { source: drama.source },
   });
 });
 
@@ -220,16 +198,8 @@ app.get(
   async (c) => {
     const { slug, number } = c.req.valid("param");
 
-    const episode = await dramaService.getEpisodeByNumber(slug, number);
-
-    if (!episode) {
-      throw new HTTPException(404, {
-        message: `Episode ${number} for drama "${slug}" not found`,
-      });
-    }
-
-    // Get full episode with navigation using the existing getEpisode method
-    const fullEpisode = await dramaService.getEpisode(episode.id);
+    // Use the new validation method that checks video URLs and fetches fresh if needed
+    const fullEpisode = await dramaService.getEpisodeByNumberWithValidation(slug, number);
 
     if (!fullEpisode) {
       throw new HTTPException(404, {
@@ -242,9 +212,10 @@ app.get(
       videoUrls: _v,
       sourceUrl: _s,
       bookId: _b,
+      source: _source,
       ...episodeWithoutUrls
     } = fullEpisode;
-    (void _v, _s, _b);
+    (void _v, _s, _b, _source);
 
     // Build pre-built video URLs for each quality
     const videoUrls: Record<string, string> = {};
@@ -268,6 +239,9 @@ app.get(
     return c.json({
       success: true,
       data: episodeWithVideo,
+      meta: {
+        source: fullEpisode.source,
+      },
     });
   },
 );

@@ -52,6 +52,15 @@ function DramasPage() {
     q?: string;
     t?: string;
   };
+  
+  // Build referrer path with search params for back navigation
+  const referrer = useMemo(() => {
+    const params = new URLSearchParams();
+    if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.t) params.set("t", searchParams.t);
+    const queryString = params.toString();
+    return queryString ? `/dramas?${queryString}` : "/dramas";
+  }, [searchParams.q, searchParams.t]);
 
   // q xor t behavior: search takes precedence over section type
   const search = searchParams.q || "";
@@ -195,6 +204,7 @@ function DramasPage() {
                   drama={drama}
                   totalEpisodes={drama.metadata?.totalEpisodes}
                   searchQuery={search}
+                  referrer={referrer}
                 />
               ))}
             </div>

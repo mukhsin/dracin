@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation, useRouter } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
@@ -8,25 +8,25 @@ export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
 });
 
-function EpisodeCard({
-  episode,
+function EpisodeButton({
+  episodeNumber,
   dramaSlug,
   searchQuery,
 }: {
-  episode: any;
+  episodeNumber: number;
   dramaSlug: string;
   searchQuery?: string;
 }) {
   return (
     <Link
       to="/dramas/$dramaSlug/$episodeNumber"
-      params={{ dramaSlug, episodeNumber: episode.number.toString() }}
+      params={{ dramaSlug, episodeNumber: episodeNumber.toString() }}
       state={searchQuery ? { searchQuery } : undefined}
       className="group bg-card border border-gray-700 aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
       style={{ borderRadius: "0" }}
     >
       <span className="text-sm font-bold text-gray-400 group-hover:text-primary transition-colors">
-        {episode.number}
+        {episodeNumber}
       </span>
     </Link>
   );
@@ -35,8 +35,47 @@ function EpisodeCard({
 function DramaDetailsPage() {
   const { dramaId } = Route.useParams();
   const location = useLocation();
+  const router = useRouter();
   const search = location.state?.searchQuery || "";
   const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
+  
+  // Determine where to go back to
+  const referrer = location.state?.referrer;
+  
+  // Parse referrer to extract path and search params
+  let backTo = "/dramas";
+  let backSearch = {} as { q?: string; t?: string };
+  
+  if (referrer) {
+    if (referrer.includes("?")) {
+      const [path, queryString] = referrer.split("?");
+      backTo = path || "/dramas";
+      
+      // Parse query params
+      const params = new URLSearchParams(queryString);
+      if (params.has("q")) backSearch.q = params.get("q") || undefined;
+      if (params.has("t")) backSearch.t = params.get("t") || undefined;
+    } else {
+      backTo = referrer;
+    }
+  }
+  
+  // Determine back button text based on referrer
+  let backText = "Back to Dramas";
+  if (referrer === "/") {
+    backText = "Back to Home";
+  } else if (referrer?.includes("?")) {
+    // Check for specific filters
+    if (referrer.includes("t=popular")) {
+      backText = "Back to Popular";
+    } else if (referrer.includes("t=featured")) {
+      backText = "Back to Featured";
+    } else if (referrer.includes("t=latest")) {
+      backText = "Back to Latest";
+    } else if (referrer.includes("q=")) {
+      backText = "Back to Search";
+    }
+  }
 
   if (isLoading) {
     return (
@@ -124,7 +163,7 @@ function DramaDetailsPage() {
     posterUrl,
     language,
     status,
-    episodes,
+    totalEpisodes,
     playCount,
   } = data;
 
@@ -141,13 +180,13 @@ function DramaDetailsPage() {
         {/* Back Button */}
         <div className="mb-6">
           <Link
-            to="/dramas"
-            search={search ? { q: search } : undefined}
+            to={backTo}
+            search={Object.keys(backSearch).length > 0 ? backSearch : undefined}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             resetScroll={true}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dramas
+            {backText}
           </Link>
         </div>
 
@@ -199,13 +238,13 @@ function DramaDetailsPage() {
                     {language.toUpperCase()}
                   </span>
                 )}
-                {episodes && (
+                {totalEpisodes > 0 && (
                   <span
                     className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1"
                     style={{ borderRadius: "0" }}
                   >
                     <Film className="w-3 h-3" />
-                    {episodes.length} Episodes
+                    {totalEpisodes} Episodes
                   </span>
                 )}
                 {playCount && (
@@ -237,16 +276,16 @@ function DramaDetailsPage() {
             </div>
 
             <div className="hidden lg:block overflow-hidden">
-              {episodes && episodes.length > 0 ? (
+              {totalEpisodes > 0 ? (
                 <div
                   className="overflow-y-auto pr-2"
                   style={{ maxHeight: "180px" }}
                 >
                   <div className="grid grid-cols-10 gap-2">
-                    {episodes.map((episode) => (
-                      <EpisodeCard
-                        key={episode.id}
-                        episode={episode}
+                    {Array.from({ length: totalEpisodes }, (_, i) => (
+                      <EpisodeButton
+                        key={i + 1}
+                        episodeNumber={i + 1}
                         dramaSlug={data.slug}
                         searchQuery={search}
                       />
@@ -266,13 +305,13 @@ function DramaDetailsPage() {
         </div>
 
         <div className="lg:hidden">
-          {episodes && episodes.length > 0 ? (
+          {totalEpisodes > 0 ? (
             <div className="overflow-y-auto" style={{ maxHeight: "240px" }}>
               <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-                {episodes.map((episode) => (
-                  <EpisodeCard
-                    key={episode.id}
-                    episode={episode}
+                {Array.from({ length: totalEpisodes }, (_, i) => (
+                  <EpisodeButton
+                    key={i + 1}
+                    episodeNumber={i + 1}
                     dramaSlug={data.slug}
                     searchQuery={search}
                   />

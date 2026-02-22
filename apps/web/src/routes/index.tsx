@@ -3,7 +3,7 @@ import HeroCarousel from "../components/home/HeroCarousel";
 import ContentSection from "../components/home/ContentSection";
 import { useHomeData } from "../hooks/use-home-data";
 import { RefreshCw } from "lucide-react";
-import { useState, useEffect } from "react";
+
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -83,15 +83,14 @@ function ErrorState({
 }
 
 export function HomePage() {
-  const { rank1, featured, latest, popular, isError } = useHomeData();
-  const [showContent, setShowContent] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowContent(true);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
+  const { rank1, featured, latest, popular, isError, isLoading: isLoadingData } = useHomeData();
+  
+  // Check if we have any cached data available immediately
+  const hasAnyData = !!(rank1.data || featured.data || latest.data || popular.data);
+  
+  // Show skeleton only when loading fresh data (no cache)
+  // If cached data exists, show content immediately
+  const isLoading = !hasAnyData && isLoadingData;
 
   if (isError) {
     return (
@@ -101,13 +100,6 @@ export function HomePage() {
       />
     );
   }
-
-  const isLoading =
-    !showContent ||
-    rank1.isLoading ||
-    featured.isLoading ||
-    latest.isLoading ||
-    popular.isLoading;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
