@@ -3,27 +3,6 @@ import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SearchIcon } from "./search-icon";
 
-function LogoIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      className={className}
-      fill="currentColor"
-    >
-      <text
-        x="50"
-        y="70"
-        fontSize="60"
-        textAnchor="middle"
-        fontFamily="serif"
-        fontWeight="bold"
-      >
-        D
-      </text>
-    </svg>
-  );
-}
-
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,13 +41,11 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div
-              className="w-8 h-8 bg-primary flex items-center justify-center group-hover:scale-105 transition-transform text-black"
-              style={{ borderRadius: "0" }}
-            >
-              <LogoIcon className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg hidden sm:block">
+            <span className="font-bold text-xl hidden sm:block group-hover:scale-105 transition-transform">
+              <span className="text-primary">Dra</span>
+              <span className="text-white">Syn</span>
+            </span>
+            <span className="font-bold text-xl sm:hidden group-hover:scale-105 transition-transform">
               <span className="text-primary">Dra</span>
               <span className="text-white">Syn</span>
             </span>
