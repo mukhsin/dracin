@@ -647,7 +647,7 @@ export class DramaService {
       posterUrl: apiDrama.cover,
       status,
       language: null,
-      playCount: parsePlayCount(apiDrama.playCount),
+      playCount: parsePlayCount(apiDrama.playCount ?? null),
       sourceEndpoint: null,
       metadata: null,
       totalEpisodes: apiDrama.chapterCount || null,
