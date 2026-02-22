@@ -58,7 +58,11 @@ COPY --from=builder --chown=api:bunjs /app/apps/api/drizzle.config.ts ./apps/api
 COPY --from=builder --chown=api:bunjs /app/packages/shared ./packages/shared
 COPY --from=builder --chown=api:bunjs /app/package.json ./
 
+# Copy drizzle migrations, scripts, and entrypoint
 COPY --chown=api:bunjs apps/api/drizzle ./apps/api/drizzle
+COPY --chown=api:bunjs apps/api/scripts ./apps/api/scripts
+COPY --chown=api:bunjs apps/api/docker-entrypoint.sh ./apps/api/
+RUN chmod +x ./apps/api/docker-entrypoint.sh
 
 EXPOSE 3001
 
@@ -68,4 +72,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-CMD ["sh", "-c", "cd apps/api && bunx drizzle-kit migrate --config ./drizzle.config.ts && bun run ./dist/index.js"]
+ENTRYPOINT ["./apps/api/docker-entrypoint.sh"]
