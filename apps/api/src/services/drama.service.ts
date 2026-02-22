@@ -1,6 +1,6 @@
 import { eq, sql, like, desc, asc, and, or, count } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { dramas, episodes } from "../db/schema.js";
+import { dramas, episodes, drama_lists } from "../db/schema.js";
 import type { Drama, Episode, PaginatedResponse } from "@repo/shared/types";
 import {
   getEpisodes,
@@ -53,6 +53,7 @@ export interface DramaListFilters {
   language?: string;
   sortBy?: "title" | "createdAt" | "updatedAt" | "playCount";
   sortOrder?: "asc" | "desc";
+  sectionType?: "popular" | "featured" | "latest";
 }
 
 type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";
@@ -78,6 +79,11 @@ export class DramaService {
     filters: DramaListFilters = {},
   ): Promise<PaginatedResponse<Drama> & { source?: string }> {
     const offset = (page - 1) * pageSize;
+
+    // Handle section type filtering (featured, latest, popular)
+    if (filters.sectionType) {
+      return this.listBySectionType(page, pageSize, filters);
+    }
 
     // Build where conditions
     const whereConditions = [];
@@ -187,6 +193,92 @@ export class DramaService {
       .from(dramas)
       .where(whereClause || sql`true`)
       .orderBy(sortFn(sortColumn))
+      .limit(pageSize)
+      .offset(offset);
+
+    return {
+      items: results.map(mapDramaRowToShared),
+      total,
+      page,
+      pageSize,
+      hasMore: offset + results.length < total,
+      source: "db",
+    };
+  }
+
+  /**
+   * List dramas by section type (popular, featured, latest)
+   */
+  private async listBySectionType(
+    page: number,
+    pageSize: number,
+    filters: DramaListFilters,
+  ): Promise<PaginatedResponse<Drama> & { source?: string }> {
+    const offset = (page - 1) * pageSize;
+    const sectionType = filters.sectionType!;
+
+    if (sectionType === "popular") {
+      // Popular: sort by playCount descending
+      const [countResult] = await db
+        .select({ count: count() })
+        .from(dramas);
+
+      const total = countResult?.count ?? 0;
+
+      const results = await db
+        .select()
+        .from(dramas)
+        .orderBy(desc(dramas.playCount))
+        .limit(pageSize)
+        .offset(offset);
+
+      return {
+        items: results.map(mapDramaRowToShared),
+        total,
+        page,
+        pageSize,
+        hasMore: offset + results.length < total,
+        source: "db",
+      };
+    }
+
+    // Featured and Latest: join with drama_lists table
+    const listType = sectionType === "featured" ? "featured" : "latest";
+
+    // Get total count from drama_lists
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(drama_lists)
+      .where(eq(drama_lists.type, listType));
+
+    const total = countResult?.count ?? 0;
+
+    // Get dramas joined with drama_lists
+    const results = await db
+      .select({
+        id: dramas.id,
+        bookId: dramas.bookId,
+        title: dramas.title,
+        slug: dramas.slug,
+        description: dramas.description,
+        posterUrl: dramas.posterUrl,
+        status: dramas.status,
+        language: dramas.language,
+        playCount: dramas.playCount,
+        sourceEndpoint: dramas.sourceEndpoint,
+        releaseYear: dramas.releaseYear,
+        country: dramas.country,
+        rating: dramas.rating,
+        totalEpisodes: dramas.totalEpisodes,
+        genres: dramas.genres,
+        metadata: dramas.metadata,
+        createdAt: dramas.createdAt,
+        updatedAt: dramas.updatedAt,
+      })
+      .from(drama_lists)
+      .where(eq(drama_lists.type, listType))
+      .innerJoin(dramas, eq(drama_lists.bookId, dramas.bookId))
+      .orderBy(asc(drama_lists.position))
       .limit(pageSize)
       .offset(offset);
 

@@ -17,6 +17,7 @@ const ListDramasQuerySchema = z.object({
     .enum(["title", "createdAt", "updatedAt", "playCount"])
     .default("playCount"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  t: z.enum(["popular", "featured", "latest"]).optional(),
 });
 
 const GetDramaParamsSchema = z.object({
@@ -35,7 +36,7 @@ const GetEpisodeByNumberParamsSchema = z.object({
 const app = new Hono();
 
 app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
-  const { page, pageSize, q, status, language, sortBy, sortOrder } =
+  const { page, pageSize, q, status, language, sortBy, sortOrder, t } =
     c.req.valid("query");
 
   const result = await dramaService.list(page, pageSize, {
@@ -44,6 +45,7 @@ app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
     language,
     sortBy,
     sortOrder,
+    sectionType: t,
   });
 
   const sanitizedItems = result.items.map((drama) => {

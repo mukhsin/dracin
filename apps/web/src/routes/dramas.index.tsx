@@ -8,14 +8,59 @@ import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { Loader2, AlertCircle, Search } from "lucide-react";
 
+// Valid section types
+const VALID_SECTION_TYPES = ["popular", "featured", "latest"] as const;
+type SectionType = (typeof VALID_SECTION_TYPES)[number];
+
+function isValidSectionType(t: string | undefined): t is SectionType {
+  return !!t && VALID_SECTION_TYPES.includes(t as SectionType);
+}
+
+function getSectionTitle(sectionType: SectionType): string {
+  switch (sectionType) {
+    case "popular":
+      return "Most Popular Dramas";
+    case "featured":
+      return "Featured For You";
+    case "latest":
+      return "Latest Releases";
+    default:
+      return "Browse Dramas";
+  }
+}
+
+function getSectionDescription(sectionType: SectionType): string {
+  switch (sectionType) {
+    case "popular":
+      return "Discover what everyone's watching";
+    case "featured":
+      return "Handpicked dramas just for you";
+    case "latest":
+      return "Fresh releases and new additions";
+    default:
+      return "Discover your next favorite series";
+  }
+}
+
 export const Route = createFileRoute("/dramas/")({
   component: DramasPage,
 });
 
 function DramasPage() {
   const navigate = useNavigate();
-  const searchParams = useSearch({ from: "/dramas" }) as { q?: string };
+  const searchParams = useSearch({ from: "/dramas" }) as {
+    q?: string;
+    t?: string;
+  };
+
+  // q xor t behavior: search takes precedence over section type
   const search = searchParams.q || "";
+  const sectionType = search
+    ? ""
+    : isValidSectionType(searchParams.t)
+      ? searchParams.t
+      : "";
+
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -34,6 +79,7 @@ function DramasPage() {
     hasNextPage,
   } = useDramasInfinite({
     search,
+    sectionType,
     pageSize: 18,
   });
 
@@ -56,6 +102,25 @@ function DramasPage() {
       fetchNextPage();
     }
   };
+
+  // Determine page title and description based on mode
+  const pageTitle = search
+    ? `Search: "${search}"`
+    : sectionType
+      ? getSectionTitle(sectionType)
+      : "Browse Dramas";
+
+  const pageDescription = search
+    ? `Showing results for "${search}"`
+    : sectionType
+      ? getSectionDescription(sectionType)
+      : "Discover your next favorite series";
+
+  const emptyStateMessage = search
+    ? "Try adjusting your search terms or browse all dramas"
+    : sectionType
+      ? "No dramas available in this section"
+      : "Check back later for new dramas";
 
   if (isLoading) {
     return (
@@ -115,10 +180,8 @@ function DramasPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Browse Dramas</h1>
-            <p className="text-muted-foreground mt-1">
-              Discover your next favorite series
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
+            <p className="text-muted-foreground mt-1">{pageDescription}</p>
           </div>
         </div>
 
@@ -175,17 +238,15 @@ function DramasPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">No dramas found</h2>
             <p className="text-muted-foreground max-w-sm">
-              {search
-                ? "Try adjusting your search terms or browse all dramas"
-                : "Check back later for new dramas"}
+              {emptyStateMessage}
             </p>
-            {search && (
+            {(search || sectionType) && (
               <button
                 type="button"
                 onClick={handleClearSearch}
                 className="mt-4 text-primary hover:underline text-sm"
               >
-                Clear search
+                Clear {search ? "search" : "filter"}
               </button>
             )}
           </div>

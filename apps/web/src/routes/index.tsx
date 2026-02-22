@@ -141,7 +141,7 @@ export function HomePage() {
               language: item.language,
               status: item.status,
             }))}
-            viewAllLink="/dramas"
+            viewAllLink="/dramas?t=popular"
           />
         ) : null}
 
@@ -160,7 +160,7 @@ export function HomePage() {
               language: item.language,
               status: item.status,
             }))}
-            viewAllLink="/dramas"
+            viewAllLink="/dramas?t=featured"
           />
         ) : null}
 
@@ -179,7 +179,7 @@ export function HomePage() {
               language: item.language,
               status: item.status,
             }))}
-            viewAllLink="/dramas"
+            viewAllLink="/dramas?t=latest"
           />
         ) : null}
       </div>

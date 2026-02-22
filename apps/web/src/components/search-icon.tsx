@@ -49,34 +49,51 @@ export function SearchIcon() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
+  const lastEmittedRef = useRef<string | undefined>(undefined);
+  const searchValueOnOpenRef = useRef<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const searchParams = useSearch({ strict: false }) as { q?: string };
+  const searchParams = useSearch({ strict: false }) as {
+    q?: string;
+    t?: string;
+  };
   const location = useLocation();
   const isOnDramasPage = location.pathname === "/dramas";
-
   const debouncedSearch = useDebounce(searchValue, 300);
 
   useEffect(() => {
     setIsHydrated(true);
+    // Initialize lastEmittedRef to prevent navigation on initial open
+    lastEmittedRef.current = searchParams.q ?? "";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sync searchValue with URL on initial load / hydration
   useEffect(() => {
-    if (isHydrated && searchParams.q) {
+    if (isHydrated && searchParams.q !== undefined) {
       setSearchValue(searchParams.q);
+      lastEmittedRef.current = searchParams.q;
     }
   }, [isHydrated, searchParams.q]);
 
+  // Navigate when debounced search changes
   useEffect(() => {
-    if (isExpanded && isHydrated) {
-      navigate({
-        to: "/dramas",
-        search: debouncedSearch ? { q: debouncedSearch } : {},
-      });
-    }
-  }, [debouncedSearch, isExpanded, isHydrated, navigate]);
+    if (!isHydrated || !isExpanded) return;
+    // Skip if same as last emitted
+    if (debouncedSearch === lastEmittedRef.current) return;
 
-  // Close when clicking outside
+    // Don't navigate to empty if we're still typing (searchValue differs from debounced)
+    if (!debouncedSearch && searchValue !== debouncedSearch) return;
+    // Don't navigate to empty if we had search on open (clear→type transition)
+    if (!debouncedSearch && searchValueOnOpenRef.current !== "") { return; }
+
+      lastEmittedRef.current = debouncedSearch;
+    navigate({
+      to: "/dramas",
+      search: debouncedSearch ? { q: debouncedSearch } : {},
+    });
+  }, [debouncedSearch, isExpanded, isHydrated, navigate, searchValue]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -94,7 +111,6 @@ export function SearchIcon() {
     }
   }, [isExpanded]);
 
-  // Close on escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -109,17 +125,23 @@ export function SearchIcon() {
   }, [isExpanded]);
 
   const handleToggle = () => {
-    setIsExpanded(!isExpanded);
-    if (isExpanded && isOnDramasPage) {
-      if (!searchValue) {
-        navigate({ to: "/dramas", search: {} });
-      }
+    const willExpand = !isExpanded;
+    setIsExpanded(willExpand);
+    if (willExpand) {
+      // Remember what searchValue was when opening
+      searchValueOnOpenRef.current = searchValue;
+    }
+
+    // When closing on dramas page, clear search if value hasn't changed from when opened
+    if (!willExpand && isOnDramasPage && searchValue === searchValueOnOpenRef.current) {
+      navigate({ to: "/dramas", search: {} });
     }
   };
 
+
+
   return (
     <div ref={containerRef} className="relative flex items-center">
-      {/* Search Icon Button */}
       <button
         type="button"
         onClick={handleToggle}
@@ -136,7 +158,6 @@ export function SearchIcon() {
         <Search className="w-5 h-5" />
       </button>
 
-      {/* Expandable Search Box */}
       {isExpanded && (
         <div
           className={`

@@ -13,6 +13,7 @@ interface DramasResponse {
 
 interface UseDramasOptions {
   search?: string;
+  sectionType?: string;
   page?: number;
   pageSize?: number;
 }
@@ -20,25 +21,23 @@ interface UseDramasOptions {
 async function fetchDramas(
   options: UseDramasOptions = {},
 ): Promise<DramasResponse> {
-  const { search = "", page = 1, pageSize = 20 } = options;
-
+  const { search = "", sectionType = "", page = 1, pageSize = 20 } = options;
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),
   });
-
+  // q xor t: search takes precedence over section type
   if (search) {
     params.append("q", search);
+  } else if (sectionType) {
+    params.append("t", sectionType);
   }
-
   const res = await fetch(`${API_BASE_URL}/api/dramas?${params}`, {
     credentials: "include",
   });
-
   if (!res.ok) {
     throw new Error("Failed to fetch dramas");
   }
-
   const data = await res.json();
   return data.data;
 }
@@ -86,17 +85,23 @@ export function formatDramaPlayCount(
 
 interface UseDramasInfiniteOptions {
   search?: string;
+  sectionType?: string;
   pageSize?: number;
 }
 
 export function useDramasInfinite(options: UseDramasInfiniteOptions = {}) {
-  const { search = "", pageSize = 20 } = options;
+  const { search = "", sectionType = "", pageSize = 20 } = options;
 
+  // Create mode-aware query key to prevent cache mixing
+  const queryKey = sectionType
+    ? ["dramas", "infinite", "section", sectionType, pageSize]
+    : ["dramas", "infinite", "search", search, pageSize];
   return useInfiniteQuery({
-    queryKey: ["dramas", "infinite", search, pageSize],
+    queryKey,
     queryFn: async ({ pageParam = 1 }) => {
       return fetchDramas({
         search,
+        sectionType,
         page: pageParam,
         pageSize,
       });
