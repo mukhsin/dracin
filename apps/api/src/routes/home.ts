@@ -3,6 +3,7 @@ import {
   getFeatured,
   getLatest,
   getPopular,
+  getRank1,
 } from "../services/home.service.js";
 
 const app = new Hono();
@@ -47,6 +48,25 @@ app.get("/latest", async (c) => {
 
 app.get("/popular", async (c) => {
   const result = await getPopular();
+
+  const sanitizedItems = result.items.map((drama) => {
+    const { createdAt: _c, updatedAt: _u, ...rest } = drama;
+    return {
+      ...rest,
+      posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+    };
+  });
+
+  c.header("Cache-Control", "public, max-age=300");
+
+  return c.json({
+    success: true,
+    data: { items: sanitizedItems },
+  });
+});
+
+app.get("/rank-1", async (c) => {
+  const result = await getRank1();
 
   const sanitizedItems = result.items.map((drama) => {
     const { createdAt: _c, updatedAt: _u, ...rest } = drama;
