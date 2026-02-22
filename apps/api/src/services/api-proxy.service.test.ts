@@ -131,15 +131,14 @@ describe("api-proxy.service", () => {
 
   describe("getRank", () => {
     it("should fetch ranked dramas", async () => {
-      const mockRankItems = [
+      const mockRankData: Drama[] = [
         {
-          rank: 1,
-          drama: {
-            id: "1",
-            title: "Top Drama",
-            cover: "https://example.com/top.jpg",
-            intro: "Top intro",
-          },
+          bookId: "42000005001",
+          title: "Rank 1 Drama",
+          cover: "https://example.com/rank1.jpg",
+          intro: "Top ranked drama",
+          chapterCount: 100,
+          playCount: 10500000,
         },
       ];
 
@@ -149,7 +148,7 @@ describe("api-proxy.service", () => {
             JSON.stringify({
               status: true,
               message: "Success",
-              data: mockRankItems,
+              data: mockRankData,
             }),
             { status: 200 },
           ),
@@ -159,7 +158,7 @@ describe("api-proxy.service", () => {
       const result = await getRank(1);
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockRankItems);
+      expect(result.data).toEqual(mockRankData);
       expect(mockFetch.mock.calls[0][0]).toContain("/drama/rank");
       expect(mockFetch.mock.calls[0][0]).toContain("type=1");
     });

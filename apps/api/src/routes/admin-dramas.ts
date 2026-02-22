@@ -6,6 +6,7 @@ import {
   fetchAllDramas,
   getLatest,
   getFeatured,
+  getRank,
 } from "../services/api-proxy.service.js";
 import { eq } from "drizzle-orm";
 
@@ -55,6 +56,18 @@ adminDramasRouter.post("/sync/featured", async (c) => {
 
 adminDramasRouter.post("/sync", async (c) => {
   return await syncDramas(c, "all", fetchAllDramas);
+});
+
+adminDramasRouter.post("/sync/rank-1", async (c) => {
+  return await syncRankDramas(c, 1);
+});
+
+adminDramasRouter.post("/sync/rank-2", async (c) => {
+  return await syncRankDramas(c, 2);
+});
+
+adminDramasRouter.post("/sync/rank-3", async (c) => {
+  return await syncRankDramas(c, 3);
 });
 
 async function syncDramas(
@@ -273,6 +286,130 @@ async function syncDramas(
   } catch (error) {
     stats.duration = Date.now() - startTime;
     const errorMsg = `Sync failed: ${error instanceof Error ? error.message : String(error)}`;
+    stats.errors.push(errorMsg);
+
+    console.error(`[AdminDramas] ${errorMsg}`);
+
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: "SYNC_ERROR",
+          message: errorMsg,
+        },
+      },
+      500,
+    );
+  }
+}
+
+async function syncRankDramas(
+  c: any,
+  rankType: number,
+): Promise<Response> {
+  const startTime = Date.now();
+  const stats: SyncStats = {
+    total: 0,
+    inserted: 0,
+    updated: 0,
+    errors: [],
+    duration: 0,
+  };
+
+  try {
+    // Map rank type to type string
+    const typeString = `rank_${rankType}` as "rank_1" | "rank_2" | "rank_3";
+    
+    console.log(
+      `[AdminDramas] Starting rank-${rankType} drama sync from api-proxy...`,
+    );
+
+    if (!process.env.ADMIN_AUTH_SECRET) {
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: "CONFIG_ERROR",
+            message: "ADMIN_AUTH_SECRET not configured",
+          },
+        },
+        500,
+      );
+    }
+
+    const apiResponse = await getRank(rankType);
+
+    if (!apiResponse.success) {
+      throw new Error(`API proxy returned error: ${apiResponse.message}`);
+    }
+
+    const dramasFromApi = apiResponse.data;
+    stats.total = dramasFromApi.length;
+
+    console.log(`[AdminDramas] Fetched ${stats.total} dramas from api-proxy for rank-${rankType}`);
+
+    // Clear existing entries for the rank type
+    await db.delete(drama_lists).where(eq(drama_lists.type, typeString));
+
+    // Deduplicate by bookId
+    const seenBookIds = new Set<string>();
+    const uniqueDramas = dramasFromApi.filter((drama) => {
+      if (seenBookIds.has(drama.bookId)) {
+        console.log(
+          `[AdminDramas] Skipping duplicate bookId in rank-${rankType}: ${drama.bookId} - "${drama.title}"`,
+        );
+        return false;
+      }
+      seenBookIds.add(drama.bookId);
+      return true;
+    });
+
+    const originalCount = stats.total;
+    stats.total = uniqueDramas.length;
+
+    if (originalCount > stats.total) {
+      console.log(
+        `[AdminDramas] Deduplicated ${originalCount - stats.total} duplicate dramas from rank-${rankType} sync`,
+      );
+    }
+
+    // Insert with position (index + 1)
+    for (let i = 0; i < uniqueDramas.length; i++) {
+      const apiDrama = uniqueDramas[i];
+      try {
+        const position = i + 1;
+
+        await db.insert(drama_lists).values({
+          bookId: apiDrama.bookId,
+          type: typeString,
+          position,
+        });
+
+        stats.inserted++;
+      } catch (error) {
+        let errorDetails =
+          error instanceof Error ? error.message : String(error);
+        const errorMsg = `Failed to sync rank-${rankType} drama "${apiDrama.title}" (${apiDrama.bookId}): ${errorDetails}`;
+        console.error(`[AdminDramas] ${errorMsg}`);
+        stats.errors.push(errorMsg);
+      }
+    }
+
+    stats.duration = Date.now() - startTime;
+
+    console.log(
+      `[AdminDramas] Rank-${rankType} sync completed: ${stats.total} total, ${stats.inserted} inserted, ${stats.updated} updated, ${stats.errors.length} errors, ${stats.duration}ms`,
+    );
+
+    const response: SyncResponse = {
+      success: true,
+      data: stats,
+    };
+
+    return c.json(response, 200);
+  } catch (error) {
+    stats.duration = Date.now() - startTime;
+    const errorMsg = `Rank-${rankType} sync failed: ${error instanceof Error ? error.message : String(error)}`;
     stats.errors.push(errorMsg);
 
     console.error(`[AdminDramas] ${errorMsg}`);

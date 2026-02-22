@@ -240,8 +240,8 @@ export async function getLatest(
 
 export async function getRank(
   type: number = 1,
-): Promise<ApiResponse<RankItem[]>> {
-  const response = await fetchWithRetry<RankItem[]>("/drama/rank", { type });
+): Promise<ApiResponse<Drama[]>> {
+  const response = await fetchWithRetry<Drama[]>("/drama/rank", { type });
   return transformResponse(response);
 }
 
