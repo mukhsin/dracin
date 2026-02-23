@@ -25,7 +25,7 @@ export function EpisodePagination({
 
   const getBatchSize = () => {
     if (typeof window !== "undefined") {
-      return window.innerWidth >= 1024 ? 20 : 10;
+      return window.innerWidth >= 1280 ? 20 : 10;
     }
     return 10;
   };
