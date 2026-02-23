@@ -51,7 +51,7 @@ Added full favorites functionality:
 - **Episode Pagination**: New batch-based pagination for episodes (10 per batch mobile, 20 desktop)  
 - **Continue Watching**: Smart button showing "Start Watching" or "Continue Watching" based on history
 - **Status Badges**: Updated to outlined design with transparent backgrounds for modern look
-- **Golden Button**: Start Watching button now features golden/amber color scheme
+- **Primary Button**: Start Watching button styled as primary action button
 - **Outlined Icons**: Bookmark and favorite icons switched to outlined style for design consistency
 - **Responsive Improvements**: Fine-tuned episode pagination breakpoint (768px) for better mobile/tablet experience
 - **Header Improvements**: Icon-only Sign In button, hidden header on auth pages
