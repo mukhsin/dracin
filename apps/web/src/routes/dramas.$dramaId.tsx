@@ -234,9 +234,9 @@ function DramaDetailsPage() {
 
   const getStatusStyle = (status: string) => {
     if (status === "completed") {
-      return "bg-primary text-black font-semibold";
+      return "border-2 border-primary text-primary font-semibold bg-transparent";
     }
-    return "border border-primary text-primary font-semibold";
+    return "border border-primary text-primary font-semibold bg-transparent";
   };
 
   return (
@@ -295,7 +295,7 @@ function DramaDetailsPage() {
   )}
   {language && (
     <span
-      className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5"
+      className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 bg-transparent"
       style={{ borderRadius: "0" }}
     >
       {language.toUpperCase()}
@@ -303,7 +303,7 @@ function DramaDetailsPage() {
   )}
   {totalEpisodes > 0 && (
     <span
-      className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1"
+      className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1 bg-transparent"
       style={{ borderRadius: "0" }}
     >
       <Film className="w-3 h-3" />
