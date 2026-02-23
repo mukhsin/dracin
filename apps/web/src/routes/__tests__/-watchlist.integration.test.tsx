@@ -53,7 +53,6 @@ describe("Watchlist Flow Integration Tests", () => {
     mockNavigate.mockClear();
     server.resetHandlers();
 
-    vi.resetModules();
     const module = await import("../watchlist.js");
     WatchlistPage = module.WatchlistPage as React.ComponentType;
   });
@@ -102,7 +101,7 @@ describe("Watchlist Flow Integration Tests", () => {
 
     const signInButton = screen.getByRole("link", { name: /sign in/i });
     expect(signInButton).toBeInTheDocument();
-    expect(signInButton).toHaveAttribute("href", "/auth/login");
+    expect(signInButton).toHaveAttribute("href", "/auth/signin");
   });
 
   it("shows retry button on 500 error", async () => {

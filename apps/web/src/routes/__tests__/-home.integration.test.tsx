@@ -78,16 +78,16 @@ describe("Home Page Flow Integration Tests", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/dramas");
   });
 
-  it('navigates to /auth/login when "Sign In" link is clicked', async () => {
+  it('navigates to /auth/signin when "Sign In" link is clicked', async () => {
     const user = userEvent.setup();
     renderWithProviders(<HomePage />);
 
     const signInLink = screen.getByRole("link", { name: /sign in/i });
     expect(signInLink).toBeInTheDocument();
-    expect(signInLink).toHaveAttribute("href", "/auth/login");
+    expect(signInLink).toHaveAttribute("href", "/auth/signin");
 
     await user.click(signInLink);
-    expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
+    expect(mockNavigate).toHaveBeenCalledWith("/auth/signin");
   });
 
   it("displays all feature cards", async () => {
