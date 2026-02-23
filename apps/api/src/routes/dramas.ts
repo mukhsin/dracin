@@ -1,11 +1,15 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { dramaService } from "../services/drama.service.js";
 import { HTTPException } from "hono/http-exception";
 import { db } from "../db/index.js";
-import { dramas } from "../db/schema.js";
+import { dramas, watchHistory } from "../db/schema.js";
+import { authMiddleware, type AuthContext } from "../middleware/auth.js";
+import { watchlistService } from "../services/watchlist.service.js";
+import { favoritesService } from "../services/favorites.service.js";
+import type { DramaUserState } from "@repo/shared/types";
 
 const ListDramasQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -33,7 +37,10 @@ const GetEpisodeByNumberParamsSchema = z.object({
   number: z.coerce.number().int().positive(),
 });
 
-const app = new Hono();
+const app = new Hono<{ Variables: AuthContext }>();
+
+// Add auth middleware to all routes (sets user on context, allows anonymous)
+app.use("*", authMiddleware);
 
 app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
   const { page, pageSize, q, status, language, sortBy, sortOrder, t } =
@@ -126,6 +133,7 @@ app.get("/:slug/poster.jpg", async (c) => {
 
 app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
   const { slug } = c.req.valid("param");
+  const user = c.get("user");
 
   const drama = await dramaService.getDramaMetadataBySlug(slug);
 
@@ -135,20 +143,54 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     });
   }
 
-  // Sanitize drama: hide bookId, createdAt, updatedAt (keep posterUrl)
   const {
     bookId: _bookId,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
     ...sanitizedDrama
   } = drama;
+  let userState: DramaUserState = {
+    isBookmarked: false,
+    isFavorite: false,
+    watchedEpisodes: [],
+    lastWatchedEpisode: null,
+  };
+  if (user) {
+    const isBookmarked = await watchlistService.isInWatchlist(
+      user.id,
+      drama.id,
+    );
+
+    const isFavorite = await favoritesService.isInFavorites(user.id, drama.id);
+    const watchedEpisodesResult = await db
+      .selectDistinct({ episodeNumber: watchHistory.episodeNumber })
+      .from(watchHistory)
+      .where(
+        sql`${watchHistory.userId} = ${user.id} AND ${watchHistory.dramaSlug} = ${slug}`,
+      )
+      .orderBy(desc(watchHistory.watchedAt));
+    const watchedEpisodes = watchedEpisodesResult.map((r) => r.episodeNumber);
+    const lastWatchedEpisode = watchedEpisodes.length > 0 ? watchedEpisodes[0] : null;
+    userState = {
+      isBookmarked,
+      isFavorite,
+      watchedEpisodes,
+      lastWatchedEpisode,
+    };
+  }
 
   const dramaResponse = {
     ...sanitizedDrama,
     posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+    userState,
   };
 
-  c.header("Cache-Control", "public, max-age=60");
+  // Reduce cache time for authenticated users (personalized data)
+  if (user) {
+    c.header("Cache-Control", "private, max-age=30");
+  } else {
+    c.header("Cache-Control", "public, max-age=60");
+  }
 
   return c.json({
     success: true,
@@ -199,7 +241,10 @@ app.get(
     const { slug, number } = c.req.valid("param");
 
     // Use the new validation method that checks video URLs and fetches fresh if needed
-    const fullEpisode = await dramaService.getEpisodeByNumberWithValidation(slug, number);
+    const fullEpisode = await dramaService.getEpisodeByNumberWithValidation(
+      slug,
+      number,
+    );
 
     if (!fullEpisode) {
       throw new HTTPException(404, {
@@ -249,41 +294,48 @@ app.get(
 export const dramaRoutes = app;
 export type DramaRoutes = typeof app;
 
-
 // GET /api/dramas/:slug/suggestions - Get drama suggestions based on title
-app.get("/:slug/suggestions", zValidator("param", GetDramaParamsSchema), async (c) => {
-  const { slug } = c.req.valid("param");
+app.get(
+  "/:slug/suggestions",
+  zValidator("param", GetDramaParamsSchema),
+  async (c) => {
+    const { slug } = c.req.valid("param");
 
-  // Get the drama to fetch suggestions based on its title
-  const drama = await dramaService.getDramaMetadataBySlug(slug);
+    // Get the drama to fetch suggestions based on its title
+    const drama = await dramaService.getDramaMetadataBySlug(slug);
 
-  if (!drama) {
-    throw new HTTPException(404, {
-      message: `Drama with slug "${slug}" not found`,
+    if (!drama) {
+      throw new HTTPException(404, {
+        message: `Drama with slug "${slug}" not found`,
+      });
+    }
+
+    // Fetch suggestions based on the drama title, excluding current drama, max 10
+    const suggestions = await dramaService.getSuggestionsByTitle(
+      drama.title,
+      drama.slug,
+      10,
+    );
+
+    // Sanitize suggestions (map posterUrl)
+    const sanitizedSuggestions = suggestions.map((suggestion) => ({
+      id: suggestion.id,
+      title: suggestion.title,
+      slug: suggestion.slug,
+      description: suggestion.description,
+      posterUrl: `/api/dramas/${suggestion.slug}/poster.jpg`,
+      status: suggestion.status,
+      language: suggestion.language,
+      playCount: suggestion.playCount,
+      totalEpisodes: suggestion.totalEpisodes,
+    }));
+
+    // Add caching headers (5 minutes - suggestions don't change often)
+    c.header("Cache-Control", "public, max-age=300");
+
+    return c.json({
+      success: true,
+      data: sanitizedSuggestions,
     });
-  }
-
-  // Fetch suggestions based on the drama title, excluding current drama, max 10
-  const suggestions = await dramaService.getSuggestionsByTitle(drama.title, drama.slug, 10);
-
-  // Sanitize suggestions (map posterUrl)
-  const sanitizedSuggestions = suggestions.map((suggestion) => ({
-    id: suggestion.id,
-    title: suggestion.title,
-    slug: suggestion.slug,
-    description: suggestion.description,
-    posterUrl: `/api/dramas/${suggestion.slug}/poster.jpg`,
-    status: suggestion.status,
-    language: suggestion.language,
-    playCount: suggestion.playCount,
-    totalEpisodes: suggestion.totalEpisodes,
-  }));
-
-  // Add caching headers (5 minutes - suggestions don't change often)
-  c.header("Cache-Control", "public, max-age=300");
-
-  return c.json({
-    success: true,
-    data: sanitizedSuggestions,
-  });
-});
+  },
+);

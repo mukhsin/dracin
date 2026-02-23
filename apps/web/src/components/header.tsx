@@ -1,5 +1,5 @@
 import { Link, useRouterState, useLocation } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
@@ -113,10 +113,11 @@ export function Header() {
                 ) : (
                   <Link
                     to="/auth/signin"
-                    className="px-4 py-2 text-sm font-medium tracking-wider uppercase text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all"
+                    className="p-2 text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all"
                     style={{ borderRadius: "0" }}
+                    aria-label="Sign In"
                   >
-                    Sign In
+                    <LogIn className="w-5 h-5" />
                   </Link>
                 )}
               </div>
@@ -150,6 +151,7 @@ export function Header() {
                     to={link.to}
                     state={location.state}
                     onClick={() => setIsMobileMenuOpen(false)}
+                      aria-label="Sign In"
                     className={`px-4 py-3 text-sm font-medium tracking-wider uppercase transition-colors ${
                       active
                         ? "text-primary border-l-2 border-primary"
@@ -181,9 +183,10 @@ export function Header() {
                     <Link
                       to="/auth/signin"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
+                      aria-label="Sign In"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
                     >
-                      Sign In
+                      <LogIn className="w-5 h-5" />
                     </Link>
                   )}
                 </div>

@@ -5,6 +5,12 @@ import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { ProgressiveImage } from "../components/progressive-image";
+import { ContinueWatchingButton } from "../components/continue-watching-button";
+import { EpisodePagination } from "../components/episode-pagination";
+import { WatchlistButton } from "../components/watchlist-button";
+import { FavouritesButton } from "../components/favourites-button";
+import useEmblaCarousel from "embla-carousel-react";
+import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -14,17 +20,19 @@ function EpisodeButton({
   episodeNumber,
   dramaSlug,
   searchQuery,
+  isWatched,
 }: {
   episodeNumber: number;
   dramaSlug: string;
   searchQuery?: string;
+  isWatched?: boolean;
 }) {
   return (
     <Link
       to="/dramas/$dramaSlug/$episodeNumber"
       params={{ dramaSlug, episodeNumber: episodeNumber.toString() }}
       state={searchQuery ? { searchQuery } : undefined}
-      className="group bg-card border border-gray-700 aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
+      className={`group bg-card border border-gray-700 aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all ${isWatched ? 'opacity-60' : ''}`}
       style={{ borderRadius: "0" }}
     >
       <span className="text-sm font-bold text-gray-400 group-hover:text-primary transition-colors">
@@ -112,7 +120,7 @@ function DramaDetailsPage() {
   const location = useLocation();
   const router = useRouter();
   const search = location.state?.searchQuery || "";
-  const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
+  const { data, isLoading, error, userState } = useDramaWithEpisodes(dramaId);
 
   // Determine where to go back to
   const referrer = location.state?.referrer;
@@ -276,52 +284,51 @@ function DramaDetailsPage() {
                 {title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                {status && (
-                  <span
-                    className={`text-sm px-3 py-1.5 font-medium ${getStatusStyle(status)}`}
-                    style={{ borderRadius: "0" }}
-                  >
-                    {status.toUpperCase()}
-                  </span>
-                )}
-                {language && (
-                  <span
-                    className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5"
-                    style={{ borderRadius: "0" }}
-                  >
-                    {language.toUpperCase()}
-                  </span>
-                )}
-                {totalEpisodes > 0 && (
-                  <span
-                    className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1"
-                    style={{ borderRadius: "0" }}
-                  >
-                    <Film className="w-3 h-3" />
-                    {totalEpisodes} Episodes
-                  </span>
-                )}
-                {playCount && (
-                  <span className="text-muted-foreground text-sm">
-                    {formatDramaPlayCount(playCount)}
-                  </span>
-                )}
-                {/*{episodes && episodes.length > 0 && (
-                  <WatchlistButton
-                    dramaId={dramaId}
-                    variant="outline"
-                    size="sm"
-                  />
-                )}
-                {episodes && episodes.length > 0 && (
-                  <FavouritesButton
-                    dramaId={dramaId}
-                    variant="outline"
-                    size="sm"
-                  />
-                )}*/}
-              </div>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+  {status && (
+    <span
+      className={`text-sm px-3 py-1.5 font-medium ${getStatusStyle(status)}`}
+      style={{ borderRadius: "0" }}
+    >
+      {status.toUpperCase()}
+    </span>
+  )}
+  {language && (
+    <span
+      className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5"
+      style={{ borderRadius: "0" }}
+    >
+      {language.toUpperCase()}
+    </span>
+  )}
+  {totalEpisodes > 0 && (
+    <span
+      className="bg-gray-800 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1"
+      style={{ borderRadius: "0" }}
+    >
+      <Film className="w-3 h-3" />
+      {totalEpisodes} Episodes
+    </span>
+  )}
+  {playCount && (
+    <span className="text-muted-foreground text-sm">
+      {formatDramaPlayCount(playCount)}
+    </span>
+  )}
+</div>
+
+{/* Actions Row */}
+<div className="flex items-center gap-3 mb-6">
+  <ContinueWatchingButton
+    dramaSlug={data.slug}
+    lastWatchedEpisode={userState?.lastWatchedEpisode ?? null}
+    totalEpisodes={totalEpisodes}
+    searchQuery={search}
+  />
+  <WatchlistButton dramaId={dramaId} iconOnly size="sm" />
+  <FavouritesButton dramaId={dramaId} iconOnly size="sm" />
+</div>
+
 
               {description && (
                 <p className="text-lg text-muted-foreground leading-relaxed mb-8">
@@ -330,23 +337,14 @@ function DramaDetailsPage() {
               )}
             </div>
 
-            <div className="hidden lg:block overflow-hidden">
+            <div className="hidden lg:block">
               {totalEpisodes > 0 ? (
-                <div
-                  className="overflow-y-auto pr-2"
-                  style={{ maxHeight: "180px" }}
-                >
-                  <div className="grid grid-cols-10 gap-2">
-                    {Array.from({ length: totalEpisodes }, (_, i) => (
-                      <EpisodeButton
-                        key={i + 1}
-                        episodeNumber={i + 1}
-                        dramaSlug={data.slug}
-                        searchQuery={search}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <EpisodePagination
+                  totalEpisodes={totalEpisodes}
+                  watchedEpisodes={new Set(userState?.watchedEpisodes || [])}
+                  dramaSlug={data.slug}
+                  searchQuery={search}
+                />
               ) : (
                 <div className="text-center py-12 bg-muted/50 rounded-xl">
                   <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -361,18 +359,12 @@ function DramaDetailsPage() {
 
         <div className="lg:hidden">
           {totalEpisodes > 0 ? (
-            <div className="overflow-y-auto" style={{ maxHeight: "240px" }}>
-              <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-                {Array.from({ length: totalEpisodes }, (_, i) => (
-                  <EpisodeButton
-                    key={i + 1}
-                    episodeNumber={i + 1}
-                    dramaSlug={data.slug}
-                    searchQuery={search}
-                  />
-                ))}
-              </div>
-            </div>
+            <EpisodePagination
+              totalEpisodes={totalEpisodes}
+              watchedEpisodes={new Set(userState?.watchedEpisodes || [])}
+              dramaSlug={data.slug}
+              searchQuery={search}
+            />
           ) : (
             <div className="text-center py-12 bg-muted/50 rounded-xl">
               <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -388,8 +380,6 @@ function DramaDetailsPage() {
   );
 }
 
-import useEmblaCarousel from "embla-carousel-react";
-import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 
 function SuggestionsSection({ dramaSlug }: { dramaSlug: string }) {
   const { data: suggestions, isLoading } = useDramaSuggestions(dramaSlug);

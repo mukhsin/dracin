@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { DramaUserState } from "@repo/shared/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -12,6 +13,7 @@ interface DramaWithEpisodes {
   language?: string;
   status?: string;
   totalEpisodes: number;
+  userState: DramaUserState;
 }
 
 async function fetchDramaWithEpisodes(id: string): Promise<DramaWithEpisodes> {

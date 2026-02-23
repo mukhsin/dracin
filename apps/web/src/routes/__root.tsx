@@ -1,4 +1,9 @@
-import { Outlet, createRootRoute, HeadContent } from "@tanstack/react-router";
+import {
+  Outlet,
+  createRootRoute,
+  HeadContent,
+  useLocation,
+} from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import styles from "../styles.css?url";
 import { Header } from "../components/header.js";
@@ -26,13 +31,16 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const location = useLocation();
+  const isAuthPage = location.pathname.startsWith("/auth");
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <HeadContent />
         <div className="min-h-screen bg-background">
-          <Header />
-          <main className="pt-16">
+          {!isAuthPage && <Header />}
+          <main className={isAuthPage ? "" : "pt-16"}>
             <Outlet />
           </main>
         </div>

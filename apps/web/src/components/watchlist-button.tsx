@@ -12,6 +12,7 @@ interface WatchlistButtonProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   variant?: "default" | "outline" | "ghost";
+  iconOnly?: boolean;
 }
 
 const sizeClasses = {
@@ -31,6 +32,7 @@ export function WatchlistButton({
   className,
   size = "md",
   variant = "default",
+  iconOnly = false,
 }: WatchlistButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -56,18 +58,21 @@ export function WatchlistButton({
       return (
         <>
           <Loader2 className="animate-spin" size={iconSizes[size]} />
-          <span className="lg:sr-only">Loading...</span>
+          {!iconOnly && (
+            <span className="lg:sr-only">Loading...</span>
+          )}
         </>
       );
     }
-
     if (isInWatchlist) {
       return (
         <>
           <BookmarkCheck size={iconSizes[size]} />
-          <span className="lg:sr-only">
-            {isHovered ? "Remove" : "In Watchlist"}
-          </span>
+          {!iconOnly && (
+            <span className="lg:sr-only">
+              {isHovered ? "Remove" : "In Watchlist"}
+            </span>
+          )}
         </>
       );
     }
@@ -75,7 +80,9 @@ export function WatchlistButton({
     return (
       <>
         <Bookmark size={iconSizes[size]} />
-        <span className="lg:sr-only">Add to Watchlist</span>
+        {!iconOnly && (
+          <span className="lg:sr-only">Add to Watchlist</span>
+        )}
       </>
     );
   };

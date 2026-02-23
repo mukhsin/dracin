@@ -135,6 +135,34 @@ export const watchlist = sqliteTable(
   }),
 );
 
+export const favorites = sqliteTable(
+  "favorites",
+  {
+    id: text("id").primaryKey().$defaultFn(uuidDefault),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    dramaId: text("drama_id")
+      .notNull()
+      .references(() => dramas.id, { onDelete: "cascade" }),
+    addedAt: integer("added_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(nowEpoch()),
+  },
+  (table) => ({
+    userDramaIdx: uniqueIndex("favorites_user_drama_idx").on(
+      table.userId,
+      table.dramaId,
+    ),
+    userAddedAtIdx: index("favorites_user_added_at_idx").on(
+      table.userId,
+      table.addedAt,
+    ),
+    userIdx: index("favorites_user_idx").on(table.userId),
+    dramaIdx: index("favorites_drama_idx").on(table.dramaId),
+  }),
+);
+
 export const watchHistory = sqliteTable(
   "watch_history",
   {
@@ -267,11 +295,13 @@ export const drama_lists = sqliteTable(
 
 export const usersRelations = relations(users, ({ many }) => ({
   watchlist: many(watchlist),
+  favorites: many(favorites),
   watchHistory: many(watchHistory),
 }));
 
 export const dramasRelations = relations(dramas, ({ many }) => ({
   episodes: many(episodes),
+  favorites: many(favorites),
   watchlist: many(watchlist),
 }));
 
@@ -294,6 +324,17 @@ export const watchlistRelations = relations(watchlist, ({ one }) => ({
   }),
 }));
 
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, {
+    fields: [favorites.userId],
+    references: [users.id],
+  }),
+  drama: one(dramas, {
+    fields: [favorites.dramaId],
+    references: [dramas.id],
+  }),
+}));
 export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
   user: one(users, {
     fields: [watchHistory.userId],
@@ -312,6 +353,9 @@ export type NewEpisode = typeof episodes.$inferInsert;
 
 export type WatchlistItem = typeof watchlist.$inferSelect;
 export type NewWatchlistItem = typeof watchlist.$inferInsert;
+
+export type Favorite = typeof favorites.$inferSelect;
+export type NewFavorite = typeof favorites.$inferInsert;
 
 export type WatchHistoryItem = typeof watchHistory.$inferSelect;
 export type NewWatchHistoryItem = typeof watchHistory.$inferInsert;

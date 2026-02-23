@@ -6,6 +6,7 @@ import { healthRoutes } from "./routes/health.js";
 import { dramaRoutes } from "./routes/dramas.js";
 import { homeRoutes } from "./routes/home.js";
 import { watchlistRoutes } from "./routes/watchlist.js";
+import { favoritesRoutes } from "./routes/favorites.js";
 import { historyRoutes } from "./routes/history.js";
 import { fallbackAdminRoutes } from "./routes/videos.js";
 import { videoProxyRoutes } from "./routes/video-proxy.js";
@@ -61,6 +62,7 @@ export function createApp() {
   app.route("/api/dramas", homeRoutes);
   app.route("/api/dramas", dramaRoutes);
   app.route("/api/watchlist", watchlistRoutes);
+  app.route("/api/favorites", favoritesRoutes);
   app.route("/api/history", historyRoutes);
   app.route("/api", videoProxyRoutes);
   app.route("/api", fallbackAdminRoutes);

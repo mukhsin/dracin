@@ -65,6 +65,13 @@ export interface UpdateDramaInput {
   metadata?: Partial<DramaMetadata>;
 }
 
+export interface DramaUserState {
+  isBookmarked: boolean;
+  isFavorite: boolean;
+  watchedEpisodes: number[];
+  lastWatchedEpisode: number | null;
+}
+
 export type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";
 
 export interface Episode {
@@ -110,6 +117,19 @@ export interface CreateWatchlistItemInput {
   userId: string;
   dramaId: string;
 }
+export interface Favorite {
+  id: string;
+  userId: string;
+  dramaId: string;
+  addedAt: Date;
+}
+
+export interface CreateFavoriteInput {
+  userId: string;
+  dramaId: string;
+}
+
+
 
 export interface WatchHistory {
   id: string;

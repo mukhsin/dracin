@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { Heart, HeartOff, Loader2 } from "lucide-react";
+import {
+  useFavoriteStatus,
+  useAddToFavorites,
+  useRemoveFromFavorites,
+} from "../hooks/use-favorites.js";
 import { cn } from "../lib/utils.js";
 
 interface FavouritesButtonProps {
@@ -7,6 +12,7 @@ interface FavouritesButtonProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   variant?: "default" | "outline" | "ghost";
+  iconOnly?: boolean;
 }
 
 const sizeClasses = {
@@ -26,22 +32,33 @@ export function FavouritesButton({
   className,
   size = "md",
   variant = "default",
+  iconOnly = false,
 }: FavouritesButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const isInFavourites = false;
-  const isLoading = false;
-  const isPending = false;
+
+  const { data: isInFavourites, isLoading: isChecking } =
+    useFavoriteStatus(dramaId);
+
+  const addMutation = useAddToFavorites();
+  const removeMutation = useRemoveFromFavorites();
+
+  const isPending = addMutation.isPending || removeMutation.isPending;
+  const isError = addMutation.isError || removeMutation.isError;
 
   const handleClick = () => {
-    console.log("Toggle favourite for drama:", dramaId);
+    if (isInFavourites) {
+      removeMutation.mutate(dramaId);
+    } else {
+      addMutation.mutate(dramaId);
+    }
   };
 
   const getButtonContent = () => {
-    if (isLoading || isPending) {
+    if (isPending || isChecking) {
       return (
         <>
           <Loader2 className="animate-spin" size={iconSizes[size]} />
-          <span className="lg:sr-only">Loading...</span>
+          {!iconOnly && <span className="lg:sr-only">Loading...</span>}
         </>
       );
     }
@@ -50,9 +67,11 @@ export function FavouritesButton({
       return (
         <>
           <HeartOff size={iconSizes[size]} />
-          <span className="lg:sr-only">
-            {isHovered ? "Remove" : "Favourited"}
-          </span>
+          {!iconOnly && (
+            <span className="lg:sr-only">
+              {isHovered ? "Remove" : "Favourited"}
+            </span>
+          )}
         </>
       );
     }
@@ -60,7 +79,7 @@ export function FavouritesButton({
     return (
       <>
         <Heart size={iconSizes[size]} />
-        <span className="lg:sr-only">Add to Favourites</span>
+        {!iconOnly && <span className="lg:sr-only">Add to Favourites</span>}
       </>
     );
   };
@@ -87,13 +106,14 @@ export function FavouritesButton({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      disabled={isLoading || isPending}
+      disabled={isPending || isChecking}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full border font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
         sizeClasses[size],
         getVariantClasses(),
+        isError && "border-red-500 text-red-600",
         className,
       )}
       aria-label={
