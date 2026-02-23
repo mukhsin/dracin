@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookmarkOutline, BookmarkCheck, Loader2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import {
   useWatchlistStatus,
   useAddToWatchlist,
@@ -79,7 +79,7 @@ export function WatchlistButton({
 
     return (
       <>
-        <BookmarkOutline size={iconSizes[size]} />
+        <Bookmark size={iconSizes[size]} />
         {!iconOnly && (
           <span className="lg:sr-only">Add to Watchlist</span>
         )}
