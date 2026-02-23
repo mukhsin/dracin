@@ -24,6 +24,7 @@ export function EpisodePagination({
     controlledCurrentPage !== undefined ? controlledCurrentPage : internalPage;
 
   const getBatchSize = () => {
+    return 20;
     if (typeof window !== "undefined") {
       return window.innerWidth >= 768 ? 20 : 10;
     }
