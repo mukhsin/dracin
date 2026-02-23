@@ -77,7 +77,7 @@ function DramaDetailsSkeleton() {
               </div>
 
               {/* Episode Grid - Desktop only */}
-              <div className="hidden lg:block pt-4">
+              <div className="hidden xl:block pt-4">
                 <div className="grid grid-cols-10 gap-2">
                   {Array.from({ length: 20 }).map((_, i) => (
                     <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
@@ -88,7 +88,7 @@ function DramaDetailsSkeleton() {
           </div>
 
           {/* Episode Grid - Mobile/Tablet */}
-          <div className="lg:hidden">
+          <div className="xl:hidden">
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
               {Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
@@ -337,7 +337,7 @@ function DramaDetailsPage() {
               )}
             </div>
 
-            <div className="hidden lg:block">
+            <div className="hidden xl:block">
               {totalEpisodes > 0 ? (
                 <EpisodePagination
                   totalEpisodes={totalEpisodes}
@@ -357,7 +357,7 @@ function DramaDetailsPage() {
           </div>
         </div>
 
-        <div className="lg:hidden">
+        <div className="xl:hidden">
           {totalEpisodes > 0 ? (
             <EpisodePagination
               totalEpisodes={totalEpisodes}
