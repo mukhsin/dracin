@@ -1,6 +1,6 @@
 import { Link, useRouterState, useLocation } from "@tanstack/react-router";
-import { Menu, X, LogIn, User, UserCircle, Bookmark, Heart } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Menu, X, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
 
@@ -8,8 +8,6 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const location = useLocation();
   const currentPath = routerState.location.pathname;
@@ -24,25 +22,6 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-
-    if (isProfileMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isProfileMenuOpen]);
-
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/dramas", label: "Browse" },
@@ -56,16 +35,12 @@ export function Header() {
   const userLabel = user?.name?.trim() || user?.email?.trim() || "Account";
 
   const handleSignOut = async () => {
-
-  // Search params for sign in redirect
-  const signInSearch = { redirect: currentPath };
     if (isSigningOut) return;
 
     try {
       setIsSigningOut(true);
       await logout();
       setIsMobileMenuOpen(false);
-      setIsProfileMenuOpen(false);
     } finally {
       setIsSigningOut(false);
     }
@@ -107,11 +82,7 @@ export function Header() {
                       ? "text-primary border-b-2 border-primary"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  className={`px-4 py-2 text-sm font-medium tracking-wider uppercase transition-all rounded-none ${
-                    active
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-gray-400 hover:text-white"
-                  }`}
+                  style={{ borderRadius: "0" }}
                 >
                   {link.label}
                 </Link>
@@ -125,68 +96,38 @@ export function Header() {
             {!isLoading && (
               <div className="hidden md:flex items-center gap-2">
                 {isAuthenticated ? (
-                    <div className="relative" ref={profileMenuRef}>
-                      <button
-                        type="button"
-                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-
-                        className="p-2 text-gray-300 hover:text-white transition-all rounded-none"
-                        aria-label="Profile menu"
-                      >
-                        <UserCircle className="w-5 h-5" />
+                  <>
+                    <span className="max-w-40 truncate px-3 py-2 text-xs font-medium tracking-wider uppercase text-gray-300 border border-primary/20 bg-black/20">
+                      {userLabel}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="px-4 py-2 text-sm font-medium tracking-wider uppercase text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ borderRadius: "0" }}
+                    >
+                      {isSigningOut ? "Signing Out..." : "Sign Out"}
                     </button>
-                      {isProfileMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-[#0A0A0A] border border-primary/30 rounded-lg shadow-xl z-50">
-                          <div className="px-4 py-3 border-b border-primary/20">
-                            <p className="text-sm font-medium text-white truncate">{userLabel}</p>
-                          </div>
-                          <div className="py-1">
-                            <Link
-                              to="/profile/bookmarks"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
-                            >
-                              <Bookmark className="w-4 h-4" />
-                              My Bookmarks
-                            </Link>
-                            <Link
-                              to="/profile/favorites"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
-                            >
-                              <Heart className="w-4 h-4" />
-                              My Favorites
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={handleSignOut}
-                              disabled={isSigningOut}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
-                            >
-                              {isSigningOut ? "Signing Out..." : "Sign Out"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  </>
                 ) : (
-
                   <Link
                     to="/auth/signin"
-                    search={signInSearch}
-                    className="p-2 text-gray-300 hover:text-white transition-all rounded-none"
+                    className="p-2 text-gray-300 hover:text-white transition-all"
+                    style={{ borderRadius: "0" }}
                     aria-label="Sign In"
                   >
                     <LogIn className="w-5 h-5" />
                   </Link>
+                )}
               </div>
             )}
             {/* Mobile Menu Button */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-
-              className="md:hidden p-2 text-gray-400 hover:text-white transition-all rounded-none"
+              className="md:hidden p-2 text-gray-400 hover:text-white transition-all"
+              style={{ borderRadius: "0" }}
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
@@ -229,22 +170,6 @@ export function Header() {
                       <div className="px-4 py-3 text-xs font-medium tracking-wider uppercase text-gray-400">
                         {userLabel}
                       </div>
-                      <Link
-                        to="/profile/bookmarks"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
-                      >
-                        <Bookmark className="w-4 h-4" />
-                        My Bookmarks
-                      </Link>
-                      <Link
-                        to="/profile/favorites"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
-                      >
-                        <Heart className="w-4 h-4" />
-                        My Favorites
-                      </Link>
                       <button
                         type="button"
                         onClick={handleSignOut}
@@ -257,13 +182,13 @@ export function Header() {
                   ) : (
                     <Link
                       to="/auth/signin"
-                      search={signInSearch}
                       onClick={() => setIsMobileMenuOpen(false)}
                       aria-label="Sign In"
                       className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
                     >
                       Sign In
                     </Link>
+                  )}
                 </div>
               )}
             </nav>

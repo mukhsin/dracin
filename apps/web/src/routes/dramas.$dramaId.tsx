@@ -325,8 +325,8 @@ function DramaDetailsPage() {
     totalEpisodes={totalEpisodes}
     searchQuery={search}
   />
-  <WatchlistButton dramaId={dramaId} size="lg" />
-  <FavouritesButton dramaId={dramaId} size="lg" />
+  <WatchlistButton dramaId={data.id} size="lg" />
+  <FavouritesButton dramaId={data.id} size="lg" />
 </div>
 
 
