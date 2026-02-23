@@ -15,6 +15,8 @@ import { Route as DramasRouteImport } from './routes/dramas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DramasIndexRouteImport } from './routes/dramas.index'
 import { Route as DramasDramaIdRouteImport } from './routes/dramas.$dramaId'
+import { Route as AuthSignupRouteImport } from './routes/auth.signup'
+import { Route as AuthSigninRouteImport } from './routes/auth.signin'
 import { Route as DramasDramaSlugEpisodeNumberRouteImport } from './routes/dramas.$dramaSlug.$episodeNumber'
 
 const WatchlistRoute = WatchlistRouteImport.update({
@@ -47,6 +49,16 @@ const DramasDramaIdRoute = DramasDramaIdRouteImport.update({
   path: '/$dramaId',
   getParentRoute: () => DramasRoute,
 } as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/auth/signup',
+  path: '/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSigninRoute = AuthSigninRouteImport.update({
+  id: '/auth/signin',
+  path: '/auth/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DramasDramaSlugEpisodeNumberRoute =
   DramasDramaSlugEpisodeNumberRouteImport.update({
     id: '/$dramaSlug/$episodeNumber',
@@ -59,6 +71,8 @@ export interface FileRoutesByFullPath {
   '/dramas': typeof DramasRouteWithChildren
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
+  '/auth/signin': typeof AuthSigninRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
@@ -67,6 +81,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
+  '/auth/signin': typeof AuthSigninRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/dramas': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
@@ -77,6 +93,8 @@ export interface FileRoutesById {
   '/dramas': typeof DramasRouteWithChildren
   '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
+  '/auth/signin': typeof AuthSigninRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
@@ -88,6 +106,8 @@ export interface FileRouteTypes {
     | '/dramas'
     | '/history'
     | '/watchlist'
+    | '/auth/signin'
+    | '/auth/signup'
     | '/dramas/$dramaId'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
@@ -96,6 +116,8 @@ export interface FileRouteTypes {
     | '/'
     | '/history'
     | '/watchlist'
+    | '/auth/signin'
+    | '/auth/signup'
     | '/dramas/$dramaId'
     | '/dramas'
     | '/dramas/$dramaSlug/$episodeNumber'
@@ -105,6 +127,8 @@ export interface FileRouteTypes {
     | '/dramas'
     | '/history'
     | '/watchlist'
+    | '/auth/signin'
+    | '/auth/signup'
     | '/dramas/$dramaId'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
@@ -115,6 +139,8 @@ export interface RootRouteChildren {
   DramasRoute: typeof DramasRouteWithChildren
   HistoryRoute: typeof HistoryRoute
   WatchlistRoute: typeof WatchlistRoute
+  AuthSigninRoute: typeof AuthSigninRoute
+  AuthSignupRoute: typeof AuthSignupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -161,6 +187,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DramasDramaIdRouteImport
       parentRoute: typeof DramasRoute
     }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/auth/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/signin': {
+      id: '/auth/signin'
+      path: '/auth/signin'
+      fullPath: '/auth/signin'
+      preLoaderRoute: typeof AuthSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dramas/$dramaSlug/$episodeNumber': {
       id: '/dramas/$dramaSlug/$episodeNumber'
       path: '/$dramaSlug/$episodeNumber'
@@ -191,6 +231,8 @@ const rootRouteChildren: RootRouteChildren = {
   DramasRoute: DramasRouteWithChildren,
   HistoryRoute: HistoryRoute,
   WatchlistRoute: WatchlistRoute,
+  AuthSigninRoute: AuthSigninRoute,
+  AuthSignupRoute: AuthSignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

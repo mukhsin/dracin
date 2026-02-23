@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { Heart, Trash2, Play, Clock, Calendar, Film } from "lucide-react";
 import { formatDate } from "@repo/shared/utils";
+import { requireRouteAuth } from "../lib/route-auth-guard.js";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -25,6 +26,7 @@ interface WatchlistItem {
 }
 
 export const Route = createFileRoute("/watchlist")({
+  beforeLoad: () => requireRouteAuth("/watchlist"),
   component: WatchlistPage,
 });
 
@@ -102,12 +104,12 @@ export function WatchlistPage() {
                 : "We couldn't load your watchlist. Please try again."}
             </p>
             {error instanceof Error && error.message.includes("sign in") ? (
-              <Link
-                to="/auth/login"
+              <a
+                href="/auth/signin"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Sign In
-              </Link>
+              </a>
             ) : (
               <button
                 onClick={() =>
@@ -226,7 +228,11 @@ function WatchlistCard({ item, onRemove, isRemoving }: WatchlistCardProps) {
 
   return (
     <div className="group relative bg-card rounded-xl overflow-hidden border shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-      <Link to={`/dramas/${drama.slug}`} className="block">
+      <Link
+        to="/dramas/$dramaId"
+        params={{ dramaId: drama.slug }}
+        className="block"
+      >
         <div className="aspect-[2/3] relative overflow-hidden bg-muted">
           {drama.posterUrl ? (
             <Image
@@ -261,7 +267,7 @@ function WatchlistCard({ item, onRemove, isRemoving }: WatchlistCardProps) {
       </Link>
 
       <div className="p-4">
-        <Link to={`/dramas/${drama.slug}`}>
+        <Link to="/dramas/$dramaId" params={{ dramaId: drama.slug }}>
           <h3 className="font-semibold text-foreground line-clamp-1 hover:text-primary transition-colors">
             {drama.title}
           </h3>

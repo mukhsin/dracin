@@ -1,14 +1,17 @@
 import { Link, useRouterState, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const routerState = useRouterState();
   const location = useLocation();
   const currentPath = routerState.location.pathname;
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +30,20 @@ export function Header() {
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/";
     return currentPath.startsWith(path);
+  };
+
+  const userLabel = user?.name?.trim() || user?.email?.trim() || "Account";
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+
+    try {
+      setIsSigningOut(true);
+      await logout();
+      setIsMobileMenuOpen(false);
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -76,6 +93,34 @@ export function Header() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
             <SearchIcon />
+            {!isLoading && (
+              <div className="hidden md:flex items-center gap-2">
+                {isAuthenticated ? (
+                  <>
+                    <span className="max-w-40 truncate px-3 py-2 text-xs font-medium tracking-wider uppercase text-gray-300 border border-primary/20 bg-black/20">
+                      {userLabel}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="px-4 py-2 text-sm font-medium tracking-wider uppercase text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ borderRadius: "0" }}
+                    >
+                      {isSigningOut ? "Signing Out..." : "Sign Out"}
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth/signin"
+                    className="px-4 py-2 text-sm font-medium tracking-wider uppercase text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all"
+                    style={{ borderRadius: "0" }}
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
+            )}
             {/* Mobile Menu Button */}
             <button
               type="button"
@@ -115,6 +160,34 @@ export function Header() {
                   </Link>
                 );
               })}
+
+              {!isLoading && (
+                <div className="mt-2 border-t border-primary/20 pt-2">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="px-4 py-3 text-xs font-medium tracking-wider uppercase text-gray-400">
+                        {userLabel}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        disabled={isSigningOut}
+                        className="w-full text-left px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {isSigningOut ? "Signing Out..." : "Sign Out"}
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/auth/signin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+              )}
             </nav>
           </div>
         )}

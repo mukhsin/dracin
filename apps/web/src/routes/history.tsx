@@ -14,8 +14,10 @@ import {
   AlertTriangle,
   Film,
 } from "lucide-react";
+import { requireRouteAuth } from "../lib/route-auth-guard.js";
 
 export const Route = createFileRoute("/history")({
+  beforeLoad: () => requireRouteAuth("/history"),
   component: HistoryPage,
 });
 
