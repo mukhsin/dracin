@@ -60,6 +60,7 @@ Added full favorites functionality:
 
 ### Technical Updates 🔧
 - Enhanced drama details API with user state (isBookmarked, isFavorite, watchedEpisodes, lastWatchedEpisode)
+- Added authentication checks to bookmark/favorite buttons with sign-in modal for anonymous users
 - Added comprehensive E2E test suite (30 tests, 100% passing)
 - Full TypeScript support across all new features
 
