@@ -44,7 +44,7 @@ export function WatchlistButton({
       return <Loader2 className="animate-spin" size={iconSizes[size]} />;
     }
     if (isInWatchlist) {
-      return <BookmarkCheck size={iconSizes[size]} />;
+      return <Bookmark size={iconSizes[size]} className="fill-current" />;
     }
     return <Bookmark size={iconSizes[size]} />;
   };
