@@ -35,7 +35,7 @@ export function ContinueWatchingButton({
         episodeNumber: targetEpisode.toString(),
       }}
       state={searchQuery ? { searchQuery } : undefined}
-      className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+      className="text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors"
     >
       {label}
     </Link>
