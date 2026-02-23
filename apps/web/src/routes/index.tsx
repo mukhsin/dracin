@@ -4,7 +4,6 @@ import ContentSection from "../components/home/ContentSection";
 import { useHomeData } from "../hooks/use-home-data";
 import { RefreshCw } from "lucide-react";
 
-
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
@@ -12,10 +11,10 @@ export const Route = createFileRoute("/")({
 function HeroSkeleton() {
   return (
     <div className="w-full bg-[#0A0A0A] overflow-hidden">
-      <div className="aspect-[21/9] animate-pulse bg-gradient-to-r from-gray-900 to-gray-800">
-        <div className="h-full flex items-center px-6 sm:px-8 lg:px-12">
-          <div className="max-w-2xl space-y-4">
-            <div className="h-12 w-96 bg-gray-700" />
+      <div className="aspect-[3/4] md:aspect-[1/2] animate-pulse bg-gradient-to-b md:bg-gradient-to-r from-gray-900 to-gray-800">
+        <div className="h-full flex flex-col justify-end md:justify-center md:flex-row md:items-center px-6 sm:px-8 lg:px-12 pb-8 md:pb-0">
+          <div className="w-full max-w-2xl space-y-4">
+            <div className="h-8 md:h-12 w-full max-w-[24rem] bg-gray-700" />
             <div className="space-y-2">
               <div className="h-4 w-full bg-gray-700" />
               <div className="h-4 w-3/4 bg-gray-700" />
@@ -84,13 +83,23 @@ function ErrorState({
 
 export function HomePage() {
   const { rank1, featured, latest, popular, isError } = useHomeData();
-  
+
   // Check if any data is already available (cached)
-  const hasAnyData = !!(rank1.data || featured.data || latest.data || popular.data);
-  
+  const hasAnyData = !!(
+    rank1.data ||
+    featured.data ||
+    latest.data ||
+    popular.data
+  );
+
   // Only show skeleton on initial load when no data exists yet
   // If we have cached data, show it immediately even if some sections are still loading
-  const isInitialLoading = !hasAnyData && (rank1.isLoading || featured.isLoading || latest.isLoading || popular.isLoading);
+  const isInitialLoading =
+    !hasAnyData &&
+    (rank1.isLoading ||
+      featured.isLoading ||
+      latest.isLoading ||
+      popular.isLoading);
 
   if (isError) {
     return (

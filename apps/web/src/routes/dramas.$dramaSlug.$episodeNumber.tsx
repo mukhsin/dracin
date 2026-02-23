@@ -47,6 +47,44 @@ export const Route = createFileRoute("/dramas/$dramaSlug/$episodeNumber")({
   component: WatchPage,
 });
 
+function WatchPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#0A0A0A]">
+      {/* Video Skeleton - Vertical format */}
+      <div className="relative bg-black flex justify-center">
+        <div className="aspect-[9/16] max-h-[70vh] w-full max-w-md bg-gray-800 animate-pulse" />
+      </div>
+
+      {/* Navigation Skeleton */}
+      <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+            </div>
+            <div className="flex-1 flex flex-col items-center gap-2">
+              <div className="h-8 w-24 bg-gray-800 animate-pulse" />
+              <div className="h-4 w-16 bg-gray-800 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Title & Description Skeleton */}
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        <div className="h-6 w-3/4 bg-gray-800 animate-pulse" />
+        <div className="space-y-2">
+          <div className="h-4 w-full bg-gray-800 animate-pulse" />
+          <div className="h-4 w-2/3 bg-gray-800 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WatchPage() {
   const { dramaSlug, episodeNumber } = Route.useParams();
   const location = useLocation();
@@ -99,41 +137,7 @@ function WatchPage() {
   const nextEpisode = episode?.navigation?.nextEpisode;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A]">
-        {/* Video Skeleton - Vertical format */}
-        <div className="relative bg-black flex justify-center">
-          <div className="aspect-[9/16] max-h-[70vh] w-full max-w-md bg-gray-800 animate-pulse" />
-        </div>
-        
-        {/* Navigation Skeleton */}
-        <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
-          <div className="max-w-lg mx-auto px-4 py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
-              </div>
-              <div className="flex-1 flex flex-col items-center gap-2">
-                <div className="h-8 w-24 bg-gray-800 animate-pulse" />
-                <div className="h-4 w-16 bg-gray-800 animate-pulse" />
-              </div>
-              <div className="flex-1">
-                <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Title & Description Skeleton */}
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          <div className="h-6 w-3/4 bg-gray-800 animate-pulse" />
-          <div className="space-y-2">
-            <div className="h-4 w-full bg-gray-800 animate-pulse" />
-            <div className="h-4 w-2/3 bg-gray-800 animate-pulse" />
-          </div>
-        </div>
-      </div>
-    );
+    return <WatchPageSkeleton />;
   }
 
   if (error || !episode) {

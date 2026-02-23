@@ -34,25 +34,98 @@ function EpisodeButton({
   );
 }
 
+function DramaDetailsSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#0A0A0A]">
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          {/* Back Button Skeleton */}
+          <div className="h-6 w-32 bg-gray-800 mb-6" style={{ borderRadius: "0" }}></div>
+
+          {/* Hero Section - Matches actual layout */}
+          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            {/* Poster Skeleton */}
+            <div className="lg:col-span-1 -mx-4 md:mx-0">
+              <div className="aspect-[2/3] bg-gray-800 w-full" style={{ borderRadius: "0" }}></div>
+            </div>
+
+            {/* Info Skeleton */}
+            <div className="md:col-span-1 lg:col-span-2 space-y-4">
+              {/* Title */}
+              <div className="h-10 md:h-12 w-3/4 bg-gray-800" style={{ borderRadius: "0" }}></div>
+
+              {/* Status Badges */}
+              <div className="flex gap-3">
+                <div className="h-8 w-24 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div className="h-8 w-20 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div className="h-8 w-28 bg-gray-800" style={{ borderRadius: "0" }}></div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2 pt-2">
+                <div className="h-4 w-full bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div className="h-4 w-full bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div className="h-4 w-2/3 bg-gray-800" style={{ borderRadius: "0" }}></div>
+              </div>
+
+              {/* Episode Grid - Desktop only */}
+              <div className="hidden lg:block pt-4">
+                <div className="grid grid-cols-10 gap-2">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Episode Grid - Mobile/Tablet */}
+          <div className="lg:hidden">
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Suggestions Section Skeleton */}
+          <div className="mt-12 pt-8 border-t border-gray-800">
+            <div className="h-8 w-48 bg-gray-800 mb-6" style={{ borderRadius: "0" }}></div>
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex-[0_0_auto] w-44 md:w-52">
+                  <div className="aspect-[2/3] bg-gray-800 mb-3" style={{ borderRadius: "0" }}></div>
+                  <div className="h-4 w-full bg-gray-800 mb-2" style={{ borderRadius: "0" }}></div>
+                  <div className="h-3 w-2/3 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DramaDetailsPage() {
   const { dramaId } = Route.useParams();
   const location = useLocation();
   const router = useRouter();
   const search = location.state?.searchQuery || "";
   const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
-  
+
   // Determine where to go back to
   const referrer = location.state?.referrer;
-  
+
   // Parse referrer to extract path and search params
   let backTo = "/dramas";
   let backSearch = {} as { q?: string; t?: string };
-  
+
   if (referrer) {
     if (referrer.includes("?")) {
       const [path, queryString] = referrer.split("?");
       backTo = path || "/dramas";
-      
+
       // Parse query params
       const params = new URLSearchParams(queryString);
       if (params.has("q")) backSearch.q = params.get("q") || undefined;
@@ -61,7 +134,7 @@ function DramaDetailsPage() {
       backTo = referrer;
     }
   }
-  
+
   // Determine back button text based on referrer
   let backText = "Back to Dramas";
   if (referrer === "/") {
@@ -80,25 +153,7 @@ function DramaDetailsPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="bg-muted rounded-xl h-64 w-full mb-6"></div>
-            <div className="space-y-4">
-              <div className="bg-muted rounded-lg h-8 w-3/4"></div>
-              <div className="bg-muted rounded-lg h-4 w-full"></div>
-              <div className="bg-muted rounded-lg h-4 w-5/6"></div>
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="bg-muted rounded-lg h-12"></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <DramaDetailsSkeleton />;
   }
 
   if (error) {
