@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useLocation, useRouter } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { useDramaSuggestions } from "../hooks/use-drama-suggestions.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
+import { ProgressiveImage } from "../components/progressive-image";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -256,12 +256,10 @@ function DramaDetailsPage() {
               style={{ borderRadius: "0" }}
             >
               {posterUrl ? (
-                <Image
+                <ProgressiveImage
                   src={posterUrl}
                   alt={title}
-                  layout="fullWidth"
                   className="w-full h-full object-cover"
-                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full bg-muted flex items-center justify-center">

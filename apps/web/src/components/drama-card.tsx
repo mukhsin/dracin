@@ -1,6 +1,6 @@
 import { Play } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
+import { ProgressiveImage } from "./progressive-image";
 import { formatDramaPlayCount } from "../hooks/use-drama.js";
 
 interface DramaCardProps {
@@ -56,13 +56,10 @@ function DramaCard({ drama, totalEpisodes, searchQuery, referrer }: DramaCardPro
       {/* Image Container */}
       <div className="relative aspect-[2/3] w-full overflow-hidden">
         {hasPoster ? (
-          <Image
+          <ProgressiveImage
             src={posterUrl!}
             alt={title}
-            layout="fullWidth"
             className="w-full h-full object-cover"
-            loading="lazy"
-            background="auto"
           />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">

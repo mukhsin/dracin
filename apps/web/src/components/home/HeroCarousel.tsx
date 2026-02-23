@@ -3,7 +3,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
+import { ProgressiveImage } from "../progressive-image";
 
 interface HeroCarouselProps {
   dramas: {
@@ -15,7 +15,7 @@ interface HeroCarouselProps {
   }[];
 }
 
-export default function HeroCarousel({ dramas }: HeroCarouselProps) {
+function HeroCarousel({ dramas }: HeroCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true, align: "start" },
     [Autoplay({ delay: 5000, stopOnInteraction: false })],
@@ -62,14 +62,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
             >
               <div className="absolute inset-0 lg:hidden">
                 {drama.posterUrl ? (
-                  <Image
-                    src={drama.posterUrl}
-                    alt={drama.title}
-                    layout="fullWidth"
-                    className="w-full h-full object-cover"
-                    priority
-                    background="auto"
-                  />
+                  <ProgressiveImage src={drama.posterUrl} alt={drama.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
                 )}
@@ -82,14 +75,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
 
                 {drama.posterUrl ? (
                   <div className="absolute right-0 top-0 w-1/2 h-full px-12">
-                    <Image
-                      src={drama.posterUrl}
-                      alt={drama.title}
-                      layout="fullWidth"
-                      className="w-full h-full object-contain"
-                      priority
-                      background="auto"
-                    />
+                    <ProgressiveImage src={drama.posterUrl} alt={drama.title} className="w-full h-full object-contain" />
                   </div>
                 ) : (
                   <div className="absolute right-0 top-0 w-1/2 h-full px-12 bg-gradient-to-br from-gray-800 to-gray-900" />
@@ -168,3 +154,5 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
     </div>
   );
 }
+
+export default HeroCarousel;
