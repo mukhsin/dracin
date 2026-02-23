@@ -85,11 +85,14 @@ export function useWatchlist() {
   });
 }
 
-export function useWatchlistStatus(dramaId: string) {
+export function useWatchlistStatus(
+  dramaId: string,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ["watchlist", "status", dramaId],
     queryFn: () => checkWatchlistStatus(dramaId),
-    enabled: !!dramaId,
+    enabled: !!dramaId && options?.enabled !== false,
   });
 }
 

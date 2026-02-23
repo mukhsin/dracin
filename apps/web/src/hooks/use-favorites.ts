@@ -69,11 +69,14 @@ export function useFavorites() {
   });
 }
 
-export function useFavoriteStatus(dramaId: string) {
+export function useFavoriteStatus(
+  dramaId: string,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ["favorites", "status", dramaId],
     queryFn: () => checkFavoriteStatus(dramaId),
-    enabled: !!dramaId,
+    enabled: !!dramaId && options?.enabled !== false,
   });
 }
 

@@ -1,10 +1,13 @@
-import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { Bookmark, Loader2 } from "lucide-react";
 import {
   useWatchlistStatus,
   useAddToWatchlist,
   useRemoveFromWatchlist,
 } from "../hooks/use-watchlist.js";
+import { useAuth } from "../hooks/use-auth.js";
+import { SignInModal } from "./sign-in-modal.js";
 import { cn } from "../lib/utils.js";
+import { useState } from "react";
 
 interface WatchlistButtonProps {
   dramaId: string;
@@ -23,8 +26,13 @@ export function WatchlistButton({
   className,
   size = "md",
 }: WatchlistButtonProps) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: isInWatchlist, isLoading: isChecking } =
-    useWatchlistStatus(dramaId);
+    useWatchlistStatus(dramaId, {
+      enabled: isAuthenticated,
+    });
 
   const addMutation = useAddToWatchlist();
   const removeMutation = useRemoveFromWatchlist();
@@ -32,6 +40,11 @@ export function WatchlistButton({
   const isPending = addMutation.isPending || removeMutation.isPending;
 
   const handleClick = () => {
+    if (!isAuthenticated) {
+      setIsModalOpen(true);
+      return;
+    }
+
     if (isInWatchlist) {
       removeMutation.mutate(dramaId);
     } else {
@@ -40,7 +53,7 @@ export function WatchlistButton({
   };
 
   const getButtonContent = () => {
-    if (isPending || isChecking) {
+    if (isAuthLoading || (isPending || (isChecking && isAuthenticated))) {
       return <Loader2 className="animate-spin" size={iconSizes[size]} />;
     }
     if (isInWatchlist) {
@@ -50,6 +63,9 @@ export function WatchlistButton({
   };
 
   const getVariantClasses = () => {
+    if (!isAuthenticated) {
+      return "text-gray-500 cursor-pointer";
+    }
     if (isInWatchlist) {
       return "text-amber-400 hover:text-amber-500";
     }
@@ -57,20 +73,27 @@ export function WatchlistButton({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending || isChecking}
-      className={cn(
-        "inline-flex items-center justify-center transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        getVariantClasses(),
-        className,
-      )}
-      aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-    >
-      {getButtonContent()}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isAuthLoading || (isPending || (isChecking && isAuthenticated))}
+        className={cn(
+          "inline-flex items-center justify-center",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "disabled:pointer-events-none disabled:opacity-50",
+          getVariantClasses(),
+          className,
+        )}
+        aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+      >
+        {getButtonContent()}
+      </button>
+      <SignInModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        message="Please sign in to add dramas to your watchlist"
+      />
+    </>
   );
 }

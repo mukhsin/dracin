@@ -113,7 +113,7 @@ export function Header() {
                 ) : (
                   <Link
                     to="/auth/signin"
-                    className="p-2 text-gray-300 hover:text-white border border-primary/30 hover:border-primary/60 transition-all"
+                    className="p-2 text-gray-300 hover:text-white transition-all"
                     style={{ borderRadius: "0" }}
                     aria-label="Sign In"
                   >
@@ -186,7 +186,7 @@ export function Header() {
                       aria-label="Sign In"
                       className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
                     >
-                      <LogIn className="w-5 h-5" />
+                      Sign In
                     </Link>
                   )}
                 </div>
