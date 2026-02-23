@@ -52,6 +52,7 @@ Added full favorites functionality:
 - **Continue Watching**: Smart button showing "Start Watching" or "Continue Watching" based on history
 - **Status Badges**: Updated to outlined design with transparent backgrounds for modern look
 - **Golden Button**: Start Watching button now features golden/amber color scheme
+- **Outlined Icons**: Bookmark and favorite icons switched to outlined style for design consistency
 - **Responsive Improvements**: Fine-tuned episode pagination breakpoint (768px) for better mobile/tablet experience
 - **Header Improvements**: Icon-only Sign In button, hidden header on auth pages
 - **Visual Polish**: Watched episodes show with dimmed opacity styling
