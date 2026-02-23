@@ -62,6 +62,7 @@ function DramaCard({ drama, totalEpisodes, searchQuery, referrer }: DramaCardPro
             layout="fullWidth"
             className="w-full h-full object-cover"
             loading="lazy"
+            background="auto"
           />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">

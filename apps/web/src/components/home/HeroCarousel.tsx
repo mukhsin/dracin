@@ -68,6 +68,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
                     layout="fullWidth"
                     className="w-full h-full object-cover"
                     priority
+                    background="auto"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
@@ -87,6 +88,7 @@ export default function HeroCarousel({ dramas }: HeroCarouselProps) {
                       layout="fullWidth"
                       className="w-full h-full object-contain"
                       priority
+                      background="auto"
                     />
                   </div>
                 ) : (
