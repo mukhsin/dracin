@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, HeartOff, Loader2 } from "lucide-react";
+import { HeartOutline, Loader2 } from "lucide-react";
 import {
   useFavoriteStatus,
   useAddToFavorites,
@@ -66,7 +66,7 @@ export function FavouritesButton({
     if (isInFavourites) {
       return (
         <>
-          <HeartOff size={iconSizes[size]} />
+          <HeartOutline size={iconSizes[size]} />
           {!iconOnly && (
             <span className="lg:sr-only">
               {isHovered ? "Remove" : "Favourited"}
@@ -78,7 +78,7 @@ export function FavouritesButton({
 
     return (
       <>
-        <Heart size={iconSizes[size]} />
+        <HeartOutline size={iconSizes[size]} />
         {!iconOnly && <span className="lg:sr-only">Add to Favourites</span>}
       </>
     );
