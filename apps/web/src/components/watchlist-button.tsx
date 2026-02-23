@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import {
   useWatchlistStatus,
@@ -11,15 +10,7 @@ interface WatchlistButtonProps {
   dramaId: string;
   className?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "default" | "outline" | "ghost";
-  iconOnly?: boolean;
 }
-
-const sizeClasses = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-6 text-base",
-};
 
 const iconSizes = {
   sm: 14,
@@ -31,11 +22,7 @@ export function WatchlistButton({
   dramaId,
   className,
   size = "md",
-  variant = "default",
-  iconOnly = false,
 }: WatchlistButtonProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   const { data: isInWatchlist, isLoading: isChecking } =
     useWatchlistStatus(dramaId);
 
@@ -43,7 +30,6 @@ export function WatchlistButton({
   const removeMutation = useRemoveFromWatchlist();
 
   const isPending = addMutation.isPending || removeMutation.isPending;
-  const isError = addMutation.isError || removeMutation.isError;
 
   const handleClick = () => {
     if (isInWatchlist) {
@@ -55,68 +41,31 @@ export function WatchlistButton({
 
   const getButtonContent = () => {
     if (isPending || isChecking) {
-      return (
-        <>
-          <Loader2 className="animate-spin" size={iconSizes[size]} />
-          {!iconOnly && (
-            <span className="lg:sr-only">Loading...</span>
-          )}
-        </>
-      );
+      return <Loader2 className="animate-spin" size={iconSizes[size]} />;
     }
     if (isInWatchlist) {
-      return (
-        <>
-          <BookmarkCheck size={iconSizes[size]} />
-          {!iconOnly && (
-            <span className="lg:sr-only">
-              {isHovered ? "Remove" : "In Watchlist"}
-            </span>
-          )}
-        </>
-      );
+      return <BookmarkCheck size={iconSizes[size]} />;
     }
-
-    return (
-      <>
-        <Bookmark size={iconSizes[size]} />
-        {!iconOnly && (
-          <span className="lg:sr-only">Add to Watchlist</span>
-        )}
-      </>
-    );
+    return <Bookmark size={iconSizes[size]} />;
   };
 
   const getVariantClasses = () => {
-    if (variant === "outline") {
-      return isInWatchlist
-        ? "border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-        : "border-input hover:bg-accent hover:text-accent-foreground";
+    if (isInWatchlist) {
+      return "text-amber-400 hover:text-amber-500";
     }
-    if (variant === "ghost") {
-      return isInWatchlist
-        ? "text-green-600 hover:bg-green-50 hover:text-green-700"
-        : "hover:bg-accent hover:text-accent-foreground";
-    }
-    return isInWatchlist
-      ? "bg-green-600 text-white hover:bg-green-700"
-      : "bg-primary text-primary-foreground hover:bg-primary/90";
+    return "text-white hover:text-amber-300 transition-colors";
   };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       disabled={isPending || isChecking}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full border font-medium transition-colors",
+        "inline-flex items-center justify-center transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
-        sizeClasses[size],
         getVariantClasses(),
-        isError && "border-red-500 text-red-600",
         className,
       )}
       aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
