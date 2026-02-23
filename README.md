@@ -27,14 +27,37 @@
 - **Authentication** - Secure email/password authentication with Better-Auth
 - **Drama Catalog** - Browse dramas with seasons and episodes
 - **Video Player** - Custom player with quality selection (240p to 4K)
-- **Watchlist** - Save your favorite dramas for later
+- **Favorites** ❤️ - Save dramas to your favorites list
+- **Watchlist** - Save dramas to watch later
 - **Viewing History** - Track what you've watched
 - **Continue Watching** - Resume from where you left off
 - **Search** - Find dramas quickly with full-text search
+- **Episode Pagination** - Browse episodes in batches (10 mobile, 20 desktop)
 - **Responsive Design** - Works seamlessly on desktop and mobile
 - **API-Proxy Fallback** - Automatic failover for resilient streaming
 
 ---
+
+## Recent Updates (Feb 2026)
+
+### Favorites Feature ✨
+Added full favorites functionality:
+- Save dramas to your favorites list
+- Toggle favorites with heart icon on drama details page
+- View all favorites on your profile
+- Favorites state integrated into drama details API
+
+### UI Enhancements 🎨
+- **Episode Pagination**: New batch-based pagination for episodes (10 per batch mobile, 20 desktop)  
+- **Continue Watching**: Smart button showing "Start Watching" or "Continue Watching" based on history
+- **Header Improvements**: Icon-only Sign In button, hidden header on auth pages
+- **Visual Polish**: Watched episodes show with dimmed opacity styling
+- **Responsive Updates**: Adjusted episode grid breakpoints for better large-screen layout
+
+### Technical Updates 🔧
+- Enhanced drama details API with user state (isBookmarked, isFavorite, watchedEpisodes, lastWatchedEpisode)
+- Added comprehensive E2E test suite (30 tests, 100% passing)
+- Full TypeScript support across all new features
 
 ## Tech Stack
 
