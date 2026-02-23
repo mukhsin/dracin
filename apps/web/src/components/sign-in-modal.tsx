@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 interface SignInModalProps {
@@ -13,6 +13,9 @@ export function SignInModal({
   onClose,
   message = "Please sign in to use this feature",
 }: SignInModalProps) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const signInSearch = { redirect: currentPath };
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -86,6 +89,7 @@ export function SignInModal({
           <div className="flex flex-col gap-3">
             <Link
               to="/auth/signin"
+              search={signInSearch}
               onClick={onClose}
               className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium tracking-wider uppercase text-white bg-primary hover:bg-primary/80 transition-all rounded-sm"
             >
