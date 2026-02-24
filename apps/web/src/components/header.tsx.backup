@@ -1,12 +1,5 @@
 import { Link, useRouterState, useLocation } from "@tanstack/react-router";
-import {
-  Menu,
-  X,
-  LogIn,
-  UserCircle,
-  Bookmark,
-  Heart,
-} from "lucide-react";
+import { Menu, X, LogIn, User, UserCircle, Bookmark, Heart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
@@ -54,19 +47,19 @@ export function Header() {
     { to: "/", label: "Home" },
     { to: "/dramas", label: "Browse" },
   ];
+
   const isActive = (path: string) => {
-    if (path === "/") {
-      return currentPath === "/";
-    }
+    if (path === "/") return currentPath === "/";
     return currentPath.startsWith(path);
   };
 
   const userLabel = user?.name?.trim() || user?.email?.trim() || "Account";
-  const signInSearch = { redirect: currentPath };
+
   const handleSignOut = async () => {
-    if (isSigningOut) {
-      return;
-    }
+
+  // Search params for sign in redirect
+  const signInSearch = { redirect: currentPath };
+    if (isSigningOut) return;
 
     try {
       setIsSigningOut(true);
@@ -114,7 +107,11 @@ export function Header() {
                       ? "text-primary border-b-2 border-primary"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  style={{ borderRadius: "0" }}
+                  className={`px-4 py-2 text-sm font-medium tracking-wider uppercase transition-all rounded-none ${
+                    active
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-gray-400 hover:text-white"
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -128,71 +125,68 @@ export function Header() {
             {!isLoading && (
               <div className="hidden md:flex items-center gap-2">
                 {isAuthenticated ? (
-                  <div className="relative" ref={profileMenuRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                      className="p-2 text-gray-300 hover:text-white transition-all"
-                      style={{ borderRadius: "0" }}
-                      aria-label="Profile menu"
-                    >
-                      <UserCircle className="w-5 h-5" />
+                    <div className="relative" ref={profileMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+
+                        className="p-2 text-gray-300 hover:text-white transition-all rounded-none"
+                        aria-label="Profile menu"
+                      >
+                        <UserCircle className="w-5 h-5" />
                     </button>
-                    {isProfileMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-[#0A0A0A] border border-primary/30 rounded-lg shadow-xl z-50">
-                        <div className="px-4 py-3 border-b border-primary/20">
-                          <p className="text-sm font-medium text-white truncate">
-                            {userLabel}
-                          </p>
+                      {isProfileMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-[#0A0A0A] border border-primary/30 rounded-lg shadow-xl z-50">
+                          <div className="px-4 py-3 border-b border-primary/20">
+                            <p className="text-sm font-medium text-white truncate">{userLabel}</p>
+                          </div>
+                          <div className="py-1">
+                            <Link
+                              to="/profile/bookmarks"
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
+                            >
+                              <Bookmark className="w-4 h-4" />
+                              My Bookmarks
+                            </Link>
+                            <Link
+                              to="/profile/favorites"
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
+                            >
+                              <Heart className="w-4 h-4" />
+                              My Favorites
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={handleSignOut}
+                              disabled={isSigningOut}
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
+                            >
+                              {isSigningOut ? "Signing Out..." : "Sign Out"}
+                            </button>
+                          </div>
                         </div>
-                        <div className="py-1">
-                          <Link
-                            to="/profile/watchlist"
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
-                          >
-                            <Bookmark className="w-4 h-4" />
-                            My Watchlist
-                          </Link>
-                          <Link
-                            to="/profile/favorites"
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
-                          >
-                            <Heart className="w-4 h-4" />
-                            My Favorites
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={handleSignOut}
-                            disabled={isSigningOut}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
-                          >
-                            {isSigningOut ? "Signing Out..." : "Sign Out"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
                 ) : (
+
                   <Link
                     to="/auth/signin"
                     search={signInSearch}
-                    className="p-2 text-gray-300 hover:text-white transition-all"
-                    style={{ borderRadius: "0" }}
+                    className="p-2 text-gray-300 hover:text-white transition-all rounded-none"
                     aria-label="Sign In"
                   >
                     <LogIn className="w-5 h-5" />
                   </Link>
-                )}
               </div>
             )}
             {/* Mobile Menu Button */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-white transition-all"
-              style={{ borderRadius: "0" }}
+
+              className="md:hidden p-2 text-gray-400 hover:text-white transition-all rounded-none"
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
@@ -216,6 +210,7 @@ export function Header() {
                     to={link.to}
                     state={location.state}
                     onClick={() => setIsMobileMenuOpen(false)}
+                      aria-label="Sign In"
                     className={`px-4 py-3 text-sm font-medium tracking-wider uppercase transition-colors ${
                       active
                         ? "text-primary border-l-2 border-primary"
@@ -235,12 +230,12 @@ export function Header() {
                         {userLabel}
                       </div>
                       <Link
-                        to="/profile/watchlist"
+                        to="/profile/bookmarks"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors"
                       >
                         <Bookmark className="w-4 h-4" />
-                        My Watchlist
+                        My Bookmarks
                       </Link>
                       <Link
                         to="/profile/favorites"
@@ -269,7 +264,6 @@ export function Header() {
                     >
                       Sign In
                     </Link>
-                  )}
                 </div>
               )}
             </nav>

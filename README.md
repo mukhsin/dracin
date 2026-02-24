@@ -52,15 +52,18 @@ Added full favorites functionality:
 - **Continue Watching**: Smart button showing "Start Watching" or "Continue Watching" based on history
 - **Status Badges**: Updated to outlined design with transparent backgrounds for modern look
 - **Primary Button**: Start Watching button styled as primary action button
-- **Icon-Only Buttons**: Bookmark and favorite buttons now minimalist icons (20px) - white outline when not saved, golden amber filled when saved
+- **Icon-Only Buttons**: Watchlist and favorite buttons now minimalist icons (20px) - white outline when not saved, golden amber filled when saved
 - **Responsive Improvements**: Fine-tuned episode pagination breakpoint (768px) for better mobile/tablet experience
 - **Header Improvements**: Icon-only Sign In button, hidden header on auth pages
 - **Visual Polish**: Watched episodes show with dimmed opacity styling
 - **Responsive Updates**: Adjusted episode grid breakpoints for better large-screen layout
 
 ### Technical Updates 🔧
-- Enhanced drama details API with user state (isBookmarked, isFavorite, watchedEpisodes, lastWatchedEpisode)
-- Added authentication checks to bookmark/favorite buttons with sign-in modal for anonymous users
+- Enhanced drama details API with user state (isInWatchlist, isFavorite, watchedEpisodes, lastWatchedEpisode)
+- Added authentication checks to watchlist/favorite buttons with sign-in modal for anonymous users
+- Updated header with profile icon menu (desktop) and watchlist/favorites links (mobile)
+- Fixed login redirect to return users to previous page after authentication
+- Fixed watchlist/favorite API calls to use UUID instead of slug (400 Bad Request fix)
 - Added comprehensive E2E test suite (30 tests, 100% passing)
 - Full TypeScript support across all new features
 

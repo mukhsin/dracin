@@ -14,6 +14,8 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DramasRouteImport } from './routes/dramas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DramasIndexRouteImport } from './routes/dramas.index'
+import { Route as ProfileWatchlistRouteImport } from './routes/profile.watchlist'
+import { Route as ProfileFavoritesRouteImport } from './routes/profile.favorites'
 import { Route as DramasDramaIdRouteImport } from './routes/dramas.$dramaId'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthSigninRouteImport } from './routes/auth.signin'
@@ -43,6 +45,16 @@ const DramasIndexRoute = DramasIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DramasRoute,
+} as any)
+const ProfileWatchlistRoute = ProfileWatchlistRouteImport.update({
+  id: '/profile/watchlist',
+  path: '/profile/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileFavoritesRoute = ProfileFavoritesRouteImport.update({
+  id: '/profile/favorites',
+  path: '/profile/favorites',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DramasDramaIdRoute = DramasDramaIdRouteImport.update({
   id: '/$dramaId',
@@ -74,6 +86,8 @@ export interface FileRoutesByFullPath {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
+  '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
 }
@@ -84,6 +98,8 @@ export interface FileRoutesByTo {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
+  '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
 }
@@ -96,6 +112,8 @@ export interface FileRoutesById {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
+  '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
 }
@@ -109,6 +127,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
+    | '/profile/favorites'
+    | '/profile/watchlist'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
@@ -119,6 +139,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
+    | '/profile/favorites'
+    | '/profile/watchlist'
     | '/dramas'
     | '/dramas/$dramaSlug/$episodeNumber'
   id:
@@ -130,6 +152,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
+    | '/profile/favorites'
+    | '/profile/watchlist'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
   fileRoutesById: FileRoutesById
@@ -141,6 +165,8 @@ export interface RootRouteChildren {
   WatchlistRoute: typeof WatchlistRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  ProfileFavoritesRoute: typeof ProfileFavoritesRoute
+  ProfileWatchlistRoute: typeof ProfileWatchlistRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -179,6 +205,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/dramas/'
       preLoaderRoute: typeof DramasIndexRouteImport
       parentRoute: typeof DramasRoute
+    }
+    '/profile/watchlist': {
+      id: '/profile/watchlist'
+      path: '/profile/watchlist'
+      fullPath: '/profile/watchlist'
+      preLoaderRoute: typeof ProfileWatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/favorites': {
+      id: '/profile/favorites'
+      path: '/profile/favorites'
+      fullPath: '/profile/favorites'
+      preLoaderRoute: typeof ProfileFavoritesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dramas/$dramaId': {
       id: '/dramas/$dramaId'
@@ -233,6 +273,8 @@ const rootRouteChildren: RootRouteChildren = {
   WatchlistRoute: WatchlistRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
+  ProfileFavoritesRoute: ProfileFavoritesRoute,
+  ProfileWatchlistRoute: ProfileWatchlistRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

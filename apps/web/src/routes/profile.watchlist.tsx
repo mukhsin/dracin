@@ -4,11 +4,11 @@ import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
 import { Loader2, Bookmark } from "lucide-react";
 
-export const Route = createFileRoute("/profile/bookmarks")({
-  component: BookmarksPage,
+export const Route = createFileRoute("/profile/watchlist")({
+  component: WatchlistPage,
 });
 
-function BookmarksPage() {
+function WatchlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: watchlist, isLoading, error } = useWatchlist();
 
@@ -24,7 +24,7 @@ function BookmarksPage() {
   // Redirect to sign in if not authenticated
   if (!isAuthenticated) {
     return (
-      <Navigate to="/auth/signin" search={{ redirect: "/profile/bookmarks" }} />
+      <Navigate to="/auth/signin" search={{ redirect: "/profile/watchlist" }} />
     );
   }
 
@@ -34,11 +34,11 @@ function BookmarksPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            My Bookmarks
+            My Watchlist
           </h1>
           <div className="p-4 border border-red-500/30 bg-red-500/10 rounded-lg">
             <p className="text-red-400">
-              Failed to load bookmarks. Please try again.
+              Failed to load watchlist. Please try again.
             </p>
           </div>
         </div>
@@ -52,12 +52,12 @@ function BookmarksPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            My Bookmarks
+            My Watchlist
           </h1>
           <div className="text-center py-16">
             <Bookmark className="w-16 h-16 mx-auto text-gray-600 mb-4" />
             <p className="text-xl text-muted-foreground mb-2">
-              No bookmarks yet
+              No watchlist yet
             </p>
             <p className="text-sm text-gray-500 mb-6">
               Save dramas to watch later
@@ -74,16 +74,16 @@ function BookmarksPage() {
     );
   }
 
-  // Render bookmarks/watchlist grid
+  // Render watchlist/watchlist grid
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          My Bookmarks
+          My Watchlist
         </h1>
         <p className="text-muted-foreground mb-8">
           {watchlist.length} {watchlist.length === 1 ? "drama" : "dramas"} in
-          your bookmarks
+          your watchlist
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -95,7 +95,7 @@ function BookmarksPage() {
                 description: item.drama.description ?? undefined,
                 posterUrl: item.drama.posterUrl ?? undefined,
               }}
-              referrer="/profile/bookmarks"
+              referrer="/profile/watchlist"
             />
           ))}
         </div>

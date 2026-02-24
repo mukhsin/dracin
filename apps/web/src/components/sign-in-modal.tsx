@@ -16,6 +16,7 @@ export function SignInModal({
   const location = useLocation();
   const currentPath = location.pathname;
   const signInSearch = { redirect: currentPath };
+  const signInState = { redirect: currentPath };
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -90,6 +91,7 @@ export function SignInModal({
             <Link
               to="/auth/signin"
               search={signInSearch}
+              state={signInState}
               onClick={onClose}
               className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium tracking-wider uppercase text-white bg-primary hover:bg-primary/80 transition-all rounded-sm"
             >

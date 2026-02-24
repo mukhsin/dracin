@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   createFileRoute,
+  useLocation,
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/auth/signin")({
 });
 
 function SignInPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as SignInSearch;
   const [email, setEmail] = useState("");
@@ -23,18 +25,19 @@ function SignInPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectTo = useMemo(() => {
-    const value = search.redirect;
+    // Check location.state first (from modal), then URL search params
+    const value = location.state?.redirect || search.redirect;
 
     if (!value || typeof value !== "string") {
-      return "/";
+      return "/dramas";
     }
 
     if (!value.startsWith("/") || value.startsWith("//")) {
-      return "/";
+      return "/dramas";
     }
 
     return value;
-  }, [search.redirect]);
+  }, [location.state?.redirect, search.redirect]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

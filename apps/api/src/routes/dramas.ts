@@ -150,13 +150,13 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     ...sanitizedDrama
   } = drama;
   let userState: DramaUserState = {
-    isBookmarked: false,
+    isInWatchlist: false,
     isFavorite: false,
     watchedEpisodes: [],
     lastWatchedEpisode: null,
   };
   if (user) {
-    const isBookmarked = await watchlistService.isInWatchlist(
+    const isInWatchlist = await watchlistService.isInWatchlist(
       user.id,
       drama.id,
     );
@@ -172,7 +172,7 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     const watchedEpisodes = watchedEpisodesResult.map((r) => r.episodeNumber);
     const lastWatchedEpisode = watchedEpisodes.length > 0 ? watchedEpisodes[0] : null;
     userState = {
-      isBookmarked,
+      isInWatchlist,
       isFavorite,
       watchedEpisodes,
       lastWatchedEpisode,

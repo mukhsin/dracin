@@ -66,7 +66,7 @@ export interface UpdateDramaInput {
 }
 
 export interface DramaUserState {
-  isBookmarked: boolean;
+  isInWatchlist: boolean;
   isFavorite: boolean;
   watchedEpisodes: number[];
   lastWatchedEpisode: number | null;
