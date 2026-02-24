@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export interface VideoProgress {
   episodeId: string;
@@ -28,8 +29,45 @@ interface ProgressResponse {
   data?: ProgressData;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiType = Record<string, unknown>;
+async function fetchEpisodeProgress(
+  episodeId: string,
+): Promise<ProgressData | null> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/history/episodes/${episodeId}`,
+    {
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    throw new Error("Failed to fetch progress");
+  }
+
+  const data = (await response.json()) as ProgressResponse;
+  return data.data || null;
+}
+
+async function syncProgressToApi(progress: VideoProgress): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/history`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      episodeId: progress.episodeId,
+      progress: progress.currentTime,
+      completed: progress.completed,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to sync progress");
+  }
+}
 
 export function useVideoProgress({
   episodeId,
@@ -43,43 +81,13 @@ export function useVideoProgress({
 
   const progressQuery = useQuery({
     queryKey: ["video-progress", episodeId],
-    queryFn: async () => {
-      const apiTyped = api.api as ApiType;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await (apiTyped.history as any).episodes[episodeId].$get();
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error("Failed to fetch progress");
-      }
-
-      const data = (await response.json()) as ProgressResponse;
-      return data.data || null;
-    },
+    queryFn: () => fetchEpisodeProgress(episodeId),
     enabled: enabled && !!episodeId,
     staleTime: 5 * 60 * 1000,
   });
 
   const syncMutation = useMutation({
-    mutationFn: async (progress: VideoProgress) => {
-      const apiTyped = api.api as ApiType;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await (apiTyped.history as any).$post({
-        json: {
-          episodeId: progress.episodeId,
-          progress: progress.currentTime,
-          completed: progress.completed,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to sync progress");
-      }
-
-      return response.json();
-    },
+    mutationFn: syncProgressToApi,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["video-progress", episodeId],
@@ -123,11 +131,11 @@ export function useVideoProgress({
       try {
         await syncMutation.mutateAsync(progress);
         lastSyncTimeRef.current = now;
-      } catch {
-        // Silently fail - progress sync is not critical
+      } catch (error) {
+        console.error("Failed to sync progress:", error);
       }
     },
-    [episodeId, enabled, syncIntervalMs, syncMutation]
+    [episodeId, enabled, syncIntervalMs, syncMutation],
   );
 
   useEffect(() => {
