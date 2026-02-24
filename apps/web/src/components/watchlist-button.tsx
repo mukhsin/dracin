@@ -67,9 +67,9 @@ export function WatchlistButton({
       return "text-gray-500 cursor-pointer";
     }
     if (isInWatchlist) {
-      return "text-yellow-500 hover:text-yellow-600";
+      return "text-primary hover:text-primary/90";
     }
-    return "text-white hover:text-yellow-400 transition-colors";
+    return "text-white hover:text-primary/70 transition-colors";
   };
 
   return (
