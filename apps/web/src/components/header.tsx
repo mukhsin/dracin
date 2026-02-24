@@ -168,6 +168,7 @@ export function Header() {
                             disabled={isSigningOut}
                             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
                           >
+                            <LogOut className="w-4 h-4" />
                             {isSigningOut ? "Signing Out..." : "Sign Out"}
                           </button>
                         </div>
@@ -254,8 +255,9 @@ export function Header() {
                         type="button"
                         onClick={handleSignOut}
                         disabled={isSigningOut}
-                        className="w-full text-left px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium tracking-wider uppercase text-gray-400 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
+                        <LogOut className="w-4 h-4" />
                         {isSigningOut ? "Signing Out..." : "Sign Out"}
                       </button>
                     </>
