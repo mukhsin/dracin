@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   createFileRoute,
+  Link,
   useLocation,
   useNavigate,
   useSearch,
@@ -141,12 +142,13 @@ function SignInPage() {
 
           <p className="mt-4 text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <a
-              href="/auth/signup"
+            <Link
+              to="/auth/signup"
+              search={{ redirect: redirectTo === "/dramas" ? undefined : redirectTo }}
               className="font-medium text-primary hover:underline"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
       </div>
