@@ -133,7 +133,7 @@ export function Header() {
                     <button
                       type="button"
                       onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                      className="p-2 text-gray-300 hover:text-white transition-all"
+                      className="p-2 text-gray-400 hover:text-primary transition-colors transition-all"
                       style={{ borderRadius: "0" }}
                       aria-label="Profile menu"
                     >
@@ -150,7 +150,7 @@ export function Header() {
                           <Link
                             to="/profile/watchlist"
                             onClick={() => setIsProfileMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-primary transition-colors hover:bg-primary/10 transition-colors"
                           >
                             <Bookmark className="w-4 h-4" />
                             My Watchlist
@@ -158,7 +158,7 @@ export function Header() {
                           <Link
                             to="/profile/favorites"
                             onClick={() => setIsProfileMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-primary transition-colors hover:bg-primary/10 transition-colors"
                           >
                             <Heart className="w-4 h-4" />
                             My Favorites
@@ -167,7 +167,7 @@ export function Header() {
                             type="button"
                             onClick={handleSignOut}
                             disabled={isSigningOut}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-primary transition-colors hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
                           >
                             <LogOut className="w-4 h-4" />
                             {isSigningOut ? "Signing Out..." : "Sign Out"}
@@ -180,7 +180,7 @@ export function Header() {
                   <Link
                     to="/auth/signin"
                     search={signInSearch}
-                    className="p-2 text-gray-300 hover:text-white transition-all"
+                    className="p-2 text-gray-400 hover:text-primary transition-colors transition-all"
                     style={{ borderRadius: "0" }}
                     aria-label="Sign In"
                   >
