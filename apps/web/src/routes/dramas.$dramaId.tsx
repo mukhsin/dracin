@@ -120,7 +120,7 @@ function DramaDetailsPage() {
   const location = useLocation();
   const router = useRouter();
   const search = location.state?.searchQuery || "";
-  const { data, isLoading, error, userState } = useDramaWithEpisodes(dramaId);
+  const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
 
   // Determine where to go back to
   const referrer = location.state?.referrer;
@@ -321,7 +321,7 @@ function DramaDetailsPage() {
 <div className="flex items-center gap-3 mb-6">
   <ContinueWatchingButton
     dramaSlug={data.slug}
-    lastWatchedEpisode={userState?.lastWatchedEpisode ?? null}
+    lastWatchedEpisode={data?.userState?.lastWatchedEpisode ?? null}
     totalEpisodes={totalEpisodes}
     searchQuery={search}
   />
@@ -341,7 +341,7 @@ function DramaDetailsPage() {
               {totalEpisodes > 0 ? (
                 <EpisodePagination
                   totalEpisodes={totalEpisodes}
-                  watchedEpisodes={new Set(userState?.watchedEpisodes || [])}
+                  watchedEpisodes={new Set(data?.userState?.watchedEpisodes || [])}
                   dramaSlug={data.slug}
                   searchQuery={search}
                 />
@@ -361,7 +361,7 @@ function DramaDetailsPage() {
           {totalEpisodes > 0 ? (
             <EpisodePagination
               totalEpisodes={totalEpisodes}
-              watchedEpisodes={new Set(userState?.watchedEpisodes || [])}
+              watchedEpisodes={new Set(data?.userState?.watchedEpisodes || [])}
               dramaSlug={data.slug}
               searchQuery={search}
             />
