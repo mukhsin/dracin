@@ -40,7 +40,7 @@ async function checkWatchlistStatus(dramaId: string): Promise<boolean> {
     `${API_BASE_URL}/api/watchlist/check/${dramaId}`,
     {
       credentials: "include",
-    }
+    },
   );
   if (!response.ok) {
     throw new Error("Failed to check watchlist status");
@@ -66,13 +66,10 @@ async function addToWatchlist(dramaId: string): Promise<WatchlistItem> {
 }
 
 async function removeFromWatchlist(dramaId: string): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/watchlist/${dramaId}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}/api/watchlist/${dramaId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
   if (!response.ok) {
     throw new Error("Failed to remove from watchlist");
   }
@@ -93,6 +90,7 @@ export function useWatchlistStatus(
     queryKey: ["watchlist", "status", dramaId],
     queryFn: () => checkWatchlistStatus(dramaId),
     enabled: !!dramaId && options?.enabled !== false,
+    staleTime: Infinity,
   });
 }
 
@@ -127,15 +125,14 @@ export function useAddToWatchlist() {
       if (context?.previousStatus !== undefined) {
         queryClient.setQueryData(
           ["watchlist", "status", dramaId],
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },
-    onSettled: (_data, _error, dramaId) => {
+    onSettled: () => {
+      // No refetch needed - optimistic updates already handle UI state
+      // Only invalidate the main watchlist to keep it in sync
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      queryClient.invalidateQueries({
-        queryKey: ["watchlist", "status", dramaId],
-      });
     },
   });
 }
@@ -161,7 +158,7 @@ export function useRemoveFromWatchlist() {
       ]);
 
       queryClient.setQueryData<WatchlistItem[]>(["watchlist"], (old) =>
-        old?.filter((item) => item.dramaId !== dramaId)
+        old?.filter((item) => item.dramaId !== dramaId),
       );
       queryClient.setQueryData(["watchlist", "status", dramaId], false);
 
@@ -174,15 +171,14 @@ export function useRemoveFromWatchlist() {
       if (context?.previousStatus !== undefined) {
         queryClient.setQueryData(
           ["watchlist", "status", context.dramaId],
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },
-    onSettled: (_data, _error, dramaId) => {
+    onSettled: () => {
+      // No refetch needed - optimistic updates already handle UI state
+      // Only invalidate the main watchlist to keep it in sync
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      queryClient.invalidateQueries({
-        queryKey: ["watchlist", "status", dramaId],
-      });
     },
   });
 }

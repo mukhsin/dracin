@@ -77,6 +77,7 @@ export function useFavoriteStatus(
     queryKey: ["favorites", "status", dramaId],
     queryFn: () => checkFavoriteStatus(dramaId),
     enabled: !!dramaId && options?.enabled !== false,
+    staleTime: Infinity,
   });
 }
 
@@ -115,11 +116,10 @@ export function useAddToFavorites() {
         );
       }
     },
-    onSettled: (_data, _error, dramaId) => {
+    onSettled: () => {
+      // No refetch needed - optimistic updates already handle UI state
+      // Only invalidate the main favorites list to keep it in sync
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      queryClient.invalidateQueries({
-        queryKey: ["favorites", "status", dramaId],
-      });
     },
   });
 }
@@ -162,11 +162,10 @@ export function useRemoveFromFavorites() {
         );
       }
     },
-    onSettled: (_data, _error, dramaId) => {
+    onSettled: () => {
+      // No refetch needed - optimistic updates already handle UI state
+      // Only invalidate the main favorites list to keep it in sync
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      queryClient.invalidateQueries({
-        queryKey: ["favorites", "status", dramaId],
-      });
     },
   });
 }
