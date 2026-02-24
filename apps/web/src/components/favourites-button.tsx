@@ -1,4 +1,4 @@
-import { Heart, Loader2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import {
   useFavoriteStatus,
   useAddToFavorites,
@@ -26,47 +26,49 @@ export function FavouritesButton({
   className,
   size = "md",
 }: FavouritesButtonProps) {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
 
-  const { data: isInFavourites, isLoading: isChecking } =
-    useFavoriteStatus(dramaId, {
-      enabled: isAuthenticated,
-    });
+  const { data: isInFavourites } = useFavoriteStatus(dramaId, {
+    enabled: isAuthenticated,
+  });
 
   const addMutation = useAddToFavorites();
   const removeMutation = useRemoveFromFavorites();
 
-  const isPending = addMutation.isPending || removeMutation.isPending;
+  const effectiveState =
+    optimisticState !== null ? optimisticState : isInFavourites;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!isAuthenticated) {
       setIsModalOpen(true);
       return;
     }
 
-    if (isInFavourites) {
-      removeMutation.mutate(dramaId);
-    } else {
-      addMutation.mutate(dramaId);
-    }
-  };
+    const newState = !effectiveState;
+    const previousState = effectiveState ?? false;
 
-  const getButtonContent = () => {
-    if (isAuthLoading || (isPending || (isChecking && isAuthenticated))) {
-      return <Loader2 className="animate-spin" size={iconSizes[size]} />;
+    setOptimisticState(newState);
+
+    try {
+      if (newState) {
+        await addMutation.mutateAsync(dramaId);
+      } else {
+        await removeMutation.mutateAsync(dramaId);
+      }
+      setOptimisticState(null);
+    } catch {
+      setOptimisticState(previousState);
+      setTimeout(() => setOptimisticState(null), 300);
     }
-    if (isInFavourites) {
-      return <Heart size={iconSizes[size]} className="fill-current" />;
-    }
-    return <Heart size={iconSizes[size]} />;
   };
 
   const getVariantClasses = () => {
     if (!isAuthenticated) {
       return "text-gray-500 cursor-pointer";
     }
-    if (isInFavourites) {
+    if (effectiveState) {
       return "text-primary hover:text-primary/90";
     }
     return "text-gray-400 hover:text-primary/70 transition-colors";
@@ -77,19 +79,20 @@ export function FavouritesButton({
       <button
         type="button"
         onClick={handleClick}
-        disabled={isAuthLoading || (isPending || (isChecking && isAuthenticated))}
         className={cn(
           "inline-flex items-center justify-center",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          "disabled:pointer-events-none disabled:opacity-50",
           getVariantClasses(),
           className,
         )}
         aria-label={
-          isInFavourites ? "Remove from favourites" : "Add to favourites"
+          effectiveState ? "Remove from favourites" : "Add to favourites"
         }
       >
-        {getButtonContent()}
+        <Heart
+          size={iconSizes[size]}
+          className={effectiveState ? "fill-current" : ""}
+        />
       </button>
       <SignInModal
         isOpen={isModalOpen}
