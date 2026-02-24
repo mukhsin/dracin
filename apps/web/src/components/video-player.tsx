@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { VideoControls } from "./video-controls.js";
 import type { VideoQuality, VideoUrls } from "./quality-selector.js";
 import { decodeVideoUrls } from "../lib/utils.js";
+import { useVideoProgress } from "../hooks/use-video-progress.js";
 
 interface VideoPlayerProps {
   videoUrls?: VideoUrls;
@@ -9,6 +10,7 @@ interface VideoPlayerProps {
   posterUrl?: string;
   autoPlay?: boolean;
   startTime?: number;
+  episodeId?: string;
 }
 
 export function VideoPlayer({
@@ -17,6 +19,7 @@ export function VideoPlayer({
   posterUrl,
   autoPlay = false,
   startTime = 0,
+  episodeId,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,9 +30,15 @@ export function VideoPlayer({
       ) as VideoUrls)
     : {};
 
+  // Video progress tracking (only if episodeId is provided)
+  const progressTracking = useVideoProgress({
+    episodeId: episodeId || "",
+    enabled: !!episodeId,
+  });
+
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>("1080p");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(startTime);
+  const [currentTime, setCurrentTime] = useState(startTime > 0 ? startTime : progressTracking.resumeTime);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -38,14 +47,12 @@ export function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
-  const [isVertical, setIsVertical] = useState(true); // Default to vertical for mobile-first
+  const [isVertical, setIsVertical] = useState(true);
 
-  // Auto-hide controls timer
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMouseOverControlsRef = useRef(false);
   const lastActivityRef = useRef(Date.now());
 
-  // Video event handlers
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -53,15 +60,19 @@ export function VideoPlayer({
     setDuration(video.duration);
     setIsLoading(false);
 
-    // Detect if video is vertical (portrait)
     const isPortrait = video.videoHeight > video.videoWidth;
     setIsVertical(isPortrait);
 
-    // Set initial time
-    if (startTime > 0) {
-      video.currentTime = startTime;
+    // Set initial time from props or resume from progress tracking
+    const initialTime = startTime > 0 ? startTime : progressTracking.resumeTime;
+    if (initialTime > 0 && initialTime < video.duration * 0.95) {
+      video.currentTime = initialTime;
+      setCurrentTime(initialTime);
     }
-  }, [startTime]);
+
+    // Update duration in progress tracking
+    progressTracking.updateDuration(video.duration);
+  }, [startTime, progressTracking]);
 
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current;
@@ -74,7 +85,10 @@ export function VideoPlayer({
       const bufferedEnd = video.buffered.end(video.buffered.length - 1);
       setBuffered(bufferedEnd);
     }
-  }, []);
+
+    // Sync progress to tracking
+    progressTracking.updateCurrentTime(video.currentTime);
+  }, [progressTracking]);
 
   const handleWaiting = useCallback(() => {
     setIsLoading(true);
@@ -90,11 +104,20 @@ export function VideoPlayer({
 
   const handlePause = useCallback(() => {
     setIsPlaying(false);
-  }, []);
+    // Sync progress when pausing
+    if (episodeId) {
+      progressTracking.syncProgress(true);
+    }
+  }, [episodeId, progressTracking]);
 
   const handleEnded = useCallback(() => {
     setIsPlaying(false);
-  }, []);
+    // Mark as completed when video ends
+    if (episodeId && videoRef.current) {
+      progressTracking.updateCurrentTime(videoRef.current.duration);
+      progressTracking.syncProgress(true);
+    }
+  }, [episodeId, progressTracking]);
 
   const handleError = useCallback(() => {
     const video = videoRef.current;
@@ -110,7 +133,6 @@ export function VideoPlayer({
     }
   }, []);
 
-  // Control handlers
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -131,7 +153,8 @@ export function VideoPlayer({
 
     video.currentTime = time;
     setCurrentTime(time);
-  }, []);
+    progressTracking.updateCurrentTime(time);
+  }, [progressTracking]);
 
   const handleVolumeChange = useCallback(
     (newVolume: number) => {
@@ -174,7 +197,6 @@ export function VideoPlayer({
     }
   }, []);
 
-  // Handle fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -185,7 +207,6 @@ export function VideoPlayer({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Auto-hide controls
   const showControlsTemporarily = useCallback(() => {
     lastActivityRef.current = Date.now();
     setShowControls(true);
@@ -201,12 +222,10 @@ export function VideoPlayer({
     }
   }, [isPlaying]);
 
-  // Handle mouse move to show controls
   const handleMouseMove = useCallback(() => {
     showControlsTemporarily();
   }, [showControlsTemporarily]);
 
-  // Handle mouse enter/leave on controls
   const handleControlsMouseEnter = useCallback(() => {
     isMouseOverControlsRef.current = true;
     if (controlsTimeoutRef.current) {
@@ -223,7 +242,6 @@ export function VideoPlayer({
     }
   }, [isPlaying]);
 
-  // Start auto-hide timer when video starts playing
   useEffect(() => {
     if (isPlaying) {
       showControlsTemporarily();
@@ -235,11 +253,9 @@ export function VideoPlayer({
     }
   }, [isPlaying, showControlsTemporarily]);
 
-  // Touch/double-tap handlers
   const lastTapRef = useRef(0);
   const handleContainerClick = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Prevent if clicking on controls
       const target = e.target as HTMLElement;
       if (target.closest("[data-controls]")) return;
 
@@ -247,7 +263,6 @@ export function VideoPlayer({
       const timeSinceLastTap = now - lastTapRef.current;
 
       if (timeSinceLastTap < 300) {
-        // Double tap - skip forward/backward based on position
         const container = containerRef.current;
         if (container) {
           const rect = container.getBoundingClientRect();
@@ -258,12 +273,10 @@ export function VideoPlayer({
           const relativeX = x - rect.left;
           const isRightSide = relativeX > rect.width / 2;
 
-          // Skip 10s forward or backward
           const skipTime = isRightSide ? 10 : -10;
           handleSeek(Math.max(0, Math.min(duration, currentTime + skipTime)));
         }
       } else {
-        // Single tap - toggle play or show controls
         if (!showControls) {
           showControlsTemporarily();
         } else {
@@ -283,7 +296,6 @@ export function VideoPlayer({
     ],
   );
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (controlsTimeoutRef.current) {
@@ -292,13 +304,10 @@ export function VideoPlayer({
     };
   }, []);
 
-  // Get current video URL
   const currentVideoUrl = videoUrls[currentQuality];
-
-  // Determine aspect ratio class based on orientation
   const aspectRatioClass = isVertical
-    ? "aspect-[9/16] max-h-[80vh]" // Vertical/mobile
-    : "aspect-video"; // Horizontal/desktop
+    ? "aspect-[9/16] max-h-[80vh]"
+    : "aspect-video";
 
   return (
     <div
@@ -308,7 +317,6 @@ export function VideoPlayer({
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
     >
-      {/* Video element */}
       <video
         ref={videoRef}
         src={currentVideoUrl}
@@ -332,7 +340,6 @@ export function VideoPlayer({
         </p>
       </video>
 
-      {/* Error overlay */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
           <div className="text-center px-4">
@@ -379,7 +386,6 @@ export function VideoPlayer({
         </div>
       )}
 
-      {/* Custom controls */}
       <VideoControls
         videoRef={videoRef}
         videoUrls={videoUrls}

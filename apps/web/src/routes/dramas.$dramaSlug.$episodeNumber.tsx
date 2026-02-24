@@ -188,6 +188,7 @@ function WatchPage() {
           <VideoPlayer
             videoUrls={videoUrls}
             posterUrl={episode.drama.posterUrl || undefined}
+            episodeId={episode.id}
           />
         </div>
 
