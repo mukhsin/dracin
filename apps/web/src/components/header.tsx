@@ -142,7 +142,7 @@ export function Header() {
                     {isProfileMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-[#0A0A0A] border border-primary/30 rounded-lg shadow-xl z-50">
                         <div className="px-4 py-3 border-b border-primary/20">
-                          <p className="text-sm font-medium text-white truncate">
+                          <p className="text-sm font-medium text-gray-400 truncate">
                             {userLabel}
                           </p>
                         </div>
