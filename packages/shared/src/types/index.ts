@@ -70,6 +70,7 @@ export interface DramaUserState {
   isFavorite: boolean;
   watchedEpisodes: number[];
   lastWatchedEpisode: number | null;
+  lastEpisodeCompleted: boolean;
 }
 
 export type VideoQuality = "240p" | "360p" | "480p" | "720p" | "1080p" | "4k";

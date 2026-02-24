@@ -322,6 +322,7 @@ function DramaDetailsPage() {
   <ContinueWatchingButton
     dramaSlug={data.slug}
     lastWatchedEpisode={data?.userState?.lastWatchedEpisode ?? null}
+    lastEpisodeCompleted={data?.userState?.lastEpisodeCompleted ?? false}
     totalEpisodes={totalEpisodes}
     searchQuery={search}
   />

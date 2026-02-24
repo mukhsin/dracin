@@ -154,6 +154,7 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
     isFavorite: false,
     watchedEpisodes: [],
     lastWatchedEpisode: null,
+    lastEpisodeCompleted: false,
   };
   if (user) {
     const isInWatchlist = await watchlistService.isInWatchlist(
@@ -163,7 +164,10 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
 
     const isFavorite = await favoritesService.isInFavorites(user.id, drama.id);
     const watchedEpisodesResult = await db
-      .selectDistinct({ episodeNumber: watchHistory.episodeNumber })
+      .selectDistinct({ 
+        episodeNumber: watchHistory.episodeNumber,
+        completed: watchHistory.completed 
+      })
       .from(watchHistory)
       .where(
         sql`${watchHistory.userId} = ${user.id} AND ${watchHistory.dramaSlug} = ${slug}`,
@@ -171,11 +175,13 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
       .orderBy(desc(watchHistory.watchedAt));
     const watchedEpisodes = watchedEpisodesResult.map((r) => r.episodeNumber);
     const lastWatchedEpisode = watchedEpisodes.length > 0 ? watchedEpisodes[0] : null;
+    const lastEpisodeCompleted = watchedEpisodes.length > 0 ? watchedEpisodesResult[0].completed : false;
     userState = {
       isInWatchlist,
       isFavorite,
       watchedEpisodes,
       lastWatchedEpisode,
+      lastEpisodeCompleted,
     };
   }
 

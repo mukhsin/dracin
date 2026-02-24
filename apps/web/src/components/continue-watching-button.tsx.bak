@@ -19,22 +19,22 @@ export function ContinueWatchingButton({
   let label: string;
 
   if (!lastWatchedEpisode) {
-    
+    // Never watched any episode
     targetEpisode = 1;
     label = "Start Watching";
   } else if (lastEpisodeCompleted) {
-    
+    // Last episode is finished, go to next
     if (lastWatchedEpisode >= totalEpisodes) {
-      
+      // All episodes completed
       targetEpisode = 1;
       label = "Watch Again";
     } else {
-      
+      // Continue to next episode
       targetEpisode = lastWatchedEpisode + 1;
       label = "Continue Watching";
     }
   } else {
-    
+    // Last episode is unfinished, resume it
     targetEpisode = lastWatchedEpisode;
     label = `Resume Episode ${lastWatchedEpisode}`;
   }
