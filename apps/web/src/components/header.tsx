@@ -3,6 +3,7 @@ import {
   Menu,
   X,
   LogIn,
+  LogOut,
   UserCircle,
   Bookmark,
   Heart,
