@@ -11,6 +11,7 @@ import { useState } from "react";
 
 interface FavouritesButtonProps {
   dramaId: string;
+  initialState?: boolean;
   className?: string;
   size?: "sm" | "md" | "lg";
 }
@@ -23,6 +24,7 @@ const iconSizes = {
 
 export function FavouritesButton({
   dramaId,
+  initialState,
   className,
   size = "md",
 }: FavouritesButtonProps) {
@@ -31,14 +33,15 @@ export function FavouritesButton({
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
 
   const { data: isInFavourites } = useFavoriteStatus(dramaId, {
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && initialState === undefined,
+    initialData: initialState,
   });
 
   const addMutation = useAddToFavorites();
   const removeMutation = useRemoveFromFavorites();
 
   const effectiveState =
-    optimisticState !== null ? optimisticState : isInFavourites;
+    optimisticState !== null ? optimisticState : (isInFavourites ?? false);
 
   const handleClick = async () => {
     if (!isAuthenticated) {
@@ -47,7 +50,7 @@ export function FavouritesButton({
     }
 
     const newState = !effectiveState;
-    const previousState = effectiveState ?? false;
+    const previousState = effectiveState;
 
     setOptimisticState(newState);
 

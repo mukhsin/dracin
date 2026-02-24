@@ -11,6 +11,7 @@ import { useState } from "react";
 
 interface WatchlistButtonProps {
   dramaId: string;
+  initialState?: boolean;
   className?: string;
   size?: "sm" | "md" | "lg";
 }
@@ -23,6 +24,7 @@ const iconSizes = {
 
 export function WatchlistButton({
   dramaId,
+  initialState,
   className,
   size = "md",
 }: WatchlistButtonProps) {
@@ -31,14 +33,15 @@ export function WatchlistButton({
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
 
   const { data: isInWatchlist } = useWatchlistStatus(dramaId, {
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && initialState === undefined,
+    initialData: initialState,
   });
 
   const addMutation = useAddToWatchlist();
   const removeMutation = useRemoveFromWatchlist();
 
   const effectiveState =
-    optimisticState !== null ? optimisticState : isInWatchlist;
+    optimisticState !== null ? optimisticState : (isInWatchlist ?? false);
 
   const handleClick = async () => {
     if (!isAuthenticated) {
@@ -47,7 +50,7 @@ export function WatchlistButton({
     }
 
     const newState = !effectiveState;
-    const previousState = effectiveState ?? false;
+    const previousState = effectiveState;
 
     setOptimisticState(newState);
 

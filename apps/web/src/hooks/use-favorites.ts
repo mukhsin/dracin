@@ -71,12 +71,13 @@ export function useFavorites() {
 
 export function useFavoriteStatus(
   dramaId: string,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; initialData?: boolean },
 ) {
   return useQuery({
     queryKey: ["favorites", "status", dramaId],
     queryFn: () => checkFavoriteStatus(dramaId),
     enabled: !!dramaId && options?.enabled !== false,
+    initialData: options?.initialData,
     staleTime: Infinity,
   });
 }

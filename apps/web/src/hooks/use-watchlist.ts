@@ -84,12 +84,13 @@ export function useWatchlist() {
 
 export function useWatchlistStatus(
   dramaId: string,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; initialData?: boolean },
 ) {
   return useQuery({
     queryKey: ["watchlist", "status", dramaId],
     queryFn: () => checkWatchlistStatus(dramaId),
     enabled: !!dramaId && options?.enabled !== false,
+    initialData: options?.initialData,
     staleTime: Infinity,
   });
 }
