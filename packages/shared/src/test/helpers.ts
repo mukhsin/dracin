@@ -42,7 +42,7 @@ export function createMockDrama(overrides?: Partial<Drama>): Drama {
     posterUrl: "https://example.com/poster.jpg",
     status: "ongoing",
     language: null,
-    playCount: "14M",
+    playCount: 14_000_000,
     sourceEndpoint: null,
     metadata: {
       releaseYear: 2024,
