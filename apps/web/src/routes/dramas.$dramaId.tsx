@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useLocation, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
 import { useDramaSuggestions } from "../hooks/use-drama-suggestions.js";
 import { AlertCircle, ArrowLeft, Film } from "lucide-react";
@@ -16,71 +16,76 @@ export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
 });
 
-function EpisodeButton({
-  episodeNumber,
-  dramaSlug,
-  searchQuery,
-  isWatched,
-}: {
-  episodeNumber: number;
-  dramaSlug: string;
-  searchQuery?: string;
-  isWatched?: boolean;
-}) {
-  return (
-    <Link
-      to="/dramas/$dramaSlug/$episodeNumber"
-      params={{ dramaSlug, episodeNumber: episodeNumber.toString() }}
-      state={searchQuery ? { searchQuery } : undefined}
-      className={`group bg-card border border-gray-700 aspect-square flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all ${isWatched ? 'opacity-60' : ''}`}
-      style={{ borderRadius: "0" }}
-    >
-      <span className="text-sm font-bold text-gray-400 group-hover:text-primary transition-colors">
-        {episodeNumber}
-      </span>
-    </Link>
-  );
-}
-
 function DramaDetailsSkeleton() {
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
           {/* Back Button Skeleton */}
-          <div className="h-6 w-32 bg-gray-800 mb-6" style={{ borderRadius: "0" }}></div>
+          <div
+            className="h-6 w-32 bg-gray-800 mb-6"
+            style={{ borderRadius: "0" }}
+          ></div>
 
           {/* Hero Section - Matches actual layout */}
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
             {/* Poster Skeleton */}
             <div className="lg:col-span-1 -mx-4 md:mx-0">
-              <div className="aspect-[2/3] bg-gray-800 w-full" style={{ borderRadius: "0" }}></div>
+              <div
+                className="aspect-[2/3] bg-gray-800 w-full"
+                style={{ borderRadius: "0" }}
+              ></div>
             </div>
 
             {/* Info Skeleton */}
             <div className="md:col-span-1 lg:col-span-2 space-y-4">
               {/* Title */}
-              <div className="h-10 md:h-12 w-3/4 bg-gray-800" style={{ borderRadius: "0" }}></div>
+              <div
+                className="h-10 md:h-12 w-3/4 bg-gray-800"
+                style={{ borderRadius: "0" }}
+              ></div>
 
               {/* Status Badges */}
               <div className="flex gap-3">
-                <div className="h-8 w-24 bg-gray-800" style={{ borderRadius: "0" }}></div>
-                <div className="h-8 w-20 bg-gray-800" style={{ borderRadius: "0" }}></div>
-                <div className="h-8 w-28 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div
+                  className="h-8 w-24 bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
+                <div
+                  className="h-8 w-20 bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
+                <div
+                  className="h-8 w-28 bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
               </div>
 
               {/* Description */}
               <div className="space-y-2 pt-2">
-                <div className="h-4 w-full bg-gray-800" style={{ borderRadius: "0" }}></div>
-                <div className="h-4 w-full bg-gray-800" style={{ borderRadius: "0" }}></div>
-                <div className="h-4 w-2/3 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                <div
+                  className="h-4 w-full bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
+                <div
+                  className="h-4 w-full bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
+                <div
+                  className="h-4 w-2/3 bg-gray-800"
+                  style={{ borderRadius: "0" }}
+                ></div>
               </div>
 
               {/* Episode Grid - Desktop only */}
               <div className="hidden xl:block pt-4">
                 <div className="grid grid-cols-10 gap-2">
                   {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
+                    <div
+                      key={i}
+                      className="bg-gray-800 aspect-square"
+                      style={{ borderRadius: "0" }}
+                    ></div>
                   ))}
                 </div>
               </div>
@@ -91,20 +96,36 @@ function DramaDetailsSkeleton() {
           <div className="xl:hidden">
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
               {Array.from({ length: 15 }).map((_, i) => (
-                <div key={i} className="bg-gray-800 aspect-square" style={{ borderRadius: "0" }}></div>
+                <div
+                  key={i}
+                  className="bg-gray-800 aspect-square"
+                  style={{ borderRadius: "0" }}
+                ></div>
               ))}
             </div>
           </div>
 
           {/* Suggestions Section Skeleton */}
           <div className="mt-12 pt-8 border-t border-gray-800">
-            <div className="h-8 w-48 bg-gray-800 mb-6" style={{ borderRadius: "0" }}></div>
+            <div
+              className="h-8 w-48 bg-gray-800 mb-6"
+              style={{ borderRadius: "0" }}
+            ></div>
             <div className="flex gap-4 overflow-hidden">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="flex-[0_0_auto] w-44 md:w-52">
-                  <div className="aspect-[2/3] bg-gray-800 mb-3" style={{ borderRadius: "0" }}></div>
-                  <div className="h-4 w-full bg-gray-800 mb-2" style={{ borderRadius: "0" }}></div>
-                  <div className="h-3 w-2/3 bg-gray-800" style={{ borderRadius: "0" }}></div>
+                  <div
+                    className="aspect-[2/3] bg-gray-800 mb-3"
+                    style={{ borderRadius: "0" }}
+                  ></div>
+                  <div
+                    className="h-4 w-full bg-gray-800 mb-2"
+                    style={{ borderRadius: "0" }}
+                  ></div>
+                  <div
+                    className="h-3 w-2/3 bg-gray-800"
+                    style={{ borderRadius: "0" }}
+                  ></div>
                 </div>
               ))}
             </div>
@@ -118,7 +139,6 @@ function DramaDetailsSkeleton() {
 function DramaDetailsPage() {
   const { dramaId } = Route.useParams();
   const location = useLocation();
-  const router = useRouter();
   const search = location.state?.searchQuery || "";
   const { data, isLoading, error } = useDramaWithEpisodes(dramaId);
 
@@ -285,51 +305,62 @@ function DramaDetailsPage() {
               </h1>
 
               <div className="flex flex-wrap items-center gap-3 mb-4">
-  {status && (
-    <span
-      className={`text-sm px-3 py-1.5 font-medium ${getStatusStyle(status)}`}
-      style={{ borderRadius: "0" }}
-    >
-      {status.toUpperCase()}
-    </span>
-  )}
-  {language && (
-    <span
-      className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 bg-transparent"
-      style={{ borderRadius: "0" }}
-    >
-      {language.toUpperCase()}
-    </span>
-  )}
-  {totalEpisodes > 0 && (
-    <span
-      className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1 bg-transparent"
-      style={{ borderRadius: "0" }}
-    >
-      <Film className="w-3 h-3" />
-      {totalEpisodes} Episodes
-    </span>
-  )}
-  {playCount && (
-    <span className="text-muted-foreground text-sm">
-      {formatDramaPlayCount(playCount)}
-    </span>
-  )}
-</div>
+                {status && (
+                  <span
+                    className={`text-sm px-3 py-1.5 font-medium ${getStatusStyle(status)}`}
+                    style={{ borderRadius: "0" }}
+                  >
+                    {status.toUpperCase()}
+                  </span>
+                )}
+                {language && (
+                  <span
+                    className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 bg-transparent"
+                    style={{ borderRadius: "0" }}
+                  >
+                    {language.toUpperCase()}
+                  </span>
+                )}
+                {totalEpisodes > 0 && (
+                  <span
+                    className="border border-gray-600 text-gray-300 text-sm px-3 py-1.5 flex items-center gap-1 bg-transparent"
+                    style={{ borderRadius: "0" }}
+                  >
+                    <Film className="w-3 h-3" />
+                    {totalEpisodes} Episodes
+                  </span>
+                )}
+                {playCount && (
+                  <span className="text-muted-foreground text-sm">
+                    {formatDramaPlayCount(playCount)}
+                  </span>
+                )}
+              </div>
 
-{/* Actions Row */}
-<div className="flex items-center gap-3 mb-6">
-  <ContinueWatchingButton
-    dramaSlug={data.slug}
-    lastWatchedEpisode={data?.userState?.lastWatchedEpisode ?? null}
-    lastEpisodeCompleted={data?.userState?.lastEpisodeCompleted ?? false}
-    totalEpisodes={totalEpisodes}
-    searchQuery={search}
-  />
-  <WatchlistButton dramaId={data.id} initialState={data.userState?.isInWatchlist} size="lg" />
-  <FavouritesButton dramaId={data.id} initialState={data.userState?.isFavorite} size="lg" />
-</div>
-
+              {/* Actions Row */}
+              <div className="flex items-center gap-3 mb-6">
+                <ContinueWatchingButton
+                  dramaSlug={data.slug}
+                  lastWatchedEpisode={
+                    data?.userState?.lastWatchedEpisode ?? null
+                  }
+                  lastEpisodeCompleted={
+                    data?.userState?.lastEpisodeCompleted ?? false
+                  }
+                  totalEpisodes={totalEpisodes}
+                  searchQuery={search}
+                />
+                <WatchlistButton
+                  dramaId={data.id}
+                  initialState={data.userState?.isInWatchlist}
+                  size="lg"
+                />
+                <FavouritesButton
+                  dramaId={data.id}
+                  initialState={data.userState?.isFavorite}
+                  size="lg"
+                />
+              </div>
 
               {description && (
                 <p className="text-lg text-muted-foreground leading-relaxed mb-8">
@@ -342,7 +373,9 @@ function DramaDetailsPage() {
               {totalEpisodes > 0 ? (
                 <EpisodePagination
                   totalEpisodes={totalEpisodes}
-                  watchedEpisodes={new Set(data?.userState?.watchedEpisodes || [])}
+                  watchedEpisodes={
+                    new Set(data?.userState?.watchedEpisodes || [])
+                  }
                   dramaSlug={data.slug}
                   searchQuery={search}
                 />
@@ -381,7 +414,6 @@ function DramaDetailsPage() {
   );
 }
 
-
 function SuggestionsSection({ dramaSlug }: { dramaSlug: string }) {
   const { data: suggestions, isLoading } = useDramaSuggestions(dramaSlug);
   const [emblaRef] = useEmblaCarousel(
@@ -390,7 +422,7 @@ function SuggestionsSection({ dramaSlug }: { dramaSlug: string }) {
       dragFree: true,
       containScroll: "trimSnaps",
     },
-    [WheelGesturesPlugin()]
+    [WheelGesturesPlugin()],
   );
 
   if (isLoading || !suggestions || suggestions.length === 0) {

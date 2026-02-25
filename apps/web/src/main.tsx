@@ -15,6 +15,7 @@ declare module "@tanstack/react-router" {
   interface HistoryState {
     searchQuery?: string;
     redirect?: string;
+    referrer?: string;
   }
 }
 

@@ -58,6 +58,8 @@ describe("VideoControls", () => {
     onFullscreenToggle: mockOnFullscreenToggle,
     isLoading: false,
     title: "Test Episode",
+    showControls: true,
+    onShowControls: vi.fn(),
   };
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { Link, useRouterState, useLocation } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { LogIn, LogOut, UserCircle, Bookmark, Heart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/use-auth";
@@ -10,7 +10,6 @@ export function Header() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
-  const location = useLocation();
   const currentPath = routerState.location.pathname;
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 

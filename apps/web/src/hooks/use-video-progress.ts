@@ -150,7 +150,7 @@ export function useVideoProgress({
     return () => {
       clearInterval(intervalId);
     };
-  }, [episodeId, enabled, isAuthenticated, syncProgressMs, syncProgress]);
+  }, [episodeId, enabled, isAuthenticated, syncIntervalMs, syncProgress]);
 
   useEffect(() => {
     if (!enabled || !episodeId || !isAuthenticated) return;

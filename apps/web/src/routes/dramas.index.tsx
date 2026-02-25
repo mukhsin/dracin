@@ -3,7 +3,7 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { Loader2, AlertCircle, Search } from "lucide-react";
