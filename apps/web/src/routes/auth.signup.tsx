@@ -84,7 +84,7 @@ function SignUpPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto flex items-center justify-center px-4 py-12">
+      <div className="container mx-auto flex items-start justify-center px-4 pt-32">
         <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-foreground">Sign Up</h1>
           <p className="mt-2 text-sm text-muted-foreground">
