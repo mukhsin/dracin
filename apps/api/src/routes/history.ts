@@ -7,7 +7,7 @@ import { HTTPException } from "hono/http-exception";
 
 export const RecordProgressSchema = z.object({
   episodeId: z.string().uuid(),
-  progress: z.number().int().min(0),
+  progress: z.number().min(0), // Changed from int() to allow floats (e.g., 123.456)
   completed: z.boolean().optional(),
 });
 
@@ -43,31 +43,34 @@ app.get("/continue", async (c) => {
   });
 });
 
-app.post(
-  "/",
-  zValidator("json", RecordProgressSchema),
-  async (c) => {
-    const user = c.get("user");
-    if (!user) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
-    const { episodeId, progress, completed } = c.req.valid("json");
-
-    const item = await historyService.recordProgress(
-      user.id,
-      episodeId,
-      progress,
-      completed ?? false
-    );
-
-    return c.json({
-      success: true,
-      data: item,
-      message: "Progress recorded",
-    });
+app.post("/", zValidator("json", RecordProgressSchema), async (c) => {
+  const user = c.get("user");
+  if (!user) {
+    throw new HTTPException(401, { message: "Unauthorized" });
   }
-);
+
+  const { episodeId, progress, completed } = c.req.valid("json");
+
+  console.log("[History POST] Recording progress:", {
+    episodeId,
+    progress,
+    completed,
+    userId: user.id,
+  });
+
+  const item = await historyService.recordProgress(
+    user.id,
+    episodeId,
+    progress,
+    completed ?? false,
+  );
+
+  return c.json({
+    success: true,
+    data: item,
+    message: "Progress recorded",
+  });
+});
 
 app.get("/episodes/:episodeId", async (c) => {
   const user = c.get("user");
