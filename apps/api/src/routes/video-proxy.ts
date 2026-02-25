@@ -100,6 +100,7 @@ async function proxyUpstream(
     const duration = Date.now() - start;
     const responseHeaders = new Headers();
     applyCors(responseHeaders);
+    responseHeaders.set("Accept-Ranges", "bytes");
 
     FORWARDED_HEADERS.forEach((header) => {
       const value = upstream.headers.get(header);
