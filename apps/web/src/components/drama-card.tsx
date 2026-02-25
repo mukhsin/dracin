@@ -8,24 +8,29 @@ interface DramaCardProps {
     id: string;
     title: string;
     slug: string;
-    description?: string;
-    posterUrl?: string;
-    playCount?: string;
-    language?: string;
-    status?: string;
+    description?: string | null;
+    posterUrl?: string | null;
+    playCount?: string | number | null;
+    language?: string | null;
+    status?: string | null;
   };
   totalEpisodes?: number;
   searchQuery?: string;
   referrer?: string;
 }
 
-function DramaCard({ drama, totalEpisodes, searchQuery, referrer }: DramaCardProps) {
+function DramaCard({
+  drama,
+  totalEpisodes,
+  searchQuery,
+  referrer,
+}: DramaCardProps) {
   const { title, slug, posterUrl, playCount, language } = drama;
 
   // Handle missing poster URL
   const hasPoster = posterUrl && posterUrl.trim() !== "";
   const languageCode = language?.toLowerCase() || "unknown";
-  
+
   // Build state object
   const linkState: { searchQuery?: string; referrer?: string } = {};
   if (searchQuery) linkState.searchQuery = searchQuery;

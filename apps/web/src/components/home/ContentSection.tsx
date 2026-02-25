@@ -8,11 +8,11 @@ interface Drama {
   id: string;
   title: string;
   slug: string;
-  description?: string;
-  posterUrl?: string;
-  playCount?: string;
-  language?: string;
-  status?: string;
+  description?: string | null;
+  posterUrl?: string | null;
+  playCount?: number | string | null;
+  language?: string | null;
+  status?: string | null;
 }
 
 interface ContentSectionProps {
@@ -28,7 +28,7 @@ function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
       dragFree: true,
       containScroll: "trimSnaps",
     },
-    [WheelGesturesPlugin()]
+    [WheelGesturesPlugin()],
   );
 
   return (

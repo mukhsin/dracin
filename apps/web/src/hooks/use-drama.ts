@@ -75,7 +75,7 @@ export function useDramaDetails(id: string) {
 
 // Helper function to format play count for display
 export function formatDramaPlayCount(
-  playCount: string | null | undefined,
+  playCount: string | number | null | undefined,
 ): string {
   if (!playCount) return "0 views";
   const parsedCount = parsePlayCount(playCount);
