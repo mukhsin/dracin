@@ -14,6 +14,7 @@ interface UseVideoProgressOptions {
   episodeId: string;
   syncIntervalMs?: number;
   enabled?: boolean;
+  isAuthenticated?: boolean; // Only make API calls if user is logged in
 }
 
 interface ProgressData {
@@ -73,6 +74,7 @@ export function useVideoProgress({
   episodeId,
   syncIntervalMs = 10000,
   enabled = true,
+  isAuthenticated = false,
 }: UseVideoProgressOptions) {
   const queryClient = useQueryClient();
   const lastSyncTimeRef = useRef<number>(0);
@@ -82,7 +84,7 @@ export function useVideoProgress({
   const progressQuery = useQuery({
     queryKey: ["video-progress", episodeId],
     queryFn: () => fetchEpisodeProgress(episodeId),
-    enabled: enabled && !!episodeId,
+    enabled: enabled && !!episodeId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -105,7 +107,7 @@ export function useVideoProgress({
 
   const syncProgress = useCallback(
     async (force = false) => {
-      if (!enabled || !episodeId) return;
+      if (!enabled || !episodeId || !isAuthenticated) return;
 
       const now = Date.now();
       const timeSinceLastSync = now - lastSyncTimeRef.current;
@@ -135,11 +137,11 @@ export function useVideoProgress({
         console.error("Failed to sync progress:", error);
       }
     },
-    [episodeId, enabled, syncIntervalMs, syncMutation],
+    [episodeId, enabled, isAuthenticated, syncIntervalMs, syncMutation],
   );
 
   useEffect(() => {
-    if (!enabled || !episodeId) return;
+    if (!enabled || !episodeId || !isAuthenticated) return;
 
     const intervalId = setInterval(() => {
       syncProgress();
@@ -148,10 +150,10 @@ export function useVideoProgress({
     return () => {
       clearInterval(intervalId);
     };
-  }, [episodeId, enabled, syncIntervalMs, syncProgress]);
+  }, [episodeId, enabled, isAuthenticated, syncProgressMs, syncProgress]);
 
   useEffect(() => {
-    if (!enabled || !episodeId) return;
+    if (!enabled || !episodeId || !isAuthenticated) return;
 
     const handleBeforeUnload = () => {
       const currentTime = currentTimeRef.current;
@@ -173,7 +175,7 @@ export function useVideoProgress({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [episodeId, enabled]);
+  }, [episodeId, enabled, isAuthenticated]);
 
   const resumeTime = progressQuery.data?.progress || 0;
   const wasCompleted = progressQuery.data?.completed || false;
