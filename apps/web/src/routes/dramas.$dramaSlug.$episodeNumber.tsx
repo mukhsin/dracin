@@ -74,13 +74,13 @@ function WatchPageSkeleton() {
       </div>
 
       {/* Title & Description Skeleton */}
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+      {/*<div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         <div className="h-6 w-3/4 bg-gray-800 animate-pulse" />
         <div className="space-y-2">
           <div className="h-4 w-full bg-gray-800 animate-pulse" />
           <div className="h-4 w-2/3 bg-gray-800 animate-pulse" />
         </div>
-      </div>
+      </div>*/}
     </div>
   );
 }
