@@ -97,7 +97,7 @@ test.describe("Video Player", () => {
   });
 
   test.describe("Playback Controls", () => {
-    test("should play video when play button clicked", async ({
+    test("should play video when tapping player once", async ({
       authenticatedPage: page,
     }) => {
       const video = page.locator("video").first();
@@ -118,7 +118,7 @@ test.describe("Video Player", () => {
       expect(isPlaying).toBe(true);
     });
 
-    test("should pause video when pause button clicked", async ({
+    test("should pause video when tapping player once while playing", async ({
       authenticatedPage: page,
     }) => {
       const video = page.locator("video").first();
@@ -139,6 +139,70 @@ test.describe("Video Player", () => {
         (el: HTMLVideoElement) => el.paused,
       );
       expect(isPaused).toBe(true);
+    });
+
+    test("should seek forward by ~5 seconds on right double tap", async ({
+      authenticatedPage: page,
+    }) => {
+      const video = page.locator("video").first();
+      await video.waitFor({
+        state: "visible",
+        timeout: TEST_TIMEOUTS.videoLoad,
+      });
+
+      await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+      await seekVideo(page, 35);
+      await page.waitForTimeout(300);
+
+      const before = await video.evaluate((el: HTMLVideoElement) => el.currentTime);
+      const box = await video.boundingBox();
+      if (!box) {
+        test.skip();
+        return;
+      }
+
+      const x = box.x + box.width * 0.8;
+      const y = box.y + box.height * 0.5;
+      await page.mouse.click(x, y);
+      await page.waitForTimeout(100);
+      await page.mouse.click(x, y);
+      await page.waitForTimeout(400);
+
+      const after = await video.evaluate((el: HTMLVideoElement) => el.currentTime);
+      expect(after).toBeGreaterThan(before + 3);
+      expect(after).toBeLessThan(before + 7);
+    });
+
+    test("should seek backward by ~5 seconds on left double tap", async ({
+      authenticatedPage: page,
+    }) => {
+      const video = page.locator("video").first();
+      await video.waitFor({
+        state: "visible",
+        timeout: TEST_TIMEOUTS.videoLoad,
+      });
+
+      await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+      await seekVideo(page, 60);
+      await page.waitForTimeout(300);
+
+      const before = await video.evaluate((el: HTMLVideoElement) => el.currentTime);
+      const box = await video.boundingBox();
+      if (!box) {
+        test.skip();
+        return;
+      }
+
+      const x = box.x + box.width * 0.2;
+      const y = box.y + box.height * 0.5;
+      await page.mouse.click(x, y);
+      await page.waitForTimeout(100);
+      await page.mouse.click(x, y);
+      await page.waitForTimeout(400);
+
+      const after = await video.evaluate((el: HTMLVideoElement) => el.currentTime);
+      expect(after).toBeGreaterThan(before - 7);
+      expect(after).toBeLessThan(before - 3);
     });
 
     test("should seek to different position", async ({

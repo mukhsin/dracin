@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Play,
-  Pause,
   Volume2,
   VolumeX,
   Maximize,
@@ -35,7 +34,6 @@ interface VideoControlsProps {
   isLoading?: boolean;
   title?: string;
   showControls: boolean;
-  onShowControls: () => void;
   isVertical?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -73,7 +71,6 @@ export function VideoControls({
   isLoading = false,
   title,
   showControls,
-  onShowControls,
   onMouseEnter,
   onMouseLeave,
 }: VideoControlsProps) {
@@ -190,22 +187,14 @@ export function VideoControls({
   const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
 
   if (!showControls) {
-    return (
-      <div
-        className="absolute inset-0 cursor-pointer"
-        onClick={onShowControls}
-        data-controls="true"
-      />
-    );
+    return null;
   }
 
   return (
     <div
-      className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent"
-      onClick={(e) => e.stopPropagation()}
+      className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      data-controls="true"
     >
       {/* Title */}
       {title && (
@@ -228,10 +217,14 @@ export function VideoControls({
         <div className="absolute inset-0 flex items-center justify-center">
           <button
             type="button"
-            onClick={onPlayPause}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlayPause();
+            }}
             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center
-                       hover:bg-white/30 active:scale-95 transition-all"
+                       hover:bg-white/30 active:scale-95 transition-all pointer-events-auto"
             aria-label="Play"
+            data-controls="true"
           >
             <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white ml-1" />
           </button>
@@ -239,7 +232,10 @@ export function VideoControls({
       )}
 
       {/* Controls container */}
-      <div className="relative z-10 px-3 sm:px-4 pb-3 sm:pb-4 pt-6 sm:pt-8">
+      <div
+        className="relative z-10 px-3 sm:px-4 pb-3 sm:pb-4 pt-6 sm:pt-8 pointer-events-auto"
+        data-controls="true"
+      >
         {/* Progress bar - Bigger for touch */}
         <div
           ref={progressRef}
@@ -285,21 +281,6 @@ export function VideoControls({
         <div className="flex items-center justify-between">
           {/* Left controls */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Play/Pause - Bigger button */}
-            <button
-              type="button"
-              onClick={onPlayPause}
-              className="p-3 sm:p-2 rounded-full text-white hover:bg-white/10 transition-colors
-                         active:scale-95 transform"
-              aria-label={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? (
-                <Pause className="w-7 h-7 sm:w-6 sm:h-6" />
-              ) : (
-                <Play className="w-7 h-7 sm:w-6 sm:h-6 fill-current" />
-              )}
-            </button>
-
             {/* Skip backward - Hidden on small mobile */}
             <button
               type="button"

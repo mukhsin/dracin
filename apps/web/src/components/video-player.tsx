@@ -21,6 +21,8 @@ export function VideoPlayer({
   startTime = 0,
   episodeId,
 }: VideoPlayerProps) {
+  const DOUBLE_TAP_THRESHOLD_MS = 300;
+  const DOUBLE_TAP_SEEK_SECONDS = 5;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -50,6 +52,7 @@ export function VideoPlayer({
   const [isVertical, setIsVertical] = useState(true);
 
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMouseOverControlsRef = useRef(false);
   const lastActivityRef = useRef(Date.now());
 
@@ -254,34 +257,40 @@ export function VideoPlayer({
   }, [isPlaying, showControlsTemporarily]);
 
   const lastTapRef = useRef(0);
-  const handleContainerClick = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
+  const handleContainerInteraction = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       const target = e.target as HTMLElement;
       if (target.closest("[data-controls]")) return;
 
       const now = Date.now();
       const timeSinceLastTap = now - lastTapRef.current;
 
-      if (timeSinceLastTap < 300) {
+      if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD_MS) {
+        if (singleTapTimeoutRef.current) {
+          clearTimeout(singleTapTimeoutRef.current);
+          singleTapTimeoutRef.current = null;
+        }
+
         const container = containerRef.current;
         if (container) {
           const rect = container.getBoundingClientRect();
-          const x =
-            "touches" in e
-              ? e.touches[0].clientX
-              : (e as React.MouseEvent).clientX;
-          const relativeX = x - rect.left;
+          const relativeX = e.clientX - rect.left;
           const isRightSide = relativeX > rect.width / 2;
 
-          const skipTime = isRightSide ? 10 : -10;
+          const skipTime = isRightSide
+            ? DOUBLE_TAP_SEEK_SECONDS
+            : -DOUBLE_TAP_SEEK_SECONDS;
           handleSeek(Math.max(0, Math.min(duration, currentTime + skipTime)));
         }
       } else {
-        if (!showControls) {
-          showControlsTemporarily();
-        } else {
-          togglePlay();
+        if (singleTapTimeoutRef.current) {
+          clearTimeout(singleTapTimeoutRef.current);
         }
+
+        singleTapTimeoutRef.current = setTimeout(() => {
+          togglePlay();
+          singleTapTimeoutRef.current = null;
+        }, DOUBLE_TAP_THRESHOLD_MS);
       }
 
       lastTapRef.current = now;
@@ -289,9 +298,9 @@ export function VideoPlayer({
     [
       currentTime,
       duration,
+      DOUBLE_TAP_SEEK_SECONDS,
+      DOUBLE_TAP_THRESHOLD_MS,
       handleSeek,
-      showControls,
-      showControlsTemporarily,
       togglePlay,
     ],
   );
@@ -300,6 +309,9 @@ export function VideoPlayer({
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
+      }
+      if (singleTapTimeoutRef.current) {
+        clearTimeout(singleTapTimeoutRef.current);
       }
     };
   }, []);
@@ -313,8 +325,7 @@ export function VideoPlayer({
     <div
       ref={containerRef}
       className={`relative w-full bg-black overflow-hidden rounded-xl shadow-2xl ${aspectRatioClass}`}
-      onClick={handleContainerClick}
-      onTouchStart={handleContainerClick}
+      onPointerDown={handleContainerInteraction}
       onMouseMove={handleMouseMove}
     >
       <video
@@ -406,7 +417,6 @@ export function VideoPlayer({
         isLoading={isLoading}
         title={title}
         showControls={showControls}
-        onShowControls={showControlsTemporarily}
         isVertical={isVertical}
         onMouseEnter={handleControlsMouseEnter}
         onMouseLeave={handleControlsMouseLeave}
