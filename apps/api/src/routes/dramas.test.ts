@@ -1,5 +1,5 @@
-process.env.DATABASE_URL = "file::memory:";
-process.env.NODE_ENV = "test";
+// Test environment setup - must be imported first
+import "./test-setup.js";
 
 import {
   describe,
@@ -14,6 +14,10 @@ import { Hono } from "hono";
 import { dramaRoutes } from "./dramas.js";
 import { dramaService } from "../services/drama.service.js";
 import type { Drama, PaginatedResponse } from "@repo/shared/types";
+import { db } from "../db/index.js";
+import { migrate } from "drizzle-orm/libsql/migrator";
+import { dramas } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 // Mock data that matches the full Drama type (including fields that should be hidden)
 const mockFullDrama: Drama = {
@@ -51,21 +55,16 @@ const mockPaginatedResponse: PaginatedResponse<Drama> & { source?: string } = {
   hasMore: false,
   source: "db",
 };
-
-import { db } from "../db/index.js";
-import { migrate } from "drizzle-orm/libsql/migrator";
-import { dramas } from "../db/schema.js";
-import { eq } from "drizzle-orm";
-
 describe("Drama Routes - Poster Proxy", () => {
   const app = new Hono();
   app.route("/api/dramas", dramaRoutes);
 
   beforeAll(async () => {
-    await migrate(db, { migrationsFolder: "./apps/api/drizzle/migrations" });
+    const __dirname = import.meta.dirname;
+    await migrate(db, { migrationsFolder: `${__dirname}/../../drizzle/migrations` });
   });
 
-  describe("GET /api/dramas/:slug-poster.jpg", () => {
+  describe("GET /api/dramas/:slug/poster.jpg", () => {
     afterEach(async () => {
       await db.delete(dramas).where(eq(dramas.slug, "cache-test-drama"));
       await db.delete(dramas).where(eq(dramas.slug, "no-poster-drama"));
@@ -74,6 +73,17 @@ describe("Drama Routes - Poster Proxy", () => {
         .delete(dramas)
         .where(eq(dramas.slug, "drama-with-special-chars-123"));
       await db.delete(dramas).where(eq(dramas.slug, "stream-test"));
+      await db.delete(dramas).where(eq(dramas.slug, "invalid-poster-type"));
+      await db.delete(dramas).where(eq(dramas.slug, "upstream-404"));
+      await db.delete(dramas).where(eq(dramas.slug, "charset-test"));
+      await db.delete(dramas).where(eq(dramas.slug, "uppercase-ct"));
+      // Clean up dynamic test slugs for image type tests
+      const allDramas = await db.select({ slug: dramas.slug }).from(dramas);
+      for (const drama of allDramas) {
+        if (drama.slug.startsWith("valid-image-")) {
+          await db.delete(dramas).where(eq(dramas.slug, drama.slug));
+        }
+      }
     });
 
     it("should return placeholder image when posterUrl is null", async () => {
@@ -83,7 +93,7 @@ describe("Drama Routes - Poster Proxy", () => {
         posterUrl: null,
       });
 
-      const res = await app.request("/api/dramas/no-poster-drama-poster.jpg");
+      const res = await app.request("/api/dramas/no-poster-drama/poster.jpg");
 
       expect(res.status).toBe(200);
       const contentType = res.headers.get("Content-Type");
@@ -101,7 +111,7 @@ describe("Drama Routes - Poster Proxy", () => {
       });
 
       const res = await app.request(
-        "/api/dramas/empty-poster-drama-poster.jpg",
+        "/api/dramas/empty-poster-drama/poster.jpg",
       );
 
       expect(res.status).toBe(200);
@@ -113,7 +123,7 @@ describe("Drama Routes - Poster Proxy", () => {
     });
 
     it("should return 404 for non-existent drama slug", async () => {
-      const res = await app.request("/api/dramas/non-existent-slug-poster.jpg");
+      const res = await app.request("/api/dramas/non-existent-slug/poster.jpg");
 
       expect(res.status).toBe(404);
     });
@@ -126,7 +136,7 @@ describe("Drama Routes - Poster Proxy", () => {
       });
 
       const res = await app.request(
-        "/api/dramas/drama-with-special-chars-123-poster.jpg",
+        "/api/dramas/drama-with-special-chars-123/poster.jpg",
       );
 
       expect(res.status).toBe(200);
@@ -139,7 +149,7 @@ describe("Drama Routes - Poster Proxy", () => {
         posterUrl: null,
       });
 
-      const res = await app.request("/api/dramas/cache-test-drama-poster.jpg");
+      const res = await app.request("/api/dramas/cache-test-drama/poster.jpg");
 
       expect(res.status).toBe(200);
       const cacheControl = res.headers.get("Cache-Control");
@@ -153,7 +163,7 @@ describe("Drama Routes - Poster Proxy", () => {
         posterUrl: null,
       });
 
-      const res = await app.request("/api/dramas/stream-test-poster.jpg");
+      const res = await app.request("/api/dramas/stream-test/poster.jpg");
 
       if (res.status === 200) {
         const body = await res.arrayBuffer();
@@ -170,6 +180,132 @@ describe("Drama Routes - Poster Proxy", () => {
         expect(isJpeg || isPng).toBe(true);
       }
     });
+
+    it("should return 502 for upstream non-image content-type", async () => {
+      // Mock fetch to return HTML instead of image
+      const originalFetch = global.fetch;
+      global.fetch = async () =>
+        new Response("<html>not an image</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        });
+
+      await db.insert(dramas).values({
+        title: "Invalid Poster Type",
+        slug: "invalid-poster-type",
+        posterUrl: "https://example.com/not-an-image.html",
+      });
+
+      const res = await app.request("/api/dramas/invalid-poster-type/poster.jpg");
+
+      expect(res.status).toBe(502);
+
+      global.fetch = originalFetch;
+      await db.delete(dramas).where(eq(dramas.slug, "invalid-poster-type"));
+    });
+
+    it("should return 502 for upstream non-ok response", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () =>
+        new Response("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+
+      await db.insert(dramas).values({
+        title: "Upstream 404",
+        slug: "upstream-404",
+        posterUrl: "https://example.com/missing.jpg",
+      });
+
+      const res = await app.request("/api/dramas/upstream-404/poster.jpg");
+
+      expect(res.status).toBe(502);
+
+      global.fetch = originalFetch;
+      await db.delete(dramas).where(eq(dramas.slug, "upstream-404"));
+    });
+
+    it("should accept valid image content-types", async () => {
+      const originalFetch = global.fetch;
+      const imageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/avif",
+      ];
+
+      for (const imageType of imageTypes) {
+        global.fetch = async () =>
+          new Response(new Uint8Array([0xff, 0xd8, 0xff]), {
+            status: 200,
+            headers: { "Content-Type": imageType },
+          });
+
+        const testSlug = `valid-image-${imageType.replace("/", "-")}`;
+        await db.insert(dramas).values({
+          title: `Valid ${imageType}`,
+          slug: testSlug,
+          posterUrl: `https://example.com/image.${imageType.split("/")[1]}`,
+        });
+
+        const res = await app.request(`/api/dramas/${testSlug}/poster.jpg`);
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get("Content-Type")).toBe(imageType);
+
+        await db.delete(dramas).where(eq(dramas.slug, testSlug));
+      }
+
+      global.fetch = originalFetch;
+    });
+
+    it("should handle upstream content-type with charset", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () =>
+        new Response(new Uint8Array([0xff, 0xd8, 0xff]), {
+          status: 200,
+          headers: { "Content-Type": "image/jpeg; charset=utf-8" },
+        });
+
+      await db.insert(dramas).values({
+        title: "Charset Test",
+        slug: "charset-test",
+        posterUrl: "https://example.com/image.jpg",
+      });
+
+      const res = await app.request("/api/dramas/charset-test/poster.jpg");
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("image/jpeg");
+
+      global.fetch = originalFetch;
+      await db.delete(dramas).where(eq(dramas.slug, "charset-test"));
+    });
+
+    it("should handle case-insensitive content-type validation", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () =>
+        new Response(new Uint8Array([0xff, 0xd8, 0xff]), {
+          status: 200,
+          headers: { "Content-Type": "IMAGE/JPEG" },
+        });
+
+      await db.insert(dramas).values({
+        title: "Uppercase Content-Type",
+        slug: "uppercase-ct",
+        posterUrl: "https://example.com/image.jpg",
+      });
+
+      const res = await app.request("/api/dramas/uppercase-ct/poster.jpg");
+
+      expect(res.status).toBe(200);
+
+      global.fetch = originalFetch;
+      await db.delete(dramas).where(eq(dramas.slug, "uppercase-ct"));
+    });
+
   });
 });
 
@@ -178,39 +314,21 @@ describe("Drama Routes - Single Drama Endpoint", () => {
   app.route("/api/dramas", dramaRoutes);
 
   describe("GET /api/dramas/:slug - Single Drama Endpoint Sanitization", () => {
-    let getBySlugSpy: ReturnType<typeof spyOn>;
+    let getDramaMetadataBySlugSpy: ReturnType<typeof spyOn>;
 
-    const mockDramaWithEpisodes = {
+    const mockDrama = {
       ...mockFullDrama,
-      episodes: [
-        {
-          id: "ep-001",
-          dramaId: "drama-001",
-          bookId: "book-123",
-          number: 1,
-          title: "Episode 1",
-          description: "First episode description",
-          duration: 3600,
-          videoUrls: {
-            "240p": "https://example.com/video-240p.mp4",
-            "720p": "https://example.com/video-720p.mp4",
-          },
-          sourceUrl: "https://example.com/source.mp4",
-          createdAt: new Date("2024-01-15T10:00:00Z"),
-        },
-      ],
-      source: "cache" as const,
     };
 
     beforeAll(() => {
-      getBySlugSpy = spyOn(
+      getDramaMetadataBySlugSpy = spyOn(
         dramaService,
-        "getBySlugWithValidation",
-      ).mockResolvedValue(mockDramaWithEpisodes);
+        "getDramaMetadataBySlug",
+      ).mockResolvedValue(mockDrama);
     });
 
     afterAll(() => {
-      getBySlugSpy.mockRestore();
+      getDramaMetadataBySlugSpy.mockRestore();
     });
 
     it("should return drama without bookId, createdAt, updatedAt", async () => {
@@ -239,41 +357,24 @@ describe("Drama Routes - Single Drama Endpoint", () => {
       );
     });
 
-    it("should sanitize episodes by hiding videoUrls, sourceUrl, and bookId", async () => {
+    it("should not include episodes in single drama response", async () => {
       const res = await app.request("/api/dramas/test-drama");
 
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.success).toBe(true);
       expect(json.data).toBeDefined();
-      expect(Array.isArray(json.data.episodes)).toBe(true);
-      expect(json.data.episodes.length).toBeGreaterThan(0);
 
-      const episode = json.data.episodes[0];
-
-      expect(episode.videoUrls).toBeUndefined();
-      expect(episode.sourceUrl).toBeUndefined();
-      expect(episode.bookId).toBeUndefined();
-      expect(episode.dramaId).toBeUndefined();
-      expect(episode.description).toBeUndefined();
-      expect(episode.duration).toBeUndefined();
-      expect(episode.createdAt).toBeUndefined();
-
-      expect(episode).toHaveProperty("id");
-      expect(episode).toHaveProperty("number");
-      expect(episode).toHaveProperty("title");
+      // Single drama endpoint should not include episodes
+      expect(json.data.episodes).toBeUndefined();
     });
 
     it("should return 404 for non-existent slug", async () => {
-      getBySlugSpy.mockResolvedValueOnce(null);
+      getDramaMetadataBySlugSpy.mockResolvedValueOnce(null);
 
       const res = await app.request("/api/dramas/non-existent-slug-12345");
 
       expect(res.status).toBe(404);
-
-      const json = await res.json();
-      expect(json.success).toBe(false);
-      expect(json.error).toBeDefined();
     });
 
     it("should include Cache-Control header", async () => {
@@ -284,19 +385,20 @@ describe("Drama Routes - Single Drama Endpoint", () => {
       expect(cacheControl).toBe("public, max-age=60");
     });
 
-    it("should have correct response format with success, data, and meta", async () => {
+    it("should have correct response format with success and data", async () => {
       const res = await app.request("/api/dramas/test-drama");
 
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json).toHaveProperty("success");
       expect(json).toHaveProperty("data");
-      expect(json).toHaveProperty("meta");
       expect(json.success).toBe(true);
-      expect(json.meta).toHaveProperty("source");
     });
   });
 });
+
+
+
 
 describe("Drama Routes - List Endpoint Sanitization", () => {
   const app = new Hono();

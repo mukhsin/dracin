@@ -11,6 +11,8 @@ import { watchlistService } from "../services/watchlist.service.js";
 import { favoritesService } from "../services/favorites.service.js";
 import type { DramaUserState } from "@repo/shared/types";
 
+import { buildPosterUrl } from "../services/home.service.js";
+
 const ListDramasQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
@@ -39,6 +41,9 @@ const GetEpisodeByNumberParamsSchema = z.object({
 
 const app = new Hono<{ Variables: AuthContext }>();
 
+
+
+
 // Add auth middleware to all routes (sets user on context, allows anonymous)
 app.use("*", authMiddleware);
 
@@ -59,7 +64,7 @@ app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
     const { bookId: _b, createdAt: _c, updatedAt: _u, ...rest } = drama;
     return {
       ...rest,
-      posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+      posterUrl: buildPosterUrl(drama.slug),
     };
   });
 
@@ -103,29 +108,71 @@ app.get("/:slug/poster.jpg", async (c) => {
     c.header("Cache-Control", "public, max-age=86400");
     return c.body(placeholderBytes);
   }
+  // Upstream fetch with timeout and validation guardrails
+  const UPSTREAM_TIMEOUT_MS = 10000; // 10 seconds
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
   try {
-    const response = await fetch(drama.posterUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
-    if (!response.ok) {
-      throw new Error(`Upstream returned ${response.status}`);
+    let response: Response;
+    try {
+      response = await fetch(drama.posterUrl, {
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    const contentType =
-      response.headers.get("Content-Type") ||
-      response.headers.get("content-type") ||
-      "image/jpeg";
+    if (!response.ok) {
+      console.error(`[PosterProxy] Upstream returned ${response.status} for slug "${slug}"`);
+      throw new HTTPException(502, {
+        message: `Upstream fetch failed: ${response.status} ${response.statusText}`,
+      });
+    }
+
+    // Validate upstream content-type is an image
+    const contentType = (response.headers.get("Content-Type") || response.headers.get("content-type") || "").toLowerCase().trim();
+    
+    // Extract base content type (remove charset, etc.)
+    const baseContentType = contentType.split(";")[0].trim();
+    
+    // Check if content type starts with image/ and is in allowlist
+    const isValidImageType = baseContentType.startsWith("image/") && ALLOWED_IMAGE_TYPES.some(type => baseContentType === type);
+
+    if (!isValidImageType) {
+      console.error(`[PosterProxy] Invalid upstream content-type "${baseContentType}" for slug "${slug}"`);
+      throw new HTTPException(502, {
+        message: `Upstream returned invalid content-type: ${baseContentType || "unknown"}`,
+      });
+    }
+
     const imageBytes = await response.arrayBuffer();
 
-    c.header("Content-Type", contentType);
+    c.header("Content-Type", baseContentType);
     c.header("Cache-Control", "public, max-age=86400");
     return c.body(imageBytes);
   } catch (error) {
+    // Handle AbortController timeout
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error(`[PosterProxy] Upstream timeout for slug "${slug}"`);
+      throw new HTTPException(504, {
+        message: "Upstream fetch timed out",
+      });
+    }
+
+    // Pass through HTTPException
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+
+    // Log and convert other errors
     console.error(
       `[PosterProxy] Failed to fetch poster for slug "${slug}":`,
       error,
     );
-    throw new HTTPException(500, {
+    throw new HTTPException(502, {
       message: "Failed to fetch poster image",
     });
   }
@@ -187,7 +234,7 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
 
   const dramaResponse = {
     ...sanitizedDrama,
-    posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+    posterUrl: buildPosterUrl(drama.slug),
     userState,
   };
 
@@ -282,7 +329,17 @@ app.get(
       video: {
         urls: videoUrls,
       },
-    };
+    } as typeof episodeWithoutUrls & { video: { urls: Record<string, string> } };
+
+    // Transform drama posterUrl to use API proxy for video player
+    if (episodeWithVideo.drama && episodeWithVideo.drama.posterUrl) {
+      episodeWithVideo.drama = {
+        ...episodeWithVideo.drama,
+        posterUrl: buildPosterUrl(slug),
+      };
+    }
+
+
 
     // Add short caching for episode data (30 seconds - shorter due to video URLs)
     c.header("Cache-Control", "public, max-age=30");
@@ -329,7 +386,7 @@ app.get(
       title: suggestion.title,
       slug: suggestion.slug,
       description: suggestion.description,
-      posterUrl: `/api/dramas/${suggestion.slug}/poster.jpg`,
+      posterUrl: buildPosterUrl(suggestion.slug),
       status: suggestion.status,
       language: suggestion.language,
       playCount: suggestion.playCount,
