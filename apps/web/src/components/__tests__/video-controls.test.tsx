@@ -123,6 +123,20 @@ describe("VideoControls", () => {
     });
   });
 
+  describe("play controls removal", () => {
+    it("does not render play/pause buttons when paused", () => {
+      renderWithProviders(
+        <VideoControls {...defaultProps} isPlaying={false} />,
+      );
+
+      const playButtons = screen.queryAllByRole("button", { name: "Play" });
+      const pauseButtons = screen.queryAllByRole("button", { name: "Pause" });
+
+      expect(playButtons).toHaveLength(0);
+      expect(pauseButtons).toHaveLength(0);
+    });
+  });
+
   describe("time display formatting", () => {
     it("formats short durations correctly", () => {
       renderWithProviders(
