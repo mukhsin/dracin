@@ -238,24 +238,26 @@ export async function toggleWatchlist(
 
 export async function playVideo(page: Page): Promise<void> {
   const video = page.locator("video").first();
-  const playButton = page.locator(SELECTORS.playButton).first();
+  const playButton = page.locator('button[aria-label="Play"]').first();
 
   const isPlaying = await video.evaluate((el: HTMLVideoElement) => !el.paused);
 
   if (!isPlaying) {
-    await playButton.click();
+    if (await playButton.isVisible().catch(() => false)) {
+      await playButton.click();
+    } else {
+      await video.click();
+    }
     await page.waitForTimeout(500);
   }
 }
 
 export async function pauseVideo(page: Page): Promise<void> {
   const video = page.locator("video").first();
-  const pauseButton = page.locator(SELECTORS.pauseButton).first();
-
   const isPlaying = await video.evaluate((el: HTMLVideoElement) => !el.paused);
 
   if (isPlaying) {
-    await pauseButton.click();
+    await video.click();
     await page.waitForTimeout(500);
   }
 }
