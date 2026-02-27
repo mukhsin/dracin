@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures";
-import {
+import type { BrowserName } from "@playwright/test";
+  import {
   waitForPageLoad,
   waitForVideoReady,
   waitForApiResponse,
@@ -10,7 +11,6 @@ import {
   TEST_TIMEOUTS,
   SELECTORS,
 } from "./utils";
-
 test.describe("Video Player", () => {
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto("/");
@@ -603,5 +603,198 @@ test.describe("Video Player", () => {
       );
       expect(isPlaying).toBe(true);
     });
+  });
+});
+
+
+test.describe("Safari Playback and Seek Verification", () => {
+  test("WebKit: seek advances currentTime and playback remains active", async ({
+    authenticatedPage: page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'webkit', 'WebKit-specific test');
+
+    const video = page.locator("video").first();
+    await video.waitFor({
+      state: "visible",
+      timeout: TEST_TIMEOUTS.videoLoad,
+    });
+
+    await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+
+    const duration = await video.evaluate(
+      (el: HTMLVideoElement) => el.duration,
+    );
+
+    if (duration < 30) {
+      test.skip();
+      return;
+    }
+
+    await playVideo(page);
+    await page.waitForTimeout(1000);
+
+    const initialTime = await video.evaluate(
+      (el: HTMLVideoElement) => el.currentTime,
+    );
+    const initialReadyState = await video.evaluate(
+      (el: HTMLVideoElement) => el.readyState,
+    );
+
+    const seekTargetPercent = 70;
+    await seekVideo(page, seekTargetPercent);
+
+    await page.waitForTimeout(1500);
+
+    const seekedTime = await video.evaluate(
+      (el: HTMLVideoElement) => el.currentTime,
+    );
+    const seekedReadyState = await video.evaluate(
+      (el: HTMLVideoElement) => el.readyState,
+    );
+    const isPlaying = await video.evaluate(
+      (el: HTMLVideoElement) => !el.paused && !el.ended,
+    );
+
+    const expectedTime = duration * (seekTargetPercent / 100);
+    const timeDiff = Math.abs(seekedTime - expectedTime);
+
+    expect(timeDiff).toBeLessThan(10);
+    expect(seekedTime).toBeGreaterThan(initialTime);
+    expect(seekedReadyState).toBeGreaterThanOrEqual(2);
+    expect(isPlaying).toBe(true);
+
+    const errorOverlay = page.locator('text=/Video format not supported/i').first();
+    const hasErrorOverlay = await errorOverlay.isVisible().catch(() => false);
+    expect(hasErrorOverlay).toBe(false);
+  });
+
+  test("Chromium: seek advances currentTime and playback remains active", async ({
+    authenticatedPage: page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'Chromium-specific test');
+
+    const video = page.locator("video").first();
+    await video.waitFor({
+      state: "visible",
+      timeout: TEST_TIMEOUTS.videoLoad,
+    });
+
+    await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+
+    const duration = await video.evaluate(
+      (el: HTMLVideoElement) => el.duration,
+    );
+
+    if (duration < 30) {
+      test.skip();
+      return;
+    }
+
+    await playVideo(page);
+    await page.waitForTimeout(1000);
+
+    const initialTime = await video.evaluate(
+      (el: HTMLVideoElement) => el.currentTime,
+    );
+
+    const seekTargetPercent = 60;
+    await seekVideo(page, seekTargetPercent);
+
+    await page.waitForTimeout(1500);
+
+    const seekedTime = await video.evaluate(
+      (el: HTMLVideoElement) => el.currentTime,
+    );
+    const isPlaying = await video.evaluate(
+      (el: HTMLVideoElement) => !el.paused && !el.ended,
+    );
+
+    const expectedTime = duration * (seekTargetPercent / 100);
+    const timeDiff = Math.abs(seekedTime - expectedTime);
+
+    expect(timeDiff).toBeLessThan(10);
+    expect(seekedTime).toBeGreaterThan(initialTime);
+    expect(isPlaying).toBe(true);
+  });
+});
+
+test.describe("Poster URL Routing Verification", () => {
+  test("should load poster from API proxy route only", async ({
+    authenticatedPage: page,
+  }) => {
+    const posterRequests: Array<{ url: string; host: string; path: string }> = [];
+
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('/poster.jpg') || url.includes('/poster')) {
+        const urlObj = new URL(url);
+        posterRequests.push({
+          url,
+          host: urlObj.host,
+          path: urlObj.pathname,
+        });
+      }
+    });
+
+    const video = page.locator("video").first();
+    await video.waitFor({
+      state: "visible",
+      timeout: TEST_TIMEOUTS.videoLoad,
+    });
+
+    await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+
+    await page.waitForTimeout(2000);
+
+    if (posterRequests.length === 0) {
+      const posterUrl = await video.getAttribute('poster');
+      if (posterUrl) {
+        const urlObj = new URL(posterUrl);
+        posterRequests.push({
+          url: posterUrl,
+          host: urlObj.host,
+          path: urlObj.pathname,
+        });
+      }
+    }
+
+    for (const request of posterRequests) {
+      expect(request.path).toMatch(/\/api\/dramas\/[^\/]+\/poster\.jpg/);
+      expect(request.host).not.toContain('dramaboxdb.com');
+      expect(request.host).not.toContain('hwztchapter');
+    }
+  });
+
+  test("should fail when poster loads from external host (regression detection)", async ({
+    authenticatedPage: page,
+  }) => {
+    let externalPosterDetected = false;
+    let externalPosterUrl = '';
+
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('/poster.jpg') || url.includes('/poster')) {
+        if (url.includes('dramaboxdb.com') || url.includes('hwztchapter')) {
+          externalPosterDetected = true;
+          externalPosterUrl = url;
+        }
+      }
+    });
+
+    const video = page.locator("video").first();
+    await video.waitFor({
+      state: "visible",
+      timeout: TEST_TIMEOUTS.videoLoad,
+    });
+
+    await waitForVideoReady(page, TEST_TIMEOUTS.videoLoad);
+
+    await page.waitForTimeout(2000);
+
+    if (externalPosterDetected) {
+      test.fail(true, `External poster host detected: ${externalPosterUrl}`);
+    }
   });
 });
