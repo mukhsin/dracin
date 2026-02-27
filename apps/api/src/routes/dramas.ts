@@ -11,6 +11,8 @@ import { watchlistService } from "../services/watchlist.service.js";
 import { favoritesService } from "../services/favorites.service.js";
 import type { DramaUserState } from "@repo/shared/types";
 
+import { buildPosterUrl } from "../services/home.service.js";
+
 const ListDramasQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
@@ -39,6 +41,9 @@ const GetEpisodeByNumberParamsSchema = z.object({
 
 const app = new Hono<{ Variables: AuthContext }>();
 
+
+
+
 // Add auth middleware to all routes (sets user on context, allows anonymous)
 app.use("*", authMiddleware);
 
@@ -59,7 +64,7 @@ app.get("/", zValidator("query", ListDramasQuerySchema), async (c) => {
     const { bookId: _b, createdAt: _c, updatedAt: _u, ...rest } = drama;
     return {
       ...rest,
-      posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+      posterUrl: buildPosterUrl(drama.slug),
     };
   });
 
@@ -229,7 +234,7 @@ app.get("/:slug", zValidator("param", GetDramaParamsSchema), async (c) => {
 
   const dramaResponse = {
     ...sanitizedDrama,
-    posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+    posterUrl: buildPosterUrl(drama.slug),
     userState,
   };
 
@@ -330,7 +335,7 @@ app.get(
     if (episodeWithVideo.drama && episodeWithVideo.drama.posterUrl) {
       episodeWithVideo.drama = {
         ...episodeWithVideo.drama,
-        posterUrl: `/api/dramas/${slug}/poster.jpg`,
+        posterUrl: buildPosterUrl(slug),
       };
     }
 
@@ -381,7 +386,7 @@ app.get(
       title: suggestion.title,
       slug: suggestion.slug,
       description: suggestion.description,
-      posterUrl: `/api/dramas/${suggestion.slug}/poster.jpg`,
+      posterUrl: buildPosterUrl(suggestion.slug),
       status: suggestion.status,
       language: suggestion.language,
       playCount: suggestion.playCount,

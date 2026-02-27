@@ -12,6 +12,12 @@ function sanitizeDrama(drama: Drama) {
   return rest;
 }
 
+// Helper function to build proxied poster URL
+export function buildPosterUrl(slug: string): string {
+  return `/api/dramas/${slug}/poster.jpg`;
+}
+
+
 export async function getFeatured(): Promise<HomeResponse> {
   const results = await db
     .select({
