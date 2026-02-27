@@ -131,7 +131,28 @@ async function proxyUpstream(
     if (rangeHeader && responseStatus === 200 && !isSuffixRange) {
       // Upstream returned 200 instead of 206 for Range request
       // Try to convert to 206 if we have Content-Length information
-      const totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      let totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      
+      // If no Content-Length from upstream (chunked encoding), try HEAD request to get size
+      if (!totalLength && requestedRange) {
+        try {
+          const headResponse = await fetch(upstreamUrl, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": userAgentHeader,
+              "Referer": refererHeader,
+            },
+          });
+          const headContentLength = headResponse.headers.get("Content-Length");
+          if (headContentLength) {
+            totalLength = parseInt(headContentLength, 10);
+          }
+        } catch (headError) {
+          // HEAD request failed, log but continue - we'll return 200 without Content-Range
+          console.warn(`[VideoProxy] HEAD request failed for ${upstreamUrl}:`, headError);
+        }
+      }
+      
       if (totalLength && requestedRange) {
         const start = requestedRange.start;
         const end = requestedRange.end ?? totalLength - 1;
@@ -145,7 +166,28 @@ async function proxyUpstream(
     } else if (rangeHeader && responseStatus === 206 && !contentRangeValue && !isSuffixRange) {
       // Upstream returned 206 but didn't include Content-Range header
       // Construct it from the request and upstream Content-Length
-      const totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      let totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      
+      // If no Content-Length from upstream, try HEAD request to get size
+      if (!totalLength && requestedRange) {
+        try {
+          const headResponse = await fetch(upstreamUrl, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": userAgentHeader,
+              "Referer": refererHeader,
+            },
+          });
+          const headContentLength = headResponse.headers.get("Content-Length");
+          if (headContentLength) {
+            totalLength = parseInt(headContentLength, 10);
+          }
+        } catch (headError) {
+          // HEAD request failed, log but continue
+          console.warn(`[VideoProxy] HEAD request failed for ${upstreamUrl}:`, headError);
+        }
+      }
+      
       if (totalLength && requestedRange) {
         const start = requestedRange.start;
         const end = requestedRange.end ?? totalLength - 1;

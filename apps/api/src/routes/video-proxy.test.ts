@@ -163,6 +163,49 @@ describe("Video Proxy Routes - Range Request Handling", () => {
       global.fetch = originalFetch;
     });
 
+    it("should synthesize Content-Range using HEAD request when Content-Length is missing", async () => {
+      // Mock fetch - first call is GET, second is HEAD
+      const originalFetch = global.fetch;
+      let fetchCallCount = 0;
+      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+        fetchCallCount++;
+        const url = input.toString();
+        const method = init?.method || "GET";
+        
+        if (method === "HEAD" || fetchCallCount === 2) {
+          // HEAD request returns Content-Length
+          return new Response(null, {
+            status: 200,
+            headers: {
+              "Content-Type": "video/mp4",
+              "Content-Length": "5000",
+            },
+          });
+        }
+        
+        // GET request returns 200 without Content-Length (chunked encoding)
+        return new Response(new Uint8Array([0x00, 0x01]), {
+          status: 200,
+          headers: {
+            "Content-Type": "video/mp4",
+            // No Content-Length - simulates chunked encoding
+          },
+        });
+      };
+
+      const res = await app.request("/api/video/test.mp4", {
+        headers: { Range: "bytes=0-1" },
+      });
+
+      // Should make HEAD request to get size, then convert to 206
+      expect(fetchCallCount).toBe(2);
+      expect(res.status).toBe(206);
+      expect(res.headers.get("Content-Range")).toBe("bytes 0-1/5000");
+      expect(res.headers.get("Accept-Ranges")).toBe("bytes");
+
+      global.fetch = originalFetch;
+    });
+
     it("should synthesize Content-Range for open-ended range bytes=start-", async () => {
       const originalFetch = global.fetch;
       global.fetch = async () =>
