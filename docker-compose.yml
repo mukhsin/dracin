@@ -25,10 +25,7 @@ services:
       - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.dracin-api.entrypoints=web"
       - "traefik.http.routers.dracin-api.tls=false"
-      # CRITICAL: Preserve Range header for video seeking
-      - "traefik.http.routers.dracin-api.middlewares=dracin-api-headers"
-      - "traefik.http.middlewares.dracin-api-headers.headers.customRequestHeaders.Range=Range"
-      - "traefik.http.middlewares.dracin-api-headers.headers.accessControlAllowHeaders=Range, Content-Type, Authorization"
+      # Note: Traefik passes all headers by default, including Range
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
