@@ -23,7 +23,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const DOUBLE_TAP_THRESHOLD_MS = 300;
   const DOUBLE_TAP_SEEK_SECONDS = 5;
-  const TAP_MOVE_THRESHOLD_PX = 10;
+  const TAP_MOVE_THRESHOLD_PX = 20;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoUrls: VideoUrls = propVideoUrls
