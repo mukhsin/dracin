@@ -219,9 +219,17 @@ async function proxyUpstream(
     if (contentRangeValue) {
       responseHeaders.set("Content-Range", contentRangeValue);
     }
+    // Set Content-Range header if determined
+    if (contentRangeValue) {
+      responseHeaders.set("Content-Range", contentRangeValue);
+    }
+    
     // Prevent CloudFlare caching for Range requests to ensure fresh 206 responses
+    // Use aggressive cache control to ensure it's not overridden
     if (rangeHeader) {
-      responseHeaders.set("Cache-Control", "no-cache");
+      responseHeaders.delete("Cache-Control");
+      responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+      responseHeaders.set("Pragma", "no-cache");
     }
 
     console.log(
