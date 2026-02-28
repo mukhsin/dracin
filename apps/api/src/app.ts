@@ -25,7 +25,7 @@ export function createApp() {
           ? ["https://dracin.mukhsin.web.id"]
           : ["http://localhost:3000"],
       allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization"],
+      allowHeaders: ["Content-Type", "Authorization", "Range"],
       credentials: true,
     }),
   );
