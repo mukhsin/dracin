@@ -318,9 +318,11 @@ app.get(
     // Build pre-built video URLs for each quality
     const videoUrls: Record<string, string> = {};
     if (fullEpisode.videoUrls) {
+      const uniqueId = Date.now().toString(36) + Math.random().toString(36);
       for (const quality of Object.keys(fullEpisode.videoUrls)) {
+        // Add ETag to force cache-busting
         videoUrls[quality] =
-          `/api/video/${fullEpisode.dramaId}.${fullEpisode.number}.${quality}.mp4`;
+          `/api/video/${fullEpisode.dramaId}.${fullEpisode.number}.${quality}.mp4?etag=${uniqueId}`;
       }
     }
 
