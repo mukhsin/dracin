@@ -50,13 +50,14 @@ const ShortVideoParamsSchema = z.object({
 });
 
 const EPISODE_KEY_PATTERN = /^(\d+)\.(240p|360p|480p|720p|1080p|4k)\.mp4$/i;
+// Pattern for dot-separated format: {number}.{quality}.mp4
+const DOT_SEPARATED_PATTERN = /^(\d+)\.(240p|360p|480p|720p|1080p|4k)\.mp4$/i;
 
 const applyCors = (headers: Headers) => {
   for (const [key, value] of CORS_HEADERS) {
     headers.set(key, value);
   }
 };
-
 app.options("/video/*", (c) => {
   const headers = new Headers();
   applyCors(headers);
@@ -66,7 +67,6 @@ app.options("/video/*", (c) => {
     headers,
   });
 });
-
 async function proxyUpstream(
   c: Context,
   upstreamUrl: string,
@@ -397,13 +397,49 @@ app.get(
   zValidator("param", ShortVideoParamsSchema),
   async (c) => {
     const { dramaId, episodeKey } = c.req.valid("param");
-    const match = episodeKey.match(EPISODE_KEY_PATTERN);
+    
+    // Support both dot-separated format (e.g., 1.1080p.mp4)
+    // and UUID-based format (e.g., 632a04f6-4d10-4ca3-a570-e497218c3129.1.1080p.mp4)
+    let episodeNumber: number | null = null;
+    let quality: string | null = null;
+    
+    // Check for dot-separated format first
+    const dotPattern = episodeKey.match(DOT_SEPARATED_PATTERN);
+    if (dotPattern) {
+      episodeNumber = Number.parseInt(dotPattern[1], 10);
+      quality = dotPattern[2].toLowerCase();
+    } else {
+      // Check for UUID-based format: {uuid}.{episode}.{quality}.mp4
+      const uuidPattern = episodeKey.match(/^([a-f0-9]{32})\.(\d+)\.((?:240p|360p|480p|720p|1080p|4k))\.mp4$/i);
+      if (!uuidPattern) {
+        const headers = new Headers();
+        applyCors(headers);
 
-    if (!match) {
+        return new Response("Invalid episode key format", {
+          status: 400,
+          headers,
+        });
+      }
+      episodeNumber = Number.parseInt(uuidPattern[2], 10);
+      quality = uuidPattern[3].toLowerCase();
+    }
+    
+    if (!episodeNumber || !quality) {
       const headers = new Headers();
       applyCors(headers);
 
-      return new Response("Invalid episode key", {
+      return new Response("Invalid episode key format", {
+        status: 400,
+        headers,
+      });
+    }
+    
+    const qualityParse = VideoQualitySchema.safeParse(quality);
+    if (!qualityParse.success) {
+      const headers = new Headers();
+      applyCors(headers);
+
+      return new Response("Invalid episode key format", {
         status: 400,
         headers,
       });
