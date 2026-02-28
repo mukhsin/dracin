@@ -81,12 +81,7 @@ async function proxyUpstream(
     "https://dramaboxdb.com/";
 
   // Debug: Log all headers to see what's being received
-  console.log(`[VideoProxy] Headers received:`, {
-    range: rangeHeader,
-    userAgent: userAgentHeader?.substring(0, 50),
-    referer: refererHeader,
-    url: c.req.url,
-  });
+
 
   // Validate Range header if present
   let requestedRange: { start: number; end: number | null; isSuffix: boolean } | null = null;
@@ -223,9 +218,6 @@ async function proxyUpstream(
       responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
       responseHeaders.set("Pragma", "no-cache");
     }
-    console.log(
-      `[VideoProxy] ${c.req.method} ${c.req.path} -> ${upstreamUrl} ${responseStatus} ${duration}ms`,
-    );
 
     return new Response(upstream.body, {
       status: responseStatus,

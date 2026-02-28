@@ -637,13 +637,11 @@ export class DramaService {
       const urlToValidate = getHighestQualityUrl(episode.videoUrls);
 
       if (urlToValidate) {
-        console.log(
-          `[DramaService] Validating URL for episode ${episodeNumber} of ${dramaSlug}: ${urlToValidate.substring(0, 50)}...`,
-        );
+
         const isValid = await validateVideoUrl(urlToValidate);
 
         if (isValid) {
-          console.log(`[DramaService] Cache valid for episode ${episodeNumber} of ${dramaSlug}`);
+
           // Get full drama details for posterUrl and totalEpisodes
           const [dramaDetails] = await db
             .select({ posterUrl: dramas.posterUrl, totalEpisodes: dramas.totalEpisodes })
@@ -917,13 +915,11 @@ export class DramaService {
       return { ...drama, source: "fresh" };
     }
 
-    console.log(
-      `[DramaService] Validating URL for drama ${slug}: ${urlToValidate.substring(0, 50)}...`,
-    );
+
     const isValid = await validateVideoUrl(urlToValidate);
 
     if (isValid) {
-      console.log(`[DramaService] Cache valid for drama ${slug}`);
+
       return { ...drama, source: "cache" };
     }
 
