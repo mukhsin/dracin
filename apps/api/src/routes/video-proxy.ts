@@ -81,6 +81,22 @@ async function proxyUpstream(
     c.req.header("referer") ??
     "https://dramaboxdb.com/";
 
+  // Debug: Log all headers to see what's being received
+  console.log(`[VideoProxy] Headers received:`, {
+    range: rangeHeader,
+    userAgent: userAgentHeader?.substring(0, 50),
+    referer: refererHeader,
+    url: c.req.url,
+  });
+  const userAgentHeader =
+    c.req.header("User-Agent") ??
+    c.req.header("user-agent") ??
+    "DramaStreamVideoProxy/1.0";
+  const refererHeader =
+    c.req.header("Referer") ??
+    c.req.header("referer") ??
+    "https://dramaboxdb.com/";
+
   // Validate Range header if present
   let requestedRange: { start: number; end: number | null; isSuffix: boolean } | null = null;
   if (rangeHeader) {
