@@ -87,10 +87,6 @@ function WatchPage() {
   const location = useLocation();
   const search = location.state?.searchQuery || "";
 
-  // Mobile bottom nav scroll-direction visibility state
-  const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
-  const lastScrollPosRef = useRef(0);
-  const accumulatedMovementRef = useRef(0);
 
   const {
     data: episode,
@@ -135,51 +131,6 @@ function WatchPage() {
     return episode?.video?.urls as VideoUrls | undefined;
   }, [episode]);
 
-  // Mobile bottom nav scroll-direction hide/show behavior
-  useEffect(() => {
-    const SCROLL_THRESHOLD_PX = 12;
-
-    const handleScroll = () => {
-      const currentScrollPos = window.scrollY;
-      const scrollDirection =
-        currentScrollPos > lastScrollPosRef.current ? "down" : "up";
-      const scrollDelta = Math.abs(currentScrollPos - lastScrollPosRef.current);
-
-      // Reset accumulated movement when direction changes
-      if (
-        (scrollDirection === "down" && accumulatedMovementRef.current < 0) ||
-        (scrollDirection === "up" && accumulatedMovementRef.current > 0)
-      ) {
-        accumulatedMovementRef.current = 0;
-      }
-
-      // Accumulate movement in current direction
-      accumulatedMovementRef.current +=
-        scrollDirection === "down" ? scrollDelta : -scrollDelta;
-
-      // Hide nav after downward accumulated movement exceeds threshold
-      if (
-        scrollDirection === "down" &&
-        accumulatedMovementRef.current > SCROLL_THRESHOLD_PX
-      ) {
-        setIsBottomNavVisible(false);
-      }
-
-      // Show nav after upward accumulated movement exceeds threshold
-      if (
-        scrollDirection === "up" &&
-        accumulatedMovementRef.current < -SCROLL_THRESHOLD_PX
-      ) {
-        setIsBottomNavVisible(true);
-        accumulatedMovementRef.current = 0;
-      }
-
-      lastScrollPosRef.current = currentScrollPos;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const prevEpisode = episode?.navigation?.prevEpisode;
   const nextEpisode = episode?.navigation?.nextEpisode;
@@ -242,7 +193,7 @@ function WatchPage() {
 
         {(prevEpisode || nextEpisode) && (
           <div
-            className={`md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none transition-transform duration-300 ease-out md:translate-y-0 ${isBottomNavVisible ? "" : "translate-y-full"}`}
+            className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none"
           >
             <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
