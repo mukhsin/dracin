@@ -219,7 +219,6 @@ async function proxyUpstream(
     if (contentRangeValue) {
       responseHeaders.set("Content-Range", contentRangeValue);
     }
-
     // Prevent CloudFlare caching for Range requests to ensure fresh 206 responses
     if (rangeHeader) {
       responseHeaders.set("Cache-Control", "no-cache");
