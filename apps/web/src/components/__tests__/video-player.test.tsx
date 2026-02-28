@@ -163,4 +163,82 @@ describe("VideoPlayer", () => {
 
     expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
   });
+
+  it("movement beyond threshold cancels tap and does not trigger play/pause", () => {
+    const { container } = renderWithProviders(
+      <VideoPlayer videoUrls={videoUrls} title="Test" />,
+    );
+
+    const { playerContainer, video } = preparePlayer(container);
+    fireEvent.canPlay(video);
+
+    // Simulate pointer down
+    fireEvent.pointerDown(playerContainer, { clientX: 200, clientY: 150 });
+
+    // Simulate movement beyond threshold (10px)
+    // Start at (200, 150), move to (220, 170) -> distance ~28px > 10px threshold
+    fireEvent.pointerMove(document, { clientX: 220, clientY: 170 });
+
+    // Release pointer
+    fireEvent.pointerUp(document);
+
+    // Wait for single tap timeout to complete
+    vi.advanceTimersByTime(301);
+
+    // Verify play was NOT triggered
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    // Verify pause was NOT triggered
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+  });
+
+  it("movement beyond threshold cancels double tap and does not trigger seek", () => {
+    const { container } = renderWithProviders(
+      <VideoPlayer videoUrls={videoUrls} title="Test" />,
+    );
+
+    const { playerContainer, video } = preparePlayer(container);
+    video.currentTime = 30;
+    fireEvent.timeUpdate(video);
+
+    // First tap with movement
+    fireEvent.pointerDown(playerContainer, { clientX: 350, clientY: 150 });
+    fireEvent.pointerMove(document, { clientX: 370, clientY: 170 });
+    fireEvent.pointerUp(document);
+    vi.advanceTimersByTime(100);
+
+    // Second tap
+    fireEvent.pointerDown(playerContainer, { clientX: 350, clientY: 150 });
+    fireEvent.pointerUp(document);
+    vi.advanceTimersByTime(301);
+
+    // Verify seek was NOT triggered - time should remain at 30, not 35
+    expect(video.currentTime).toBe(30);
+    // Verify play was NOT triggered
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+  });
+
+  it("small movement within threshold allows tap to work normally", () => {
+    const { container } = renderWithProviders(
+      <VideoPlayer videoUrls={videoUrls} title="Test" />,
+    );
+
+    const { playerContainer, video } = preparePlayer(container);
+    fireEvent.canPlay(video);
+
+    // Simulate pointer down
+    fireEvent.pointerDown(playerContainer, { clientX: 200, clientY: 150 });
+
+    // Simulate small movement within threshold (5px)
+    // Start at (200, 150), move to (205, 155) -> distance ~7px < 10px threshold
+    fireEvent.pointerMove(document, { clientX: 205, clientY: 155 });
+
+    // Release pointer
+    fireEvent.pointerUp(document);
+
+    // Wait for single tap timeout to complete
+    vi.advanceTimersByTime(301);
+
+    // Verify play WAS triggered (small movement should not cancel)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+  });
 });

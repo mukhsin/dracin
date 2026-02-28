@@ -256,10 +256,9 @@ export function VideoControls({
 
           {/* Played progress */}
           <div
-            className="absolute inset-y-0 left-0 bg-primary transition-all duration-150"
-            style={{ width: `${progressPercent}%`, borderRadius: "0" }}
+            className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-150"
+            style={{ width: `${progressPercent}%` }}
           />
-
           {/* Scrubber handle - Bigger for touch */}
           <div
             className="absolute top-1/2 -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 bg-white rounded-full shadow-lg

@@ -23,9 +23,9 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const DOUBLE_TAP_THRESHOLD_MS = 300;
   const DOUBLE_TAP_SEEK_SECONDS = 5;
+  const TAP_MOVE_THRESHOLD_PX = 10;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const videoUrls: VideoUrls = propVideoUrls
     ? (decodeVideoUrls(
         propVideoUrls as Record<string, string | undefined>,
@@ -55,7 +55,8 @@ export function VideoPlayer({
   const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMouseOverControlsRef = useRef(false);
   const lastActivityRef = useRef(Date.now());
-
+  const pointerStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const isTapCanceledRef = useRef(false);
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -262,25 +263,59 @@ export function VideoPlayer({
       const target = e.target as HTMLElement;
       if (target.closest("[data-controls]")) return;
 
+      // Record pointer start position for movement discrimination
+      pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
+      isTapCanceledRef.current = false;
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        if (!pointerStartPosRef.current || isTapCanceledRef.current) return;
+
+        const dx = moveEvent.clientX - pointerStartPosRef.current.x;
+        const dy = moveEvent.clientY - pointerStartPosRef.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Cancel tap if movement exceeds threshold (indicating scroll/drag)
+        if (distance > TAP_MOVE_THRESHOLD_PX) {
+          isTapCanceledRef.current = true;
+          if (singleTapTimeoutRef.current) {
+            clearTimeout(singleTapTimeoutRef.current);
+            singleTapTimeoutRef.current = null;
+          }
+        }
+      };
+
+      const handlePointerUp = () => {
+        pointerStartPosRef.current = null;
+        document.removeEventListener("pointermove", handlePointerMove);
+        document.removeEventListener("pointerup", handlePointerUp);
+      };
+
+      // Add move/up listeners to track movement during pointer down
+      document.addEventListener("pointermove", handlePointerMove);
+      document.addEventListener("pointerup", handlePointerUp);
+
       const now = Date.now();
       const timeSinceLastTap = now - lastTapRef.current;
 
+      // Process tap/double-tap only if not canceled by movement
       if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD_MS) {
         if (singleTapTimeoutRef.current) {
           clearTimeout(singleTapTimeoutRef.current);
           singleTapTimeoutRef.current = null;
         }
 
-        const container = containerRef.current;
-        if (container) {
-          const rect = container.getBoundingClientRect();
-          const relativeX = e.clientX - rect.left;
-          const isRightSide = relativeX > rect.width / 2;
+        if (!isTapCanceledRef.current) {
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const relativeX = e.clientX - rect.left;
+            const isRightSide = relativeX > rect.width / 2;
 
-          const skipTime = isRightSide
-            ? DOUBLE_TAP_SEEK_SECONDS
-            : -DOUBLE_TAP_SEEK_SECONDS;
-          handleSeek(Math.max(0, Math.min(duration, currentTime + skipTime)));
+            const skipTime = isRightSide
+              ? DOUBLE_TAP_SEEK_SECONDS
+              : -DOUBLE_TAP_SEEK_SECONDS;
+            handleSeek(Math.max(0, Math.min(duration, currentTime + skipTime)));
+          }
         }
       } else {
         if (singleTapTimeoutRef.current) {
@@ -288,7 +323,9 @@ export function VideoPlayer({
         }
 
         singleTapTimeoutRef.current = setTimeout(() => {
-          togglePlay();
+          if (!isTapCanceledRef.current) {
+            togglePlay();
+          }
           singleTapTimeoutRef.current = null;
         }, DOUBLE_TAP_THRESHOLD_MS);
       }
@@ -300,6 +337,7 @@ export function VideoPlayer({
       duration,
       DOUBLE_TAP_SEEK_SECONDS,
       DOUBLE_TAP_THRESHOLD_MS,
+      TAP_MOVE_THRESHOLD_PX,
       handleSeek,
       togglePlay,
     ],
