@@ -212,6 +212,11 @@ async function proxyUpstream(
       responseHeaders.set("Content-Range", contentRangeValue);
     }
 
+    // Prevent CloudFlare caching for Range requests to ensure fresh 206 responses
+    if (rangeHeader) {
+      responseHeaders.set("Cache-Control", "no-cache");
+    }
+
     console.log(
       `[VideoProxy] ${c.req.method} ${c.req.path} -> ${upstreamUrl} ${responseStatus} ${duration}ms`,
     );
