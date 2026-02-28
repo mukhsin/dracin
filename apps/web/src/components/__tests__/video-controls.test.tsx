@@ -182,4 +182,16 @@ describe("VideoControls", () => {
 
     expect(container.firstChild).toBeNull();
   });
+
+  it("renders played progress with rounded edges", () => {
+    const { container } = renderWithProviders(
+      <VideoControls {...defaultProps} currentTime={30} duration={120} />,
+    );
+
+    const playedProgress = container.querySelector(
+      "[style*='width: 25%'][class*='bg-primary']",
+    );
+    expect(playedProgress).toBeInTheDocument();
+    expect(playedProgress).toHaveClass("rounded-full");
+  });
 });

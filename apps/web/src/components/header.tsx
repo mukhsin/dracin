@@ -6,6 +6,7 @@ import { SearchIcon } from "./search-icon";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -13,9 +14,27 @@ export function Header() {
   const currentPath = routerState.location.pathname;
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
+  const scrollRef = useRef<number>(0);
+  const accumulatedScrollRef = useRef<number>(0);
+
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 20);
+
+      const scrollDelta = currentScrollY - scrollRef.current;
+      accumulatedScrollRef.current += scrollDelta;
+      scrollRef.current = currentScrollY;
+
+      const SCROLL_THRESHOLD = 12;
+
+      if (accumulatedScrollRef.current > SCROLL_THRESHOLD) {
+        setIsVisible(false);
+        accumulatedScrollRef.current = 0;
+      } else if (accumulatedScrollRef.current < -SCROLL_THRESHOLD) {
+        setIsVisible(true);
+        accumulatedScrollRef.current = 0;
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -63,6 +82,8 @@ export function Header() {
         isScrolled
           ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-primary/20"
           : "bg-transparent"
+      } ${
+        isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
       }`}
     >
       <div className="container mx-auto px-4">

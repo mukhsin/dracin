@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
@@ -60,27 +60,24 @@ function WatchPageSkeleton() {
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+              <div
+                className="h-10 bg-gray-800 animate-pulse"
+                style={{ borderRadius: "0" }}
+              />
             </div>
             <div className="flex-1 flex flex-col items-center gap-2">
               <div className="h-8 w-24 bg-gray-800 animate-pulse" />
               <div className="h-4 w-16 bg-gray-800 animate-pulse" />
             </div>
             <div className="flex-1">
-              <div className="h-10 bg-gray-800 animate-pulse" style={{ borderRadius: "0" }} />
+              <div
+                className="h-10 bg-gray-800 animate-pulse"
+                style={{ borderRadius: "0" }}
+              />
             </div>
           </div>
         </div>
       </div>
-
-      {/* Title & Description Skeleton */}
-      {/*<div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        <div className="h-6 w-3/4 bg-gray-800 animate-pulse" />
-        <div className="space-y-2">
-          <div className="h-4 w-full bg-gray-800 animate-pulse" />
-          <div className="h-4 w-2/3 bg-gray-800 animate-pulse" />
-        </div>
-      </div>*/}
     </div>
   );
 }
@@ -89,6 +86,11 @@ function WatchPage() {
   const { dramaSlug, episodeNumber } = Route.useParams();
   const location = useLocation();
   const search = location.state?.searchQuery || "";
+
+  // Mobile bottom nav scroll-direction visibility state
+  const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
+  const lastScrollPosRef = useRef(0);
+  const accumulatedMovementRef = useRef(0);
 
   const {
     data: episode,
@@ -132,6 +134,52 @@ function WatchPage() {
   const videoUrls = useMemo<VideoUrls | undefined>(() => {
     return episode?.video?.urls as VideoUrls | undefined;
   }, [episode]);
+
+  // Mobile bottom nav scroll-direction hide/show behavior
+  useEffect(() => {
+    const SCROLL_THRESHOLD_PX = 12;
+
+    const handleScroll = () => {
+      const currentScrollPos = window.scrollY;
+      const scrollDirection =
+        currentScrollPos > lastScrollPosRef.current ? "down" : "up";
+      const scrollDelta = Math.abs(currentScrollPos - lastScrollPosRef.current);
+
+      // Reset accumulated movement when direction changes
+      if (
+        (scrollDirection === "down" && accumulatedMovementRef.current < 0) ||
+        (scrollDirection === "up" && accumulatedMovementRef.current > 0)
+      ) {
+        accumulatedMovementRef.current = 0;
+      }
+
+      // Accumulate movement in current direction
+      accumulatedMovementRef.current +=
+        scrollDirection === "down" ? scrollDelta : -scrollDelta;
+
+      // Hide nav after downward accumulated movement exceeds threshold
+      if (
+        scrollDirection === "down" &&
+        accumulatedMovementRef.current > SCROLL_THRESHOLD_PX
+      ) {
+        setIsBottomNavVisible(false);
+      }
+
+      // Show nav after upward accumulated movement exceeds threshold
+      if (
+        scrollDirection === "up" &&
+        accumulatedMovementRef.current < -SCROLL_THRESHOLD_PX
+      ) {
+        setIsBottomNavVisible(true);
+        accumulatedMovementRef.current = 0;
+      }
+
+      lastScrollPosRef.current = currentScrollPos;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const prevEpisode = episode?.navigation?.prevEpisode;
   const nextEpisode = episode?.navigation?.nextEpisode;
@@ -193,7 +241,9 @@ function WatchPage() {
         </div>
 
         {(prevEpisode || nextEpisode) && (
-          <div className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none">
+          <div
+            className={`md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none transition-transform duration-300 ease-out md:translate-y-0 ${isBottomNavVisible ? "" : "translate-y-full"}`}
+          >
             <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
                 {prevEpisode ? (
