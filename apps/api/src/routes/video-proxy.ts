@@ -202,8 +202,7 @@ async function proxyUpstream(
         contentRangeValue = `bytes ${start}-${end}/${totalLength}`;
       }
     }
-
-    // Forward upstream headers
+    // Forward upstream headers (skip if we set them during range conversion)
     FORWARDED_HEADERS.forEach((header) => {
       const value = upstream.headers.get(header);
       if (value) {
@@ -214,16 +213,17 @@ async function proxyUpstream(
         responseHeaders.set(header, value);
       }
     });
-
-    // Set Content-Range header if determined
+    
+    // Set Content-Range header from upstream or our synthesized value
     if (contentRangeValue) {
       responseHeaders.set("Content-Range", contentRangeValue);
     }
-    // Prevent CloudFlare caching for Range requests to ensure fresh 206 responses
+    
+    // Set cache control headers for Range requests to prevent CloudFlare caching
     if (rangeHeader) {
-      responseHeaders.set("Cache-Control", "no-cache");
+      responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+      responseHeaders.set("Pragma", "no-cache");
     }
-
     console.log(
       `[VideoProxy] ${c.req.method} ${c.req.path} -> ${upstreamUrl} ${responseStatus} ${duration}ms`,
     );
