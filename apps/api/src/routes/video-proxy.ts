@@ -19,7 +19,6 @@ const FORWARDED_HEADERS = [
   "Content-Length",
   "Accept-Ranges",
   "Content-Range",
-  "ETag",
   "Last-Modified",
 ] as const;
 
@@ -29,7 +28,7 @@ const CORS_HEADERS: Array<[string, string]> = [
   ["Access-Control-Allow-Headers", "Range, Content-Type"],
   [
     "Access-Control-Expose-Headers",
-    "Accept-Ranges, Content-Range, Content-Length, Content-Type, ETag, Last-Modified",
+    "Accept-Ranges, Content-Range, Content-Length, Content-Type, Last-Modified",
   ],
 ];
 
