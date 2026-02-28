@@ -88,14 +88,6 @@ async function proxyUpstream(
     referer: refererHeader,
     url: c.req.url,
   });
-  const userAgentHeader =
-    c.req.header("User-Agent") ??
-    c.req.header("user-agent") ??
-    "DramaStreamVideoProxy/1.0";
-  const refererHeader =
-    c.req.header("Referer") ??
-    c.req.header("referer") ??
-    "https://dramaboxdb.com/";
 
   // Validate Range header if present
   let requestedRange: { start: number; end: number | null; isSuffix: boolean } | null = null;
