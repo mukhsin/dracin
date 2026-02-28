@@ -3,7 +3,7 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { Loader2, AlertCircle, Search } from "lucide-react";
@@ -83,6 +83,30 @@ function DramasPage() {
     pageSize: 18,
   });
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.unobserve(sentinel);
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   // Only show loading skeleton when actually loading without cached data
   const isLoading = dataLoading && !data;
 
@@ -98,11 +122,6 @@ function DramasPage() {
     });
   };
 
-  const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
 
   // Determine page title and description based on mode
   const pageTitle = search
@@ -200,26 +219,12 @@ function DramasPage() {
                 />
               ))}
             </div>
-
-            {/* Load More Button */}
-            {hasNextPage && (
-              <div className="flex justify-center mt-12">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={isFetchingNextPage}
-                  className="flex items-center gap-2 bg-primary hover:bg-[#B89452] text-black font-semibold px-8 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ borderRadius: "0" }}
-                >
-                  {isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More"
-                  )}
-                </button>
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} className="h-10" />
+            {/* Loading indicator for next page */}
+            {isFetchingNextPage && (
+              <div className="flex justify-center mt-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             )}
 

@@ -119,7 +119,7 @@ test.describe("Drama Browsing", () => {
       expect(isEmpty).toBe(true);
     });
 
-    test("should load more content when clicking Load More", async ({
+    test("should load more content on scroll", async ({
       page,
     }) => {
       await page.waitForTimeout(2000);
@@ -132,21 +132,15 @@ test.describe("Drama Browsing", () => {
         return;
       }
 
-      const loadMoreButton = page.locator('button:has-text("Load More")');
-      const hasMoreButton = await loadMoreButton.isVisible().catch(() => false);
+      // Scroll to bottom to trigger infinite scroll
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(3000);
 
-      if (!hasMoreButton) {
-        test.skip(true, "No load more button");
-        return;
-      }
+      const afterScrollCards = await getDramaCards(page);
+      const afterScrollCount = await afterScrollCards.count();
 
-      await loadMoreButton.click();
-      await page.waitForTimeout(2000);
-
-      const afterLoadCards = await getDramaCards(page);
-      const afterLoadCount = await afterLoadCards.count();
-
-      expect(afterLoadCount).toBeGreaterThanOrEqual(initialCount);
+      // Should have at least the same number of cards
+      expect(afterScrollCount).toBeGreaterThanOrEqual(initialCount);
     });
   });
 
