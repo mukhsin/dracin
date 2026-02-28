@@ -25,6 +25,7 @@ services:
       - "traefik.http.services.dracin-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.dracin-api.entrypoints=web"
       - "traefik.http.routers.dracin-api.tls=false"
+      # Note: Traefik passes all headers by default, including Range
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -39,7 +40,6 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
-
   # Web Service (TanStack Start)
   web:
     build:

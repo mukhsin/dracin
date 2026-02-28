@@ -4,7 +4,9 @@ import {
   getLatest,
   getPopular,
   getRank1,
+  buildPosterUrl,
 } from "../services/home.service.js";
+
 
 const app = new Hono();
 
@@ -15,7 +17,7 @@ app.get("/featured", async (c) => {
     const { createdAt: _c, updatedAt: _u, ...rest } = drama;
     return {
       ...rest,
-      posterUrl: `/api/dramas/${drama.slug}/poster.jpg`,
+      posterUrl: buildPosterUrl(drama.slug),
     };
   });
 

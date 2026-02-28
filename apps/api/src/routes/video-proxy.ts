@@ -81,6 +81,30 @@ async function proxyUpstream(
     c.req.header("referer") ??
     "https://dramaboxdb.com/";
 
+  // Debug: Log all headers to see what's being received
+  console.log(`[VideoProxy] Headers received:`, {
+    range: rangeHeader,
+    userAgent: userAgentHeader?.substring(0, 50),
+    referer: refererHeader,
+    url: c.req.url,
+  });
+
+  // Validate Range header if present
+  let requestedRange: { start: number; end: number | null; isSuffix: boolean } | null = null;
+  if (rangeHeader) {
+    const rangeValidation = validateRangeHeader(rangeHeader);
+    if (!rangeValidation.valid) {
+      const headers = new Headers();
+      applyCors(headers);
+      headers.set("Accept-Ranges", "bytes");
+      return new Response(`Invalid Range: ${rangeValidation.error}`, {
+        status: 416, // Range Not Satisfiable
+        headers,
+      });
+    }
+    requestedRange = rangeValidation.range;
+  }
+
   const requestHeaders = new Headers();
   requestHeaders.set("User-Agent", userAgentHeader);
   requestHeaders.set("Referer", refererHeader);
@@ -102,19 +126,110 @@ async function proxyUpstream(
     applyCors(responseHeaders);
     responseHeaders.set("Accept-Ranges", "bytes");
 
+    // Determine the response status and Content-Range header
+    let responseStatus = upstream.status;
+    let contentRangeValue = upstream.headers.get("Content-Range");
+    const upstreamContentLength = upstream.headers.get("Content-Length");
+    const contentType = upstream.headers.get("Content-Type");
+
+    // Handle Range request responses
+    // Skip Content-Range synthesis for suffix ranges (bytes=-N) - we need upstream to provide it
+    const isSuffixRange = requestedRange?.isSuffix ?? false;
+    
+    if (rangeHeader && responseStatus === 200 && !isSuffixRange) {
+      // Upstream returned 200 instead of 206 for Range request
+      // Try to convert to 206 if we have Content-Length information
+      let totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      
+      // If no Content-Length from upstream (chunked encoding), try HEAD request to get size
+      if (!totalLength && requestedRange) {
+        try {
+          const headResponse = await fetch(upstreamUrl, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": userAgentHeader,
+              "Referer": refererHeader,
+            },
+          });
+          const headContentLength = headResponse.headers.get("Content-Length");
+          if (headContentLength) {
+            totalLength = parseInt(headContentLength, 10);
+          }
+        } catch (headError) {
+          // HEAD request failed, log but continue - we'll return 200 without Content-Range
+          console.warn(`[VideoProxy] HEAD request failed for ${upstreamUrl}:`, headError);
+        }
+      }
+      
+      if (totalLength && requestedRange) {
+        const start = requestedRange.start;
+        const end = requestedRange.end ?? totalLength - 1;
+        contentRangeValue = `bytes ${start}-${end}/${totalLength}`;
+        responseStatus = 206;
+
+        // Also update Content-Length to reflect the actual range size
+        const rangeSize = end - start + 1;
+        responseHeaders.set("Content-Length", String(rangeSize));
+      }
+    } else if (rangeHeader && responseStatus === 206 && !contentRangeValue && !isSuffixRange) {
+      // Upstream returned 206 but didn't include Content-Range header
+      // Construct it from the request and upstream Content-Length
+      let totalLength = upstreamContentLength ? parseInt(upstreamContentLength, 10) : null;
+      
+      // If no Content-Length from upstream, try HEAD request to get size
+      if (!totalLength && requestedRange) {
+        try {
+          const headResponse = await fetch(upstreamUrl, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": userAgentHeader,
+              "Referer": refererHeader,
+            },
+          });
+          const headContentLength = headResponse.headers.get("Content-Length");
+          if (headContentLength) {
+            totalLength = parseInt(headContentLength, 10);
+          }
+        } catch (headError) {
+          // HEAD request failed, log but continue
+          console.warn(`[VideoProxy] HEAD request failed for ${upstreamUrl}:`, headError);
+        }
+      }
+      
+      if (totalLength && requestedRange) {
+        const start = requestedRange.start;
+        const end = requestedRange.end ?? totalLength - 1;
+        contentRangeValue = `bytes ${start}-${end}/${totalLength}`;
+      }
+    }
+    // Forward upstream headers (skip if we set them during range conversion)
     FORWARDED_HEADERS.forEach((header) => {
       const value = upstream.headers.get(header);
       if (value) {
+        // Skip Content-Length if we already set it for range conversion
+        if (header === "Content-Length" && responseHeaders.has("Content-Length")) {
+          return;
+        }
         responseHeaders.set(header, value);
       }
     });
-
+    
+    // Set Content-Range header from upstream or our synthesized value
+    if (contentRangeValue) {
+      responseHeaders.set("Content-Range", contentRangeValue);
+    }
+    
+    // Set cache control headers for Range requests to prevent CloudFlare caching
+    if (rangeHeader) {
+      responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+      responseHeaders.set("Pragma", "no-cache");
+    }
     console.log(
-      `[VideoProxy] ${c.req.method} ${c.req.path} -> ${upstreamUrl} ${upstream.status} ${duration}ms`,
+      `[VideoProxy] ${c.req.method} ${c.req.path} -> ${upstreamUrl} ${responseStatus} ${duration}ms`,
     );
 
     return new Response(upstream.body, {
-      status: upstream.status,
+      status: responseStatus,
       headers: responseHeaders,
     });
   } catch (error) {
@@ -132,6 +247,74 @@ async function proxyUpstream(
       headers,
     });
   }
+}
+
+/**
+ * Validates a Range header value according to RFC 7233
+ * Supports only "bytes" unit (required for video seeking)
+ * 
+ * @returns Object with valid flag, optional error message, and parsed range
+ */
+function validateRangeHeader(rangeHeader: string):
+  | { valid: true; range: { start: number; end: number | null; isSuffix: boolean } }
+  | { valid: false; error: string } {
+  // Range header format: bytes=start-end or bytes=start- or bytes=-suffix
+  const rangePattern = /^bytes=(\d*)-(\d*)$/;
+  const match = rangeHeader.trim().match(rangePattern);
+
+  if (!match) {
+    return { valid: false, error: "Invalid range format. Expected: bytes=start-end" };
+  }
+
+  const [, startStr, endStr] = match;
+  const hasStart = startStr !== "";
+  const hasEnd = endStr !== "";
+
+  // Case 1: bytes=start-end (both start and end specified)
+  if (hasStart && hasEnd) {
+    const start = parseInt(startStr, 10);
+    const end = parseInt(endStr, 10);
+
+    if (Number.isNaN(start) || Number.isNaN(end)) {
+      return { valid: false, error: "Invalid range values" };
+    }
+
+    if (start < 0 || end < 0) {
+      return { valid: false, error: "Range values must be non-negative" };
+    }
+
+    if (start > end) {
+      return { valid: false, error: "Range start must not exceed end" };
+    }
+
+    return { valid: true, range: { start, end, isSuffix: false } };
+  }
+
+  // Case 2: bytes=start- (suffix range - start to end of file)
+  if (hasStart && !hasEnd) {
+    const start = parseInt(startStr, 10);
+
+    if (Number.isNaN(start) || start < 0) {
+      return { valid: false, error: "Invalid start value" };
+    }
+
+    return { valid: true, range: { start, end: null, isSuffix: false } };
+  }
+
+  // Case 3: bytes=-suffix (last N bytes) - not commonly used for video
+  // We accept it but mark as suffix so Content-Range synthesis is skipped
+  if (!hasStart && hasEnd) {
+    const suffixLength = parseInt(endStr, 10);
+    
+    if (Number.isNaN(suffixLength) || suffixLength <= 0) {
+      return { valid: false, error: "Invalid suffix length" };
+    }
+
+    // Suffix ranges use negative start as placeholder; isSuffix flag prevents invalid Content-Range synthesis
+    return { valid: true, range: { start: -suffixLength, end: null, isSuffix: true } };
+  }
+
+  return { valid: false, error: "Empty range specification" };
 }
 
 function transformApiProxyUrlToVideoUrls(
