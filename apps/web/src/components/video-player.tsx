@@ -57,6 +57,7 @@ export function VideoPlayer({
   const lastActivityRef = useRef(Date.now());
   const pointerStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const isTapCanceledRef = useRef(false);
+  const scrollStartRef = useRef(0);
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -266,6 +267,7 @@ export function VideoPlayer({
       // Record pointer start position for movement discrimination
       pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
       isTapCanceledRef.current = false;
+      scrollStartRef.current = window.scrollY;
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         if (!pointerStartPosRef.current || isTapCanceledRef.current) return;
@@ -284,15 +286,29 @@ export function VideoPlayer({
         }
       };
 
+      const handleScroll = () => {
+        if (isTapCanceledRef.current) return;
+        const scrollDelta = Math.abs(window.scrollY - scrollStartRef.current);
+        if (scrollDelta > TAP_MOVE_THRESHOLD_PX) {
+          isTapCanceledRef.current = true;
+          if (singleTapTimeoutRef.current) {
+            clearTimeout(singleTapTimeoutRef.current);
+            singleTapTimeoutRef.current = null;
+          }
+        }
+      };
+
       const handlePointerUp = () => {
         pointerStartPosRef.current = null;
         document.removeEventListener("pointermove", handlePointerMove);
         document.removeEventListener("pointerup", handlePointerUp);
+        document.removeEventListener("scroll", handleScroll);
       };
 
-      // Add move/up listeners to track movement during pointer down
+      // Add move/up/scroll listeners to track movement during pointer down
       document.addEventListener("pointermove", handlePointerMove);
       document.addEventListener("pointerup", handlePointerUp);
+      document.addEventListener("scroll", handleScroll, { passive: true });
 
       const now = Date.now();
       const timeSinceLastTap = now - lastTapRef.current;
