@@ -1,5 +1,26 @@
-import { describe, it, expect } from "bun:test";
-import { auth } from "../lib/auth.js";
+import { beforeAll, describe, it, expect } from "bun:test";
+import type { auth as authInstance } from "../lib/auth.js";
+
+let auth: typeof authInstance;
+
+type SocialProvidersOptions = {
+  google?: {
+    clientId?: string;
+    clientSecret?: string;
+  };
+};
+
+beforeAll(async () => {
+  process.env.NODE_ENV = "production";
+  process.env.DATABASE_URL = "file:./.data/auth-config-test.sqlite";
+  process.env.BETTER_AUTH_URL = "http://localhost:3001";
+  process.env.BETTER_AUTH_SECRET =
+    "test-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz";
+  process.env.GOOGLE_CLIENT_ID = "test-google-client-id";
+  process.env.GOOGLE_CLIENT_SECRET = "test-google-client-secret";
+
+  ({ auth } = await import("../lib/auth.js"));
+});
 
 describe("Better-Auth Configuration", () => {
   it("should have auth instance defined", () => {
@@ -24,6 +45,18 @@ describe("Better-Auth Configuration", () => {
 
   it("should have maximum password length of 128", () => {
     expect(auth.options.emailAndPassword?.maxPasswordLength).toBe(128);
+  });
+
+  it("should configure Google social provider", () => {
+    const socialProviders = (
+      auth.options as typeof auth.options & {
+        socialProviders?: SocialProvidersOptions;
+      }
+    ).socialProviders;
+
+    expect(socialProviders?.google).toBeDefined();
+    expect(socialProviders?.google?.clientId).toBeTruthy();
+    expect(socialProviders?.google?.clientSecret).toBeTruthy();
   });
 
   it("should have session expiration of 7 days", () => {

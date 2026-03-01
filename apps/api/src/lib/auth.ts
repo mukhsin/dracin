@@ -19,8 +19,8 @@ export const auth = betterAuth({
     schema: schema,
     usePlural: true,
   }),
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
 
   emailAndPassword: {
     enabled: true,
@@ -28,6 +28,13 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+  },
+
+  socialProviders: {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    },
   },
 
   session: {
@@ -40,8 +47,14 @@ export const auth = betterAuth({
   },
 
   advanced: {
+    // Disable origin check in development for local testing
+    disableOriginCheck: process.env.NODE_ENV === "development",
+    trustedOrigins: [
+      "http://localhost:3000",
+      "https://dracin.mukhsin.web.id",
+    ],
     database: {
-      generateId: false, // Disable Better Auth ID generation, use database defaults
+      generateId: false,
     },
     crossSubDomainCookies: {
       enabled: true,
@@ -53,6 +66,8 @@ export const auth = betterAuth({
       partitioned: false,
     },
   },
+
+
 
   rateLimit: {
     enabled: process.env.NODE_ENV === "production",

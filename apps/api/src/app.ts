@@ -32,6 +32,36 @@ export function createApp() {
 
   app.use("*", logger);
 
+  app.get("/api/auth/sign-in/social", (c) => {
+    const requestUrl = new URL(c.req.url);
+    const provider = requestUrl.searchParams.get("provider");
+
+    if (!provider) {
+      return auth.handler(c.req.raw);
+    }
+
+    const body: Record<string, string> = { provider };
+    const callbackURL = requestUrl.searchParams.get("callbackURL");
+
+    if (callbackURL) {
+      body.callbackURL = callbackURL;
+    }
+
+    const headers = new Headers(c.req.raw.headers);
+    headers.set("content-type", "application/json");
+
+    const postRequest = new Request(
+      new URL("/api/auth/sign-in/social", c.req.url),
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      },
+    );
+
+    return auth.handler(postRequest);
+  });
+
   app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
   app.use("*", authMiddleware);
