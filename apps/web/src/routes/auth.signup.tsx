@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { FcGoogle } from "react-icons/fc";
 import authClient from "../lib/auth-client.js";
+import { mergeGuestHistoryAfterAuthSuccess } from "../lib/auth-guest-merge.js";
 type SignUpSearch = {
   redirect?: string;
 };
@@ -71,6 +72,7 @@ function SignUpPage() {
         return;
       }
 
+      await mergeGuestHistoryAfterAuthSuccess();
       await navigate({ to: redirectTo });
     } catch (err) {
       setError(

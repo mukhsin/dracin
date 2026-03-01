@@ -3,6 +3,9 @@ import { VideoControls } from "./video-controls.js";
 import type { VideoQuality, VideoUrls } from "./quality-selector.js";
 import { decodeVideoUrls } from "../lib/utils.js";
 import { useVideoProgress } from "../hooks/use-video-progress.js";
+import { useAuth } from "../hooks/use-auth.js";
+import { guestWatchStorage } from "../lib/guest-watch-storage.js";
+import { SignInModal } from "./sign-in-modal.js";
 
 interface VideoPlayerProps {
   videoUrls?: VideoUrls;
@@ -26,6 +29,7 @@ export function VideoPlayer({
   const TAP_MOVE_THRESHOLD_PX = 20;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useAuth();
   const videoUrls: VideoUrls = propVideoUrls
     ? (decodeVideoUrls(
         propVideoUrls as Record<string, string | undefined>,
@@ -40,7 +44,9 @@ export function VideoPlayer({
 
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>("1080p");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(startTime > 0 ? startTime : progressTracking.resumeTime);
+  const [currentTime, setCurrentTime] = useState(
+    startTime > 0 ? startTime : progressTracking.resumeTime,
+  );
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -50,9 +56,12 @@ export function VideoPlayer({
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   const [isVertical, setIsVertical] = useState(true);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
 
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const isMouseOverControlsRef = useRef(false);
   const lastActivityRef = useRef(Date.now());
   const pointerStartPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -107,6 +116,28 @@ export function VideoPlayer({
     setIsPlaying(true);
   }, []);
 
+  const canStartPlayback = useCallback(() => {
+    if (isAuthenticated) {
+      return true;
+    }
+
+    if (!episodeId) {
+      return true;
+    }
+
+    if (guestWatchStorage.isEpisodeTracked(episodeId)) {
+      return true;
+    }
+
+    if (!guestWatchStorage.canTrackNewEpisode()) {
+      setIsSignInModalOpen(true);
+      return false;
+    }
+
+    guestWatchStorage.recordEpisodePlaybackStart(episodeId);
+    return true;
+  }, [episodeId, isAuthenticated]);
+
   const handlePause = useCallback(() => {
     setIsPlaying(false);
     // Sync progress when pausing
@@ -145,21 +176,28 @@ export function VideoPlayer({
     if (isPlaying) {
       video.pause();
     } else {
+      if (!canStartPlayback()) {
+        return;
+      }
+
       video.play().catch((err) => {
         console.error("Failed to play video:", err);
         setError("Failed to play video. Tap to retry.");
       });
     }
-  }, [isPlaying]);
+  }, [canStartPlayback, isPlaying]);
 
-  const handleSeek = useCallback((time: number) => {
-    const video = videoRef.current;
-    if (!video) return;
+  const handleSeek = useCallback(
+    (time: number) => {
+      const video = videoRef.current;
+      if (!video) return;
 
-    video.currentTime = time;
-    setCurrentTime(time);
-    progressTracking.updateCurrentTime(time);
-  }, [progressTracking]);
+      video.currentTime = time;
+      setCurrentTime(time);
+      progressTracking.updateCurrentTime(time);
+    },
+    [progressTracking],
+  );
 
   const handleVolumeChange = useCallback(
     (newVolume: number) => {
@@ -260,7 +298,7 @@ export function VideoPlayer({
 
   const lastTapRef = useRef(0);
   const handleContainerInteraction = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
+    (e: React.PointerEvent<HTMLElement>) => {
       const target = e.target as HTMLElement;
       if (target.closest("[data-controls]")) return;
 
@@ -348,15 +386,7 @@ export function VideoPlayer({
 
       lastTapRef.current = now;
     },
-    [
-      currentTime,
-      duration,
-      DOUBLE_TAP_SEEK_SECONDS,
-      DOUBLE_TAP_THRESHOLD_MS,
-      TAP_MOVE_THRESHOLD_PX,
-      handleSeek,
-      togglePlay,
-    ],
+    [currentTime, duration, handleSeek, togglePlay],
   );
 
   useEffect(() => {
@@ -379,8 +409,6 @@ export function VideoPlayer({
     <div
       ref={containerRef}
       className={`relative w-full bg-black overflow-hidden rounded-xl shadow-2xl ${aspectRatioClass}`}
-      onPointerDown={handleContainerInteraction}
-      onMouseMove={handleMouseMove}
     >
       <video
         ref={videoRef}
@@ -391,6 +419,8 @@ export function VideoPlayer({
         playsInline
         crossOrigin="anonymous"
         className="w-full h-full object-contain"
+        onPointerDown={handleContainerInteraction}
+        onMouseMove={handleMouseMove}
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={handleWaiting}
@@ -400,6 +430,7 @@ export function VideoPlayer({
         onEnded={handleEnded}
         onError={handleError}
       >
+        <track kind="captions" srcLang="en" label="Captions unavailable" />
         <p className="text-white text-center p-4">
           Your browser does not support the video tag.
         </p>
@@ -414,6 +445,7 @@ export function VideoPlayer({
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -474,6 +506,12 @@ export function VideoPlayer({
         isVertical={isVertical}
         onMouseEnter={handleControlsMouseEnter}
         onMouseLeave={handleControlsMouseLeave}
+      />
+
+      <SignInModal
+        isOpen={isSignInModalOpen}
+        onClose={() => setIsSignInModalOpen(false)}
+        message="Please sign in to continue watching new episodes"
       />
     </div>
   );
