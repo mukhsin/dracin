@@ -32,47 +32,45 @@
 - **Viewing History** - Track what you've watched
 - **Continue Watching** - Resume from where you left off
 - **Search** - Find dramas quickly with full-text search
-- **Episode Pagination** - Browse episodes in batches (10 mobile, 20 desktop)
 - **Responsive Design** - Works seamlessly on desktop and mobile
 - **API-Proxy Fallback** - Automatic failover for resilient streaming
+- **Infinite Scroll** - Smooth browsing experience with automatic content loading
+- **Mobile-Optimized Player** - Touch-friendly controls with scroll-aware navigation
 
 ---
 
 ## Recent Updates (Feb 2026)
 
-### Favorites Feature ✨
-Added full favorites functionality:
-- Save dramas to your favorites list
-- Toggle favorites with heart icon on drama details page
-- View all favorites on your profile
-- Favorites state integrated into drama details API
+### Mobile Player Navigation 📱
 
-### UI Enhancements 🎨
-- **Episode Pagination**: New batch-based pagination for episodes (10 per batch mobile, 20 desktop)  
-- **Continue Watching**: Smart button showing "Start Watching" or "Continue Watching" based on history
-- **Status Badges**: Updated to outlined design with transparent backgrounds for modern look
-- **Primary Button**: Start Watching button styled as primary action button
-- **Icon-Only Buttons**: Watchlist and favorite buttons now minimalist icons (20px) - white outline when not saved, golden amber filled when saved
-- **Responsive Improvements**: Fine-tuned episode pagination breakpoint (768px) for better mobile/tablet experience
-- **Header Improvements**: Icon-only Sign In button, hidden header on auth pages
-- **Visual Polish**: Watched episodes show with dimmed opacity styling
-- **Responsive Updates**: Adjusted episode grid breakpoints for better large-screen layout
+Enhanced mobile video player experience:
+
+- Scroll-aware navigation bar visibility (hides during scroll, shows on idle)
+- Touch-scroll guard prevents accidental play/pause during vertical scrolling
+- Rounded progress indicator for modern mobile UI
+- Bottom navigation remains always accessible
+
+### Infinite Scroll & Performance Improvements ⚡
+
+- Replaced "Load More" button with smooth infinite scroll on dramas page
+- Optimized video proxy caching with aggressive cache control for Range requests
+- Removed ETag from video URLs to prevent cache conflicts
+- Enhanced Safari video seek support with proper Range request handling
 
 ### Technical Updates 🔧
-- Enhanced drama details API with user state (isInWatchlist, isFavorite, watchedEpisodes, lastWatchedEpisode)
-- Added authentication checks to watchlist/favorite buttons with sign-in modal for anonymous users
-- Updated header with profile icon menu (desktop) and watchlist/favorites links (mobile)
-- Fixed login redirect to return users to previous page after authentication
-- Fixed watchlist/favorite API calls to use UUID instead of slug (400 Bad Request fix)
-- Added comprehensive E2E test suite (30 tests, 100% passing)
-- Full TypeScript support across all new features
+
+- Migrated from PostgreSQL to SQLite for reduced memory footprint
+- Simplified deployment with no database server requirement
+- Enhanced integration test coverage with mobile UI polish tests
+- Improved search integration with deferred redirect patterns
+- Fixed Safari precheck instrumentation for better debugging
 
 ## Tech Stack
 
 | Category           | Technologies                                                        |
 | ------------------ | ------------------------------------------------------------------- |
 | **Frontend**       | TanStack Start, React 19, shadcn/ui, TailwindCSS v4, TanStack Query |
-| **Backend**        | Hono, Drizzle ORM, PostgreSQL, Better-Auth                          |
+| **Backend**        | Hono, Drizzle ORM, SQLite, Better-Auth                              |
 | **Infrastructure** | Turborepo, Bun, Docker, Playwright                                  |
 
 ---
@@ -81,8 +79,8 @@ Added full favorites functionality:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) 1.1.0 or higher
-- PostgreSQL 15+ (or use Docker)
+- [Bun](https://bun.sh) 1.2.0 or higher
+- SQLite (no server required)
 - Docker & Docker Compose (optional, for containerized setup)
 
 ### 1. Clone and Install
@@ -108,11 +106,14 @@ Edit the `.env` files with your configuration (see [Environment Variables](#envi
 
 ### 3. Database Setup
 
+The project uses SQLite, which doesn't require a database server. The database file will be created automatically when running migrations.
+
 ```bash
-# Run migrations
+# Run database migrations
+bun run db:generate
 bun run db:migrate
 
-# Seed the database with sample data
+# Seed database with sample data
 bun run db:seed
 ```
 
@@ -127,7 +128,7 @@ The app will be available at:
 
 - Web App: http://localhost:3000
 - API: http://localhost:3001
-- Drizzle Studio: http://localhost:3002 (run `bun run db:studio`)
+- Drizzle Studio: http://localhost:4983 (run with docker-compose, or use `bun run db:studio`)
 
 ---
 
@@ -141,6 +142,9 @@ drama-stream/
 │   │   │   ├── routes/      # API routes
 │   │   │   ├── db/          # Database schema & migrations
 │   │   │   └── lib/         # Utilities & middleware
+│   │   └── package.json
+│   ├── api-proxy/           # API proxy fallback service
+│   │   ├── src/
 │   │   └── package.json
 │   └── web/                 # TanStack Start frontend
 │       ├── app/
@@ -168,11 +172,12 @@ drama-stream/
 
 | Variable             | Description                     | Required |
 | -------------------- | ------------------------------- | -------- |
-| `DATABASE_URL`       | PostgreSQL connection string    | Yes      |
+| `DATABASE_URL`       | SQLite database file path       | Yes      |
 | `BETTER_AUTH_SECRET` | Secret key for auth encryption  | Yes      |
 | `API_PROXY_URL`      | Fallback API proxy URL          | No       |
 | `PRIMARY_API_URL`    | Primary API URL for proxy       | No       |
 | `PORT`               | API server port (default: 3001) | No       |
+| `ADMIN_AUTH_SECRET`  | Admin authentication secret     | No       |
 
 ### Web (`apps/web/.env`)
 
@@ -185,11 +190,12 @@ drama-stream/
 **apps/api/.env:**
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/dramastream
+DATABASE_URL=file:.data/dracin.db
 BETTER_AUTH_SECRET=your-secret-key-here
 API_PROXY_URL=http://localhost:3002
 PRIMARY_API_URL=http://localhost:3001
 PORT=3001
+ADMIN_AUTH_SECRET=your-admin-secret
 ```
 
 **apps/web/.env:**
@@ -215,13 +221,14 @@ VITE_API_URL=http://localhost:3001
 
 ### API Commands
 
-| Command               | Description                    |
-| --------------------- | ------------------------------ |
-| `bun run dev`         | Start API development server   |
-| `bun run db:migrate`  | Run database migrations        |
-| `bun run db:seed`     | Seed database with sample data |
-| `bun run db:studio`   | Open Drizzle Studio            |
-| `bun run db:generate` | Generate migration files       |
+| Command                 | Description                    |
+| ----------------------- | ------------------------------ |
+| `bun run dev`           | Start API development server   |
+| `bun run db:generate`   | Generate migration files       |
+| `bun run db:migrate`    | Run database migrations        |
+| `bun run db:seed`       | Seed database with sample data |
+| `bun run db:studio`     | Open Drizzle Studio            |
+| `bun run db:import-sql` | Import data from SQL file      |
 
 ### Web Commands
 
@@ -315,12 +322,12 @@ docker-compose up -d --build
 
 ### Services
 
-| Service   | Port | Description             |
-| --------- | ---- | ----------------------- |
-| web       | 3000 | TanStack Start frontend |
-| api       | 3001 | Hono API server         |
-| api-proxy | 3002 | Fallback proxy server   |
-| postgres  | 5432 | PostgreSQL database     |
+| Service   | Port | Description               |
+| --------- | ---- | ------------------------- |
+| web       | 3000 | TanStack Start frontend   |
+| api       | 3001 | Hono API server           |
+| api-proxy | 3002 | Fallback proxy server     |
+| postgres  | N/A  | (Not used - using SQLite) |
 
 ### Production Deployment
 
@@ -336,49 +343,34 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 DramaStream follows a modern full-stack architecture with clear separation of concerns:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client Layer                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   Browser   │  │   Mobile    │  │    API Consumers    │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-└─────────┼────────────────┼────────────────────┼─────────────┘
-          │                │                    │
-          ▼                ▼                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (Port 3000)                     │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │              TanStack Start + React 19                 │  │
-│  │  ┌────────────┐ ┌────────────┐ ┌──────────────────┐   │  │
-│  │  │   Routes   │ │ Components │ │   TanStack Query │   │  │
-│  │  └────────────┘ └────────────┘ └──────────────────┘   │  │
-│  └───────────────────────────────────────────────────────┘  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ HTTP / REST
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      API Layer (Port 3001)                   │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │                    Hono Framework                      │  │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │  │
-│  │  │  Auth    │ │  Dramas  │ │ Episodes │ │  Admin   │  │  │
-│  │  │  Routes  │ │  Routes  │ │  Routes  │ │  Routes  │  │  │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │  │
-│  └───────────────────────────────────────────────────────┘  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              │                           │
-              ▼                           ▼
-┌─────────────────────────┐  ┌──────────────────────────────┐
-│      Database Layer      │  │      Fallback Proxy          │
-│  ┌───────────────────┐   │  │  (Port 3002)                 │
-│  │    PostgreSQL     │   │  │                              │
-│  │  ┌─────────────┐  │   │  │  Circuit Breaker Pattern     │
-│  │  │   Drizzle   │  │   │  │  In-Memory Caching           │
-│  │  │     ORM     │  │   │  │  Automatic Failover          │
-│  │  └─────────────┘  │   │  │                              │
-│  └───────────────────┘   │  └──────────────────────────────┘
-└─────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                               Client Layer                                 │
+│                                                                            │
+│   ┌─────────────┐     ┌──────────────┐     ┌───────────────┐               │
+│   │   Browser   │     │   Mobile     │     │ API Consumers │               │
+│   └──────┬──────┘     └───────┬──────┘     └───────┬───────┘               │
+│          └────────────────────┴────────────────────┘                       │
+└────────────────────────────────────────────────────────────────────────────┘
+                                │ HTTP/REST
+                                ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                      Web App (apps/web, :3000)                             │
+│               TanStack Start + React 19 + TanStack Query                   │
+└───────────────────────────────┬────────────────────────────────────────────┘
+                                │
+                                ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                       API (apps/api, :3001)                                │
+│        Hono routes + Better-Auth + domain services + validation            │
+└───────────────────────────┬──────────────────────────────┬─────────────────┘
+                            │                              │ fallback on failure
+                            ▼                              ▼
+┌──────────────────────────────────┐      ┌──────────────────────────────────┐
+│  Data Layer                      │      │  Proxy Layer (apps/api-proxy)    │
+│  SQLite + Drizzle ORM            │      │  API fallback + circuit breaker  │
+└──────────────────────────────────┘      └──────────────────────────────────┘
+
+Shared package: packages/shared (types + schemas used across apps)
 ```
 
 ### Key Architectural Decisions
@@ -388,7 +380,10 @@ DramaStream follows a modern full-stack architecture with clear separation of co
 - **Hono**: Lightweight, fast web framework perfect for edge deployment
 - **Drizzle ORM**: Type-safe SQL-like ORM with excellent performance
 - **Better-Auth**: Modern authentication with session management
+- **SQLite**: Embedded database for reduced memory footprint and simplified deployment
 - **API-Proxy Fallback**: Circuit breaker pattern ensures high availability
+
+For deeper technical details and data-flow internals, see [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
 ---
 
@@ -423,13 +418,16 @@ git push origin feature/amazing-feature
 
 ### Common Issues
 
-**Database connection errors:**
+**Database errors:**
 
 ```bash
-# Ensure PostgreSQL is running
-docker-compose up -d postgres
+# Ensure migrations are run
+bun run db:generate && bun run db:migrate
 
-# Check connection string in apps/api/.env
+# Reset database (WARNING: deletes all data)
+rm -f apps/api/.data/dracin.db
+bun run db:migrate
+bun run db:seed
 ```
 
 **Port conflicts:**
@@ -443,12 +441,12 @@ lsof -ti:3000,3001,3002 | xargs kill -9
 
 ```bash
 # Reset database (WARNING: deletes all data)
-bun run db:reset
-
-# Or manually drop and recreate
-dropdb dramastream && createdb dramastream
+rm -f apps/api/.data/dracin.db
 bun run db:migrate
+bun run db:seed
 ```
+
+**Note:** This project uses SQLite, which requires no database server. The database file is automatically created in `.data/dracin.db` after running migrations.
 
 **Build errors:**
 
