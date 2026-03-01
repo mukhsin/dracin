@@ -43,12 +43,12 @@ DramaStream is a full-stack drama streaming platform built with modern web techn
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           Docker Compose Environment                        │
-├─────────────────────────────────────────────────────────────────────────────┤
+│                           SQLite Embedded Database Environment                 │
 │                                                                             │
 │  ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐   │
 │  │                  │      │                  │      │                  │   │
-│  │   Web Frontend   │◄────►│   API Service    │◄────►│   PostgreSQL     │   │
-│  │   Port 3000      │      │   Port 3001      │      │   Port 5432      │   │
+│   Web Frontend   │◄────►│   API Service    │◄────►│   **Data Layer**  │   │
+│  │   Port 3000      │      │   Port 3001      │      │
 │  │                  │      │                  │      │                  │   │
 │  │  TanStack Start  │      │  Hono Framework  │      │  Drizzle ORM     │   │
 │  │  React 19        │      │  Better-Auth     │      │  Schema-First    │   │
@@ -115,7 +115,7 @@ User Request
 │  - Migrations       │
 └──────┬──────────────┘
        │
-       ▼
+       │  **SQLite**         │
 ┌─────────────────────┐
 │  PostgreSQL         │
 └─────────────────────┘
