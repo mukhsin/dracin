@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ContinueWatching } from "../components/continue-watching";
 import HeroCarousel from "../components/home/HeroCarousel";
 import ContentSection from "../components/home/ContentSection";
+import { useAuth } from "../hooks/use-auth";
 import { useHomeData } from "../hooks/use-home-data";
 import { RefreshCw } from "lucide-react";
 
@@ -83,6 +85,7 @@ function ErrorState({
 
 export function HomePage() {
   const { rank1, featured, latest, popular, isError } = useHomeData();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Check if any data is already available (cached)
   const hasAnyData = !!(
@@ -127,6 +130,8 @@ export function HomePage() {
       ) : null}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {!isLoading && isAuthenticated ? <ContinueWatching /> : null}
+
         {isInitialLoading ? (
           <SectionSkeleton />
         ) : popular.data && popular.data.items.length > 0 ? (
