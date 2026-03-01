@@ -38,6 +38,7 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
-    "embla-carousel-wheel-gestures": "^8.1.0"
+    "embla-carousel-wheel-gestures": "^8.1.0",
+    "react-icons": "^5.5.0"
   }
 }

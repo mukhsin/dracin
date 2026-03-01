@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogIn, LogOut, UserCircle, Bookmark, Heart } from "lucide-react";
+import { LogIn, LogOut, Bookmark, Heart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
@@ -60,7 +60,10 @@ export function Header() {
     };
   }, [isProfileMenuOpen]);
 
+  // Show Google profile image if available, otherwise first letter of name
   const userLabel = user?.name?.trim() || user?.email?.trim() || "Account";
+  const userInitial = user?.name?.trim()?.[0]?.toUpperCase() || "A";
+  const userImage = user?.image || null;
   const signInSearch = { redirect: currentPath };
   const handleSignOut = async () => {
     if (isSigningOut) {
@@ -114,7 +117,17 @@ export function Header() {
                       style={{ borderRadius: "0" }}
                       aria-label="Profile menu"
                     >
-                      <UserCircle className="w-5 h-5" />
+                      {userImage ? (
+                        <img
+                          src={userImage}
+                          alt="Google profile"
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
+                          {userInitial}
+                        </div>
+                      )}
                     </button>
                     {isProfileMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-[#0A0A0A] border border-primary/30 rounded-lg shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">

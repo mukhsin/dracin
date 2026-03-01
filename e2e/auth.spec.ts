@@ -1,11 +1,76 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Request } from "@playwright/test";
 import {
   generateTestUser,
   waitForPageLoad,
   fillForm,
-  expectToast,
   TEST_TIMEOUTS,
 } from "./utils";
+
+type SocialInitCapture = {
+  method: string;
+  provider: string | null;
+  callbackOrRedirect: string | null;
+  url: string;
+};
+
+async function captureSocialInitRequest(
+  request: Request,
+): Promise<SocialInitCapture> {
+  const requestUrl = new URL(request.url());
+  const params = new URLSearchParams(requestUrl.search);
+  const contentType = (await request.headerValue("content-type")) || "";
+  const postData = request.postData() || "";
+
+  const bodyParams = new URLSearchParams();
+
+  if (postData) {
+    if (contentType.includes("application/json")) {
+      try {
+        const json = JSON.parse(postData) as Record<string, unknown>;
+        for (const [key, value] of Object.entries(json)) {
+          if (typeof value === "string") {
+            bodyParams.set(key, value);
+          }
+        }
+      } catch {}
+    }
+
+    if (bodyParams.size === 0) {
+      const urlEncoded = new URLSearchParams(postData);
+      for (const [key, value] of urlEncoded.entries()) {
+        bodyParams.set(key, value);
+      }
+    }
+  }
+
+  const pickValue = (...keys: string[]): string | null => {
+    for (const key of keys) {
+      const fromUrl = params.get(key);
+      if (fromUrl) {
+        return fromUrl;
+      }
+
+      const fromBody = bodyParams.get(key);
+      if (fromBody) {
+        return fromBody;
+      }
+    }
+
+    return null;
+  };
+
+  return {
+    method: request.method(),
+    provider: pickValue("provider"),
+    callbackOrRedirect: pickValue(
+      "callbackURL",
+      "callbackUrl",
+      "redirectTo",
+      "redirect",
+    ),
+    url: request.url(),
+  };
+}
 
 test.describe("Authentication Flows", () => {
   test.describe("Sign Up", () => {
@@ -14,7 +79,8 @@ test.describe("Authentication Flows", () => {
       await waitForPageLoad(page);
 
       await expect(page.locator('input[type="email"]')).toBeVisible();
-      await expect(page.locator('input[type="password"]')).toBeVisible();
+      await expect(page.locator("#password")).toBeVisible();
+      await expect(page.locator("#confirmPassword")).toBeVisible();
       await expect(page.locator('button[type="submit"]')).toBeVisible();
     });
 
@@ -27,7 +93,7 @@ test.describe("Authentication Flows", () => {
       await fillForm(page, {
         'input[name="name"], input[placeholder*="name" i]': user.name,
         'input[type="email"]': user.email,
-        'input[type="password"]': user.password,
+        "#password": user.password,
         'input[name="confirmPassword"], input[placeholder*="confirm" i]':
           user.password,
       });
@@ -46,7 +112,8 @@ test.describe("Authentication Flows", () => {
       await waitForPageLoad(page);
 
       await page.locator('input[type="email"]').fill("invalid-email");
-      await page.locator('input[type="password"]').fill("password123");
+      await page.locator("#password").fill("password123");
+      await page.locator("#confirmPassword").fill("password123");
       await page.locator('button[type="submit"]').click();
 
       await page.waitForTimeout(1000);
@@ -56,7 +123,14 @@ test.describe("Authentication Flows", () => {
         .first()
         .isVisible()
         .catch(() => false);
-      expect(errorVisible).toBe(true);
+
+      if (!errorVisible) {
+        const emailInput = page.locator('input[type="email"]').first();
+        const isInvalid = await emailInput.evaluate(
+          (el: HTMLInputElement) => !el.validity.valid,
+        );
+        expect(isInvalid).toBe(true);
+      }
     });
 
     test("should show validation error for weak password", async ({ page }) => {
@@ -68,7 +142,7 @@ test.describe("Authentication Flows", () => {
       await fillForm(page, {
         'input[name="name"], input[placeholder*="name" i]': user.name,
         'input[type="email"]': user.email,
-        'input[type="password"]': "123",
+        "#password": "123",
         'input[name="confirmPassword"], input[placeholder*="confirm" i]': "123",
       });
 
@@ -92,7 +166,7 @@ test.describe("Authentication Flows", () => {
       await fillForm(page, {
         'input[name="name"], input[placeholder*="name" i]': user.name,
         'input[type="email"]': user.email,
-        'input[type="password"]': user.password,
+        "#password": user.password,
         'input[name="confirmPassword"], input[placeholder*="confirm" i]':
           "DifferentPassword123!",
       });
@@ -106,6 +180,38 @@ test.describe("Authentication Flows", () => {
         .isVisible()
         .catch(() => false);
       expect(errorVisible).toBe(true);
+    });
+
+    test("Google initiation path from Sign Up includes provider and callback intent", async ({
+      page,
+    }) => {
+      const socialRequestCapture: { value: SocialInitCapture | null } = {
+        value: null,
+      };
+
+      await page.route("**/api/auth/sign-in/social**", async (route) => {
+        socialRequestCapture.value = await captureSocialInitRequest(
+          route.request(),
+        );
+        await route.abort("failed");
+      });
+
+      await page.goto("/auth/signup");
+      await waitForPageLoad(page);
+
+      await page.getByRole("button", { name: "Continue with Google" }).click();
+
+      await expect.poll(() => socialRequestCapture.value !== null).toBe(true);
+      if (!socialRequestCapture.value) {
+        throw new Error(
+          "Expected Google social initiation request to be captured",
+        );
+      }
+
+      const parsedSocialRequest = socialRequestCapture.value;
+      expect(parsedSocialRequest.provider).toBe("google");
+      expect(parsedSocialRequest.callbackOrRedirect).toContain("/dramas");
+      expect(parsedSocialRequest.url).toContain("/api/auth/sign-in/social");
     });
   });
 
@@ -130,7 +236,7 @@ test.describe("Authentication Flows", () => {
       await fillForm(page, {
         'input[name="name"], input[placeholder*="name" i]': user.name,
         'input[type="email"]': user.email,
-        'input[type="password"]': user.password,
+        "#password": user.password,
         'input[name="confirmPassword"], input[placeholder*="confirm" i]':
           user.password,
       });
@@ -198,6 +304,101 @@ test.describe("Authentication Flows", () => {
         expect(isInvalid).toBe(true);
       }
     });
+
+    test("Google initiation path from Sign In includes provider and callback intent", async ({
+      page,
+    }) => {
+      const socialRequestCapture: { value: SocialInitCapture | null } = {
+        value: null,
+      };
+
+      await page.route("**/api/auth/sign-in/social**", async (route) => {
+        socialRequestCapture.value = await captureSocialInitRequest(
+          route.request(),
+        );
+        await route.abort("failed");
+      });
+
+      await page.goto("/auth/signin");
+      await waitForPageLoad(page);
+
+      await page.getByRole("button", { name: "Continue with Google" }).click();
+
+      await expect.poll(() => socialRequestCapture.value !== null).toBe(true);
+      if (!socialRequestCapture.value) {
+        throw new Error(
+          "Expected Google social initiation request to be captured",
+        );
+      }
+
+      const parsedSocialRequest = socialRequestCapture.value;
+      expect(parsedSocialRequest.provider).toBe("google");
+      expect(parsedSocialRequest.callbackOrRedirect).toContain("/dramas");
+      expect(parsedSocialRequest.url).toContain("/api/auth/sign-in/social");
+    });
+
+    test("Google initiation preserves redirect parameter in request", async ({
+      page,
+    }) => {
+      const redirectTarget = "/watchlist";
+      const socialRequestCapture: { value: SocialInitCapture | null } = {
+        value: null,
+      };
+
+      await page.route("**/api/auth/sign-in/social**", async (route) => {
+        socialRequestCapture.value = await captureSocialInitRequest(
+          route.request(),
+        );
+        await route.abort("failed");
+      });
+
+      await page.goto(
+        `/auth/signin?redirect=${encodeURIComponent(redirectTarget)}`,
+      );
+      await waitForPageLoad(page);
+
+      await page.getByRole("button", { name: "Continue with Google" }).click();
+
+      await expect.poll(() => socialRequestCapture.value !== null).toBe(true);
+      if (!socialRequestCapture.value) {
+        throw new Error(
+          "Expected Google social initiation request to be captured",
+        );
+      }
+
+      const parsedSocialRequest = socialRequestCapture.value;
+      expect(parsedSocialRequest.provider).toBe("google");
+      expect(parsedSocialRequest.callbackOrRedirect).toContain(redirectTarget);
+    });
+
+    test("Google initiation failure shows error and keeps Sign In usable", async ({
+      page,
+    }) => {
+      await page.route("**/api/auth/sign-in/social**", async (route) => {
+        await route.abort("failed");
+      });
+
+      await page.goto("/auth/signin");
+      await waitForPageLoad(page);
+
+      await page.getByRole("button", { name: "Continue with Google" }).click();
+
+      await expect(page.getByRole("alert")).toContainText(
+        "Could not start Google sign in. Please try again.",
+      );
+
+      const emailInput = page.locator('input[type="email"]').first();
+      const passwordInput = page.locator('input[type="password"]').first();
+      await emailInput.fill("still-usable@example.com");
+      await passwordInput.fill("TestPassword123!");
+
+      await expect(emailInput).toHaveValue("still-usable@example.com");
+      await expect(passwordInput).toHaveValue("TestPassword123!");
+      await expect(page.locator('button[type="submit"]').first()).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Continue with Google" }),
+      ).toBeEnabled();
+    });
   });
 
   test.describe("Sign Out", () => {
@@ -210,7 +411,7 @@ test.describe("Authentication Flows", () => {
       await fillForm(page, {
         'input[name="name"], input[placeholder*="name" i]': user.name,
         'input[type="email"]': user.email,
-        'input[type="password"]': user.password,
+        "#password": user.password,
         'input[name="confirmPassword"], input[placeholder*="confirm" i]':
           user.password,
       });

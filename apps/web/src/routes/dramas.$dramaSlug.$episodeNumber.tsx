@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
