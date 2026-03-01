@@ -30,7 +30,34 @@ export interface HistoryListResult {
   total: number;
 }
 
+export interface GuestHistoryMergeEntry {
+  episodeId: string;
+  progress: number;
+  completed: boolean;
+}
+
+export interface GuestHistoryMergeSummary {
+  merged: number;
+  skipped: number;
+  total: number;
+}
+
 export class HistoryService {
+  private shouldMergeEntry(
+    existing: Pick<WatchHistory, "progress" | "completed">,
+    incoming: Pick<WatchHistory, "progress" | "completed">,
+  ): boolean {
+    if (incoming.progress > existing.progress) {
+      return true;
+    }
+
+    if (incoming.progress < existing.progress) {
+      return false;
+    }
+
+    return incoming.completed && !existing.completed;
+  }
+
   async getUserHistory(userId: string): Promise<HistoryListResult> {
     const results = await db
       .select({
@@ -187,6 +214,89 @@ export class HistoryService {
           posterUrl: result.drama.posterUrl,
         },
       },
+    };
+  }
+
+  async mergeGuestHistory(
+    userId: string,
+    entries: GuestHistoryMergeEntry[],
+  ): Promise<GuestHistoryMergeSummary> {
+    const dedupedByEpisode = new Map<string, GuestHistoryMergeEntry>();
+
+    for (const entry of entries) {
+      const existing = dedupedByEpisode.get(entry.episodeId);
+
+      if (!existing || this.shouldMergeEntry(existing, entry)) {
+        dedupedByEpisode.set(entry.episodeId, entry);
+      }
+    }
+
+    let merged = 0;
+    let skipped = 0;
+
+    for (const entry of dedupedByEpisode.values()) {
+      const [episodeWithDrama] = await db
+        .select({
+          episode: episodes,
+          drama: dramas,
+        })
+        .from(episodes)
+        .innerJoin(dramas, eq(episodes.dramaId, dramas.id))
+        .where(eq(episodes.id, entry.episodeId));
+
+      if (!episodeWithDrama) {
+        skipped += 1;
+        continue;
+      }
+
+      const [existing] = await db
+        .select({
+          id: watchHistory.id,
+          progress: watchHistory.progress,
+          completed: watchHistory.completed,
+        })
+        .from(watchHistory)
+        .where(
+          and(
+            eq(watchHistory.userId, userId),
+            eq(watchHistory.dramaSlug, episodeWithDrama.drama.slug),
+            eq(watchHistory.episodeNumber, episodeWithDrama.episode.number),
+          ),
+        );
+
+      if (!existing) {
+        await db.insert(watchHistory).values({
+          userId,
+          dramaSlug: episodeWithDrama.drama.slug,
+          episodeNumber: episodeWithDrama.episode.number,
+          progress: entry.progress,
+          completed: entry.completed,
+        });
+        merged += 1;
+        continue;
+      }
+
+      if (!this.shouldMergeEntry(existing, entry)) {
+        skipped += 1;
+        continue;
+      }
+
+      await db
+        .update(watchHistory)
+        .set({
+          progress: entry.progress,
+          completed: entry.completed,
+          watchedAt: new Date(),
+        })
+        .where(eq(watchHistory.id, existing.id));
+
+      merged += 1;
+    }
+
+    return {
+      merged,
+      skipped,
+      total: dedupedByEpisode.size,
     };
   }
 

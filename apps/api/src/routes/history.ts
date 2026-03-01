@@ -11,6 +11,16 @@ export const RecordProgressSchema = z.object({
   completed: z.boolean().optional(),
 });
 
+export const MergeGuestHistorySchema = z.object({
+  entries: z.array(
+    z.object({
+      episodeId: z.string().uuid(),
+      progress: z.number().min(0),
+      completed: z.boolean(),
+    }),
+  ),
+});
+
 const app = new Hono<{ Variables: AuthContext }>();
 
 app.use("*", requireAuth);
@@ -71,6 +81,27 @@ app.post("/", zValidator("json", RecordProgressSchema), async (c) => {
     message: "Progress recorded",
   });
 });
+
+app.post(
+  "/merge-guest",
+  zValidator("json", MergeGuestHistorySchema),
+  async (c) => {
+    const user = c.get("user");
+    if (!user) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+
+    const { entries } = c.req.valid("json");
+
+    const summary = await historyService.mergeGuestHistory(user.id, entries);
+
+    return c.json({
+      success: true,
+      data: summary,
+      message: "Guest history merged",
+    });
+  },
+);
 
 app.get("/episodes/:episodeId", async (c) => {
   const user = c.get("user");
