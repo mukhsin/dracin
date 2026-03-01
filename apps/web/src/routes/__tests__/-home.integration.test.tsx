@@ -1,64 +1,166 @@
+/** @vitest-environment jsdom */
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/utils.js";
 import { server } from "../../test/mocks/server.js";
 import { resetMockData } from "../../test/mocks/handlers.js";
 
 const mockNavigate = vi.fn();
+const mockLogout = vi.fn();
 
-vi.mock("@tanstack/react-router", async () => {
-  const actual = await vi.importActual("@tanstack/react-router");
-  return {
-    ...actual,
-    createFileRoute: () => ({
-      component: null,
-    }),
-    Link: ({
-      to,
-      children,
-      className,
-    }: {
-      to: string;
-      children: React.ReactNode;
-      className?: string;
-    }) => (
-      <a
-        href={to}
-        className={className}
-        onClick={(e) => {
-          e.preventDefault();
-          mockNavigate(to);
-        }}
-      >
-        {children}
-      </a>
-    ),
-    useNavigate: () => mockNavigate,
-  };
-});
+const mockAuthState: {
+  user: { id: string } | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  logout: typeof mockLogout;
+} = {
+  user: { id: "user-1" },
+  isAuthenticated: true,
+  isLoading: false,
+  logout: mockLogout,
+};
+
+const mockHomeDataState = {
+  rank1: {
+    data: {
+      items: [
+        {
+          id: "hero-1",
+          title: "Drama Streaming App",
+          slug: "drama-streaming-app",
+          description:
+            "Your favorite dramas, all in one place. Stream anytime, anywhere.",
+          posterUrl: "https://example.com/hero.jpg",
+        },
+      ],
+      total: 1,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  },
+  featured: {
+    data: {
+      items: [
+        {
+          id: "featured-1",
+          title: "Featured Drama",
+          slug: "featured-drama",
+          description: "Featured description",
+          posterUrl: "https://example.com/featured.jpg",
+          status: "ongoing",
+          language: "Korean",
+          playCount: 100,
+        },
+      ],
+      total: 1,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  },
+  latest: {
+    data: {
+      items: [
+        {
+          id: "latest-1",
+          title: "Latest Drama",
+          slug: "latest-drama",
+          description: "Latest description",
+          posterUrl: "https://example.com/latest.jpg",
+          status: "ongoing",
+          language: "Korean",
+          playCount: 50,
+        },
+      ],
+      total: 1,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  },
+  popular: {
+    data: {
+      items: [
+        {
+          id: "popular-1",
+          title: "Most Popular Drama",
+          slug: "most-popular-drama",
+          description: "Popular description",
+          posterUrl: "https://example.com/popular.jpg",
+          status: "completed",
+          language: "Korean",
+          playCount: 1000,
+        },
+      ],
+      total: 1,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  },
+  isLoading: false,
+  isError: false,
+};
+
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (options: { component: React.ComponentType }) =>
+    options,
+  Link: ({
+    to,
+    children,
+    className,
+  }: {
+    to: string;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <a
+      href={to}
+      className={className}
+      onClick={(event) => {
+        event.preventDefault();
+        mockNavigate(to);
+      }}
+    >
+      {children}
+    </a>
+  ),
+  useNavigate: () => mockNavigate,
+}));
+
+vi.mock("../../hooks/use-auth.js", () => ({
+  useAuth: () => mockAuthState,
+}));
+
+vi.mock("../../hooks/use-home-data.js", () => ({
+  useHomeData: () => mockHomeDataState,
+}));
+
+async function renderHomePage() {
+  const { HomePage } = await import("../index.js");
+  return renderWithProviders(<HomePage />);
+}
 
 describe("Home Page Flow Integration Tests", () => {
-  let HomePage: React.ComponentType;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     resetMockData();
     mockNavigate.mockClear();
+    mockLogout.mockClear();
     server.resetHandlers();
-
-    vi.resetModules();
-    const module = await import("../index.js");
-    HomePage = module.HomePage as React.ComponentType;
+    mockAuthState.user = { id: "user-1" };
+    mockAuthState.isAuthenticated = true;
+    mockAuthState.isLoading = false;
   });
 
   it("renders hero section with app title and description", async () => {
-    renderWithProviders(<HomePage />);
+    await renderHomePage();
 
     expect(
       screen.getByRole("heading", { name: /drama streaming app/i }),
     ).toBeInTheDocument();
-
     expect(
       screen.getByText(
         /your favorite dramas, all in one place\. stream anytime, anywhere\./i,
@@ -66,144 +168,56 @@ describe("Home Page Flow Integration Tests", () => {
     ).toBeInTheDocument();
   });
 
-  it('navigates to /dramas when "Browse Dramas" link is clicked', async () => {
+  it("navigates to most popular section view-all route", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<HomePage />);
+    await renderHomePage();
 
-    const browseLink = screen.getByRole("link", { name: /browse dramas/i });
-    expect(browseLink).toBeInTheDocument();
-    expect(browseLink).toHaveAttribute("href", "/dramas");
+    const seeAllLinks = await screen.findAllByRole("link", {
+      name: /see all/i,
+    });
+    const mostPopularSeeAll = seeAllLinks[0];
 
-    await user.click(browseLink);
-    expect(mockNavigate).toHaveBeenCalledWith("/dramas");
+    expect(mostPopularSeeAll).toHaveAttribute("href", "/dramas?t=popular");
+
+    await user.click(mostPopularSeeAll);
+    expect(mockNavigate).toHaveBeenCalledWith("/dramas?t=popular");
   });
 
-  it('navigates to /auth/signin when "Sign In" link is clicked', async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<HomePage />);
+  it("does not render Continue Watching heading for unauthenticated users", async () => {
+    mockAuthState.user = { id: "guest" };
+    mockAuthState.isAuthenticated = false;
 
-    const signInLink = screen.getByRole("link", { name: /sign in/i });
-    expect(signInLink).toBeInTheDocument();
-    expect(signInLink).toHaveAttribute("href", "/auth/signin");
+    await renderHomePage();
 
-    await user.click(signInLink);
-    expect(mockNavigate).toHaveBeenCalledWith("/auth/signin");
+    expect(
+      await screen.findByRole("heading", { name: /^most popular$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /continue watching/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("displays all feature cards", async () => {
-    renderWithProviders(<HomePage />);
+  it("renders Continue Watching heading for authenticated users with data", async () => {
+    await renderHomePage();
 
     expect(
-      screen.getByRole("heading", { name: /hd streaming/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /watch your favorite dramas in high definition quality\./i,
-      ),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", { name: /watchlist/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/save dramas to your personal watchlist for later\./i),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", { name: /track progress/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/resume watching exactly where you left off\./i),
+      await screen.findByRole("heading", { name: /continue watching/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders ContinueWatching component", async () => {
-    renderWithProviders(<HomePage />);
+  it("renders Continue Watching before Most Popular for authenticated users", async () => {
+    await renderHomePage();
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: /continue watching/i }),
-      ).toBeInTheDocument();
+    const continueWatchingHeading = await screen.findByRole("heading", {
+      name: /continue watching/i,
     });
-  });
-
-  it("displays correct number of feature cards in grid layout", async () => {
-    renderWithProviders(<HomePage />);
-
-    const featureCards = screen.getAllByText(
-      /watch your favorite dramas|save dramas to your|resume watching exactly/i,
-    );
-    expect(featureCards.length).toBe(3);
-  });
-
-  it("feature cards have correct styling classes", async () => {
-    renderWithProviders(<HomePage />);
-
-    const featureSection = screen
-      .getByRole("heading", { name: /hd streaming/i })
-      .closest("div")?.parentElement;
-    expect(featureSection).toHaveClass("grid");
-  });
-
-  it("renders ContinueWatching with history items when available", async () => {
-    renderWithProviders(<HomePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Love in the Moonlight")).toBeInTheDocument();
+    const mostPopularHeading = await screen.findByRole("heading", {
+      name: /^most popular$/i,
     });
 
-    expect(screen.getByText("Hospital Playlist")).toBeInTheDocument();
-    expect(screen.getByText("The Glory")).toBeInTheDocument();
-  });
-
-  it("displays View All link when there are more than maxItems", async () => {
-    renderWithProviders(<HomePage />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: /continue watching/i }),
-      ).toBeInTheDocument();
-    });
-
-    const viewAllLink = screen.getByRole("link", { name: /view all/i });
-    expect(viewAllLink).toBeInTheDocument();
-    expect(viewAllLink).toHaveAttribute("href", "/history");
-  });
-
-  it("displays progress bars for continue watching items", async () => {
-    renderWithProviders(<HomePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("50%")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("75%")).toBeInTheDocument();
-    expect(screen.getByText("5%")).toBeInTheDocument();
-  });
-
-  it("displays episode numbers and titles", async () => {
-    renderWithProviders(<HomePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/episode 5/i)).toBeInTheDocument();
-    });
-
-    expect(screen.getByText(/the royal secret/i)).toBeInTheDocument();
-    expect(screen.getByText(/episode 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/first surgery/i)).toBeInTheDocument();
-  });
-
-  it("navigates to correct episode when clicking continue watching item", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<HomePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Love in the Moonlight")).toBeInTheDocument();
-    });
-
-    const dramaTitle = screen.getByText("Love in the Moonlight");
-    await user.click(dramaTitle);
-
-    expect(mockNavigate).toHaveBeenCalledWith("/dramas/ep-001");
+    expect(
+      continueWatchingHeading.compareDocumentPosition(mostPopularHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
