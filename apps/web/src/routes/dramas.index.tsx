@@ -3,15 +3,25 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
+import { MIN_SKELETON_DELAY_MS } from "../lib/constants";
+
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
 import { AlertCircle, Search } from "lucide-react";
-import { PageHeaderSkeleton, DramaCardSkeleton } from "../components/skeletons.js";
+import {
+  PageHeaderSkeleton,
+  DramaCardSkeleton,
+} from "../components/skeletons.js";
 
 // Valid section types
 const VALID_SECTION_TYPES = ["popular", "featured", "latest"] as const;
 type SectionType = (typeof VALID_SECTION_TYPES)[number];
+
+const DRAMA_SKELETON_KEYS = Array.from(
+  { length: 18 },
+  (_, i) => `drama-card-skeleton-${i}`,
+);
 
 function isValidSectionType(t: string | undefined): t is SectionType {
   return !!t && VALID_SECTION_TYPES.includes(t as SectionType);
@@ -53,7 +63,16 @@ function DramasPage() {
     q?: string;
     t?: string;
   };
-  
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setMinDelayDone(true),
+      MIN_SKELETON_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, []);
+
   // Build referrer path with search params for back navigation
   const referrer = useMemo(() => {
     const params = new URLSearchParams();
@@ -98,7 +117,7 @@ function DramasPage() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(sentinel);
@@ -110,6 +129,7 @@ function DramasPage() {
 
   // Only show loading skeleton when actually loading without cached data
   const isLoading = dataLoading && !data;
+  const showSkeleton = !minDelayDone || isLoading;
 
   const dramas = useMemo(() => {
     if (!data) return [];
@@ -122,7 +142,6 @@ function DramasPage() {
       search: {},
     });
   };
-
 
   // Determine page title and description based on mode
   const pageTitle = search
@@ -143,14 +162,14 @@ function DramasPage() {
       ? "No dramas available in this section"
       : "Check back later for new dramas";
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-[#0A0A0A]">
         <div className="container mx-auto px-4 py-8">
           <PageHeaderSkeleton />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <DramaCardSkeleton key={i} />
+            {DRAMA_SKELETON_KEYS.map((key) => (
+              <DramaCardSkeleton key={key} />
             ))}
           </div>
         </div>
