@@ -7,8 +7,7 @@ import { useHomeData } from "../hooks/use-home-data";
 import { useContinueWatching } from "../hooks/use-history";
 import { RefreshCw } from "lucide-react";
 import { HeroSkeleton, SectionSkeleton } from "../components/skeletons.js";
-import { useEffect, useState } from "react";
-import { MIN_SKELETON_DELAY_MS } from "../lib/constants";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -52,15 +51,7 @@ export function HomePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: continueWatchingData, isLoading: continueWatchingLoading } =
     useContinueWatching();
-  const [minDelayDone, setMinDelayDone] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(
-      () => setMinDelayDone(true),
-      MIN_SKELETON_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, []);
+  const minDelayDone = useMinSkeletonDelay();
 
   // Check if any data is already available (cached)
   const hasAnyData = !!(

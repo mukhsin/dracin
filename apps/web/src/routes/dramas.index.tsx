@@ -3,8 +3,8 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo, useRef, useEffect, useState } from "react";
-import { MIN_SKELETON_DELAY_MS } from "../lib/constants";
+import { useMemo, useRef, useEffect } from "react";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
@@ -63,15 +63,7 @@ function DramasPage() {
     q?: string;
     t?: string;
   };
-  const [minDelayDone, setMinDelayDone] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(
-      () => setMinDelayDone(true),
-      MIN_SKELETON_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, []);
+  const minDelayDone = useMinSkeletonDelay();
 
   // Build referrer path with search params for back navigation
   const referrer = useMemo(() => {

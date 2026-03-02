@@ -7,8 +7,7 @@ import {
   PageHeaderSkeleton,
   ProfileHistorySkeleton,
 } from "../components/skeletons.js";
-import { useEffect, useState } from "react";
-import { MIN_SKELETON_DELAY_MS } from "../lib/constants";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/history")({
   component: HistoryPage,
@@ -27,6 +26,8 @@ function HistoryPage() {
     );
     return () => clearTimeout(timer);
   }, []);
+
+  const minDelayDone = useMinSkeletonDelay();
 
   const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
 
