@@ -5,6 +5,11 @@ import { ChevronLeft, AlertCircle } from "lucide-react";
 import { VideoPlayer } from "../components/video-player.js";
 import type { VideoUrls } from "../components/quality-selector.js";
 import type { EpisodeWithNavigation } from "@repo/shared";
+import {
+  WatchPageVideoSkeleton,
+  WatchPageNavigationSkeleton,
+} from "../components/skeletons.js";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -47,40 +52,6 @@ export const Route = createFileRoute("/dramas/$dramaSlug/$episodeNumber")({
   component: WatchPage,
 });
 
-function WatchPageSkeleton() {
-  return (
-    <div className="min-h-screen bg-[#0A0A0A]">
-      {/* Video Skeleton - Vertical format */}
-      <div className="relative bg-black flex justify-center">
-        <div className="aspect-[9/16] max-h-[70vh] w-full max-w-md bg-gray-800 animate-pulse" />
-      </div>
-
-      {/* Navigation Skeleton */}
-      <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <div
-                className="h-10 bg-gray-800 animate-pulse"
-                style={{ borderRadius: "0" }}
-              />
-            </div>
-            <div className="flex-1 flex flex-col items-center gap-2">
-              <div className="h-8 w-24 bg-gray-800 animate-pulse" />
-              <div className="h-4 w-16 bg-gray-800 animate-pulse" />
-            </div>
-            <div className="flex-1">
-              <div
-                className="h-10 bg-gray-800 animate-pulse"
-                style={{ borderRadius: "0" }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function WatchPage() {
   const { dramaSlug, episodeNumber } = Route.useParams();
@@ -136,8 +107,23 @@ function WatchPage() {
   const nextEpisode = episode?.navigation?.nextEpisode;
 
   if (isLoading) {
-    return <WatchPageSkeleton />;
+    return (
+      <div className="min-h-screen bg-[#0A0A0A]">
+        {/* Video Skeleton - Vertical format */}
+        <div className="relative bg-black flex justify-center">
+          <WatchPageVideoSkeleton />
+        </div>
+
+        {/* Navigation Skeleton */}
+        <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
+          <div className="max-w-lg mx-auto px-4 py-4">
+            <WatchPageNavigationSkeleton />
+          </div>
+        </div>
+      </div>
+    );
   }
+
 
   if (error || !episode) {
     return (

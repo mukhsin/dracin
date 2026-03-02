@@ -5,50 +5,11 @@ import ContentSection from "../components/home/ContentSection";
 import { useAuth } from "../hooks/use-auth";
 import { useHomeData } from "../hooks/use-home-data";
 import { RefreshCw } from "lucide-react";
+import { HeroSkeleton, SectionSkeleton } from "../components/skeletons.js";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
-
-function HeroSkeleton() {
-  return (
-    <div className="w-full bg-[#0A0A0A] overflow-hidden">
-      <div className="aspect-[3/4] md:aspect-[1/2] animate-pulse bg-gradient-to-b md:bg-gradient-to-r from-gray-900 to-gray-800">
-        <div className="h-full flex flex-col justify-end md:justify-center md:flex-row md:items-center px-6 sm:px-8 lg:px-12 pb-8 md:pb-0">
-          <div className="w-full max-w-2xl space-y-4">
-            <div className="h-8 md:h-12 w-full max-w-[24rem] bg-gray-700" />
-            <div className="space-y-2">
-              <div className="h-4 w-full bg-gray-700" />
-              <div className="h-4 w-3/4 bg-gray-700" />
-              <div className="h-4 w-1/2 bg-gray-700" />
-            </div>
-            <div className="h-12 w-40 bg-primary/50" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SectionSkeleton() {
-  return (
-    <section className="py-6">
-      <div className="flex items-center justify-between mb-4 px-2">
-        <div className="h-6 w-48 bg-gray-800 animate-pulse" />
-        <div className="h-4 w-16 bg-gray-800 animate-pulse" />
-      </div>
-      <div className="flex gap-4 overflow-hidden">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex-[0_0_auto] w-44 md:w-52 animate-pulse">
-            <div className="aspect-[2/3] bg-gray-800 mb-3" />
-            <div className="h-4 w-full bg-gray-800 mb-2" />
-            <div className="h-3 w-2/3 bg-gray-800" />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function ErrorState({
   message,

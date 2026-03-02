@@ -6,7 +6,8 @@ import {
 import { useMemo, useRef, useEffect } from "react";
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
-import { Loader2, AlertCircle, Search } from "lucide-react";
+import { AlertCircle, Search } from "lucide-react";
+import { PageHeaderSkeleton, DramaCardSkeleton } from "../components/skeletons.js";
 
 // Valid section types
 const VALID_SECTION_TYPES = ["popular", "featured", "latest"] as const;
@@ -146,17 +147,10 @@ function DramasPage() {
     return (
       <div className="min-h-screen bg-[#0A0A0A]">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <div className="h-8 w-48 bg-gray-800 animate-pulse mb-2" />
-            <div className="h-4 w-64 bg-gray-800 animate-pulse" />
-          </div>
+          <PageHeaderSkeleton />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
             {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-[2/3] bg-gray-800 mb-3" />
-                <div className="h-4 w-full bg-gray-800 mb-2" />
-                <div className="h-3 w-2/3 bg-gray-800" />
-              </div>
+              <DramaCardSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -224,7 +218,7 @@ function DramasPage() {
             {/* Loading indicator for next page */}
             {isFetchingNextPage && (
               <div className="flex justify-center mt-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <div className="animate-spin h-6 w-6 border-2 border-t-foreground" />
               </div>
             )}
 
@@ -232,7 +226,7 @@ function DramasPage() {
             {!hasNextPage && dramas.length > 0 && (
               <div className="text-center mt-12 py-8 border-t">
                 <p className="text-muted-foreground text-sm">
-                  You&apos;ve reached the end
+                  You've reached the end
                 </p>
               </div>
             )}

@@ -3,6 +3,7 @@ import { useWatchlist } from "../hooks/use-watchlist.js";
 import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
 import { Bookmark } from "lucide-react";
+import { PageHeaderSkeleton, DramaCardSkeleton } from "../components/skeletons.js";
 
 export const Route = createFileRoute("/profile/watchlist")({
   component: WatchlistPage,
@@ -17,17 +18,10 @@ function WatchlistPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
-          <div className="mb-8">
-            <div className="h-8 w-48 bg-muted animate-pulse mb-2" />
-            <div className="h-4 w-32 bg-muted animate-pulse" />
-          </div>
+          <PageHeaderSkeleton />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-[2/3] bg-muted mb-3" />
-                <div className="h-4 w-full bg-muted mb-2" />
-                <div className="h-3 w-2/3 bg-muted" />
-              </div>
+              <DramaCardSkeleton key={i} />
             ))}
           </div>
         </div>

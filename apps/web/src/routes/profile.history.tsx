@@ -3,6 +3,7 @@ import { useHistory, useDeleteHistoryEntry } from "../hooks/use-history.js";
 import { useAuth } from "../hooks/use-auth.js";
 import { ContinueWatchingCard } from "../components/continue-watching-card.js";
 import { History } from "lucide-react";
+import { PageHeaderSkeleton, ContinueWatchingCardSkeleton } from "../components/skeletons.js";
 
 export const Route = createFileRoute("/profile/history")({
   component: HistoryPage,
@@ -18,25 +19,10 @@ function HistoryPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
-          <div className="mb-8">
-            <div className="h-8 w-48 bg-muted animate-pulse mb-2" />
-            <div className="h-4 w-32 bg-muted animate-pulse" />
-          </div>
+          <PageHeaderSkeleton />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="flex gap-3 p-3 border rounded-lg">
-                  <div className="w-24 aspect-[2/3] flex-shrink-0 bg-muted" />
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="h-4 w-3/4 bg-muted" />
-                    <div className="h-3 w-1/2 bg-muted" />
-                    <div className="mt-3 space-y-2">
-                      <div className="h-1 w-full bg-muted" />
-                      <div className="h-3 w-1/3 bg-muted" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ContinueWatchingCardSkeleton key={i} />
             ))}
           </div>
         </div>
