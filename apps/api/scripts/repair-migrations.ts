@@ -63,10 +63,10 @@ async function applyMigration0004() {
       `DROP INDEX IF EXISTS "watch_history_user_episode_idx"`,
     );
     await client.execute(`DROP INDEX IF EXISTS "watch_history_episode_idx"`);
-    
+
     // Disable foreign keys temporarily to allow dropping column with FK
     await client.execute(`PRAGMA foreign_keys = OFF`);
-    
+
     await client.execute(
       `ALTER TABLE "watch_history" ADD COLUMN "drama_slug" text NOT NULL DEFAULT ''`,
     );
@@ -83,7 +83,7 @@ async function applyMigration0004() {
         `ALTER TABLE "watch_history" DROP COLUMN "episode_id"`,
       );
     }
-    
+
     // Re-enable foreign keys
     await client.execute(`PRAGMA foreign_keys = ON`);
 
@@ -143,22 +143,22 @@ async function applyMigration0005() {
     // Copy data with conversion
     await client.execute(`
       INSERT INTO "dramas_new" (
-        "id", "book_id", "title", "slug", "description", "poster_url", 
+        "id", "book_id", "title", "slug", "description", "poster_url",
         "status", "language", "play_count", "source_endpoint",
         "release_year", "country", "rating", "total_episodes", "genres", "metadata",
         "created_at", "updated_at"
       )
-      SELECT 
+      SELECT
         "id", "book_id", "title", "slug", "description", "poster_url",
         "status", "language",
-        CASE 
+        CASE
           WHEN "play_count" IS NULL THEN NULL
           WHEN "play_count" = '' THEN NULL
-          WHEN UPPER("play_count") LIKE '%M' THEN 
+          WHEN UPPER("play_count") LIKE '%M' THEN
             CAST(ROUND(CAST(REPLACE(LOWER("play_count"), 'm', '') AS REAL) * 1000000) AS INTEGER)
-          WHEN UPPER("play_count") LIKE '%K' THEN 
+          WHEN UPPER("play_count") LIKE '%K' THEN
             CAST(ROUND(CAST(REPLACE(LOWER("play_count"), 'k', '') AS REAL) * 1000) AS INTEGER)
-          ELSE 
+          ELSE
             CAST("play_count" AS INTEGER)
         END,
         "source_endpoint",
@@ -225,12 +225,63 @@ async function applyMigration0006() {
       `CREATE INDEX IF NOT EXISTS "drama_lists_position_idx" ON "drama_lists" ("position")`,
     );
 
+    // Drop old tables if they exist
+    await client.execute(`DROP TABLE IF EXISTS "latest_dramas"`);
+    await client.execute(`DROP TABLE IF EXISTS "featured_dramas"`);
+
     console.log("  ✅ Migration 0006 applied successfully");
   } catch (error) {
     console.error("  ❌ Error applying migration 0006:", error);
     throw error;
   }
 }
+async function applyMigration0007() {
+  console.log("\n🔧 Applying migration 0007: add_favorites_table...");
+
+  try {
+    // Check if favorites table exists
+    const result = await client.execute(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'
+    `);
+
+    if (result.rows.length > 0) {
+      console.log("  ✅ Already applied (favorites table exists)");
+      return;
+    }
+
+    // Create favorites table
+    await client.execute(`
+      CREATE TABLE "favorites" (
+        "id" text PRIMARY KEY NOT NULL,
+        "user_id" text NOT NULL,
+        "drama_id" text NOT NULL,
+        "added_at" integer DEFAULT (cast((julianday('now') - 2440587.5)*86400000 as integer)) NOT NULL,
+        FOREIGN KEY ("user_id") REFERENCES "users"("id") ON UPDATE no action ON DELETE cascade,
+        FOREIGN KEY ("drama_id") REFERENCES "dramas"("id") ON UPDATE no action ON DELETE cascade
+      )
+    `);
+
+    await client.execute(
+      `CREATE UNIQUE INDEX IF NOT EXISTS "favorites_user_drama_idx" ON "favorites" ("user_id","drama_id")`,
+    );
+    await client.execute(
+      `CREATE INDEX IF NOT EXISTS "favorites_user_added_at_idx" ON "favorites" ("user_id","added_at")`,
+    );
+    await client.execute(
+      `CREATE INDEX IF NOT EXISTS "favorites_user_idx" ON "favorites" ("user_id")`,
+    );
+    await client.execute(
+      `CREATE INDEX IF NOT EXISTS "favorites_drama_idx" ON "favorites" ("drama_id")`,
+    );
+
+    console.log("  ✅ Migration 0007 applied successfully");
+  } catch (error) {
+    console.error("  ❌ Error applying migration 0007:", error);
+    throw error;
+  }
+}
+
+
 
 async function recordMigrations() {
   console.log("\n📝 Recording migrations in journal...");
@@ -250,6 +301,7 @@ async function recordMigrations() {
       "0004_watch_history_refactor",
       "0005_play_count_integer",
       "0006_merge_drama_lists",
+      "0007_add_favorites_table",
     ];
 
     for (const migration of migrations) {
@@ -270,6 +322,7 @@ async function main() {
   await applyMigration0004();
   await applyMigration0005();
   await applyMigration0006();
+  await applyMigration0007();
   await recordMigrations();
 
   console.log("\n" + "=".repeat(60));
