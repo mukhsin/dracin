@@ -4,8 +4,10 @@ import HeroCarousel from "../components/home/HeroCarousel";
 import ContentSection from "../components/home/ContentSection";
 import { useAuth } from "../hooks/use-auth";
 import { useHomeData } from "../hooks/use-home-data";
+import { useContinueWatching } from "../hooks/use-history";
 import { RefreshCw } from "lucide-react";
 import { HeroSkeleton, SectionSkeleton } from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -46,14 +48,18 @@ function ErrorState({
 
 export function HomePage() {
   const { rank1, featured, latest, popular, isError } = useHomeData();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { data: continueWatchingData, isLoading: continueWatchingLoading } =
+    useContinueWatching();
+  const minDelayDone = useMinSkeletonDelay();
 
   // Check if any data is already available (cached)
   const hasAnyData = !!(
     rank1.data ||
     featured.data ||
     latest.data ||
-    popular.data
+    popular.data ||
+    continueWatchingData
   );
 
   // Only show skeleton on initial load when no data exists yet
@@ -63,7 +69,11 @@ export function HomePage() {
     (rank1.isLoading ||
       featured.isLoading ||
       latest.isLoading ||
-      popular.isLoading);
+      popular.isLoading ||
+      continueWatchingLoading ||
+      authLoading);
+
+  const showSkeleton = !minDelayDone || isInitialLoading;
 
   if (isError) {
     return (
@@ -76,7 +86,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
-      {isInitialLoading ? (
+      {showSkeleton ? (
         <HeroSkeleton />
       ) : rank1.data && rank1.data.items.length > 0 ? (
         <HeroCarousel
@@ -91,9 +101,9 @@ export function HomePage() {
       ) : null}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!isLoading && isAuthenticated ? <ContinueWatching /> : null}
+        {isAuthenticated || authLoading ? <ContinueWatching /> : null}
 
-        {isInitialLoading ? (
+        {showSkeleton ? (
           <SectionSkeleton />
         ) : popular.data && popular.data.items.length > 0 ? (
           <ContentSection
@@ -112,7 +122,7 @@ export function HomePage() {
           />
         ) : null}
 
-        {isInitialLoading ? (
+        {showSkeleton ? (
           <SectionSkeleton />
         ) : featured.data && featured.data.items.length > 0 ? (
           <ContentSection
@@ -131,7 +141,7 @@ export function HomePage() {
           />
         ) : null}
 
-        {isInitialLoading ? (
+        {showSkeleton ? (
           <SectionSkeleton />
         ) : latest.data && latest.data.items.length > 0 ? (
           <ContentSection

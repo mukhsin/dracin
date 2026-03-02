@@ -3,7 +3,11 @@ import { useWatchlist } from "../hooks/use-watchlist.js";
 import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
 import { Bookmark } from "lucide-react";
-import { PageHeaderSkeleton, DramaCardSkeleton } from "../components/skeletons.js";
+import {
+  PageHeaderSkeleton,
+  ProfileGridSkeleton,
+} from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/watchlist")({
   component: WatchlistPage,
@@ -12,18 +16,17 @@ export const Route = createFileRoute("/profile/watchlist")({
 function WatchlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: watchlist, isLoading, error } = useWatchlist();
+  const minDelayDone = useMinSkeletonDelay();
+
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
 
   // Show loading skeleton while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <PageHeaderSkeleton />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <DramaCardSkeleton key={i} />
-            ))}
-          </div>
+          <ProfileGridSkeleton />
         </div>
       </div>
     );

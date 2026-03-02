@@ -3,7 +3,11 @@ import { useHistory, useDeleteHistoryEntry } from "../hooks/use-history.js";
 import { useAuth } from "../hooks/use-auth.js";
 import { ContinueWatchingCard } from "../components/continue-watching-card.js";
 import { History } from "lucide-react";
-import { PageHeaderSkeleton, ContinueWatchingCardSkeleton } from "../components/skeletons.js";
+import {
+  PageHeaderSkeleton,
+  ProfileHistorySkeleton,
+} from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/history")({
   component: HistoryPage,
@@ -14,17 +18,17 @@ function HistoryPage() {
   const { data: history, isLoading, error } = useHistory();
   const deleteMutation = useDeleteHistoryEntry();
 
+  const minDelayDone = useMinSkeletonDelay();
+
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
+
   // Show loading skeleton while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <PageHeaderSkeleton />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <ContinueWatchingCardSkeleton key={i} />
-            ))}
-          </div>
+          <ProfileHistorySkeleton />
         </div>
       </div>
     );

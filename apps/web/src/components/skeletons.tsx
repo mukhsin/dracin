@@ -12,9 +12,9 @@
 export function DramaCardSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="aspect-[2/3] bg-muted mb-3" />
-      <div className="h-4 w-full bg-muted mb-2" />
-      <div className="h-3 w-2/3 bg-muted" />
+      <div className="aspect-[2/3] bg-gray-800 mb-3" />
+      <div className="h-4 w-full bg-gray-800 mb-2" />
+      <div className="h-3 w-2/3 bg-gray-800" />
     </div>
   );
 }
@@ -28,13 +28,13 @@ export function ContinueWatchingCardSkeleton() {
   return (
     <div className="animate-pulse">
       <div className="flex gap-3">
-        <div className="w-24 aspect-[2/3] flex-shrink-0 bg-muted" />
+        <div className="w-24 aspect-[2/3] flex-shrink-0 bg-gray-800" />
         <div className="flex-1 min-w-0 space-y-2">
-          <div className="h-4 w-3/4 bg-muted" />
-          <div className="h-3 w-1/2 bg-muted" />
+          <div className="h-4 w-3/4 bg-gray-800" />
+          <div className="h-3 w-1/2 bg-gray-800" />
           <div className="mt-3 space-y-2">
-            <div className="h-1 w-full bg-muted" />
-            <div className="h-3 w-1/3 bg-muted" />
+            <div className="h-1 w-full bg-gray-800" />
+            <div className="h-3 w-1/3 bg-gray-800" />
           </div>
         </div>
       </div>
@@ -50,14 +50,14 @@ export function ContinueWatchingCardSkeleton() {
 export function HeroSkeleton() {
   return (
     <div className="w-full bg-[#0A0A0A] overflow-hidden animate-pulse">
-      <div className="aspect-[3/4] md:aspect-[1/2] bg-gradient-to-b md:bg-gradient-to-r from-gray-900 to-gray-800">
+      <div className="aspect-[3/4] md:aspect-video lg:aspect-[18/9] bg-gradient-to-b md:bg-gradient-to-r from-gray-900 to-gray-800">
         <div className="h-full flex flex-col justify-end md:justify-center md:flex-row md:items-center px-6 sm:px-8 lg:px-12 pb-8 md:pb-0">
           <div className="w-full max-w-2xl space-y-4">
-            <div className="h-8 md:h-12 w-full max-w-[24rem] bg-gray-700" />
+            <div className="h-8 md:h-12 w-full max-w-[24rem] bg-gray-800" />
             <div className="space-y-2">
-              <div className="h-4 w-full bg-gray-700" />
-              <div className="h-4 w-3/4 bg-gray-700" />
-              <div className="h-4 w-1/2 bg-gray-700" />
+              <div className="h-4 w-full bg-gray-800" />
+              <div className="h-4 w-3/4 bg-gray-800" />
+              <div className="h-4 w-1/2 bg-gray-800" />
             </div>
             <div className="h-12 w-40 bg-primary/50" />
           </div>
@@ -75,13 +75,13 @@ export function HeroSkeleton() {
 export function SectionSkeleton() {
   return (
     <section className="py-6 animate-pulse">
-      <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex items-center justify-between mb-4">
         <div className="h-6 w-48 bg-gray-800" />
         <div className="h-4 w-16 bg-gray-800" />
       </div>
-      <div className="flex gap-4 overflow-hidden">
+      <div className="flex gap-3 overflow-hidden">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex-[0_0_auto] w-44 md:w-52">
+          <div key={i} className="flex-[0_0_auto] w-40 md:w-48">
             <div className="aspect-[2/3] bg-gray-800 mb-3" />
             <div className="h-4 w-full bg-gray-800 mb-2" />
             <div className="h-3 w-2/3 bg-gray-800" />
@@ -99,8 +99,8 @@ export function SectionSkeleton() {
 export function PageHeaderSkeleton() {
   return (
     <div className="mb-8 animate-pulse">
-      <div className="h-8 w-48 bg-muted mb-2" />
-      <div className="h-4 w-32 bg-muted" />
+      <div className="h-8 w-48 bg-gray-800 mb-2" />
+      <div className="h-4 w-32 bg-gray-800" />
     </div>
   );
 }
@@ -116,7 +116,7 @@ export function EpisodeGridSkeleton() {
       <div className="grid grid-cols-10 gap-2">
         {Array.from({ length: 20 }).map((_, i) => (
           <div
-            key={i}
+            key={`episode-skel-${i}-${20}`}
             className="bg-gray-800 aspect-square"
             style={{ borderRadius: "0" }}
           />
@@ -136,7 +136,7 @@ export function EpisodeGridMobileSkeleton() {
       <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
         {Array.from({ length: 15 }).map((_, i) => (
           <div
-            key={i}
+            key={`episode-mobile-skel-${i}-${15}`}
             className="bg-gray-800 aspect-square"
             style={{ borderRadius: "0" }}
           />
@@ -222,5 +222,37 @@ export function BackButtonSkeleton() {
       className="h-6 w-32 bg-gray-800 mb-6 animate-pulse"
       style={{ borderRadius: "0" }}
     />
+  );
+}
+
+export function ProfileGridSkeleton({ count = 12 }: { count?: number }) {
+  const keys = Array.from(
+    { length: count },
+    (_, i) => `profile-grid-skel-${i}`,
+  );
+  return (
+    <div className="animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {keys.map((key) => (
+          <DramaCardSkeleton key={key} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ProfileHistorySkeleton({ count = 6 }: { count?: number }) {
+  const keys = Array.from(
+    { length: count },
+    (_, i) => `profile-history-skel-${i}`,
+  );
+  return (
+    <div className="animate-pulse">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {keys.map((key) => (
+          <ContinueWatchingCardSkeleton key={key} />
+        ))}
+      </div>
+    </div>
   );
 }
