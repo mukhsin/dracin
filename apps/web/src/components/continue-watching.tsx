@@ -5,6 +5,7 @@ import {
   useDeleteHistoryEntry,
 } from "../hooks/use-history.js";
 import { ContinueWatchingCard } from "./continue-watching-card.js";
+import { ContinueWatchingCardSkeleton } from "./skeletons.js";
 
 interface ContinueWatchingItem {
   historyId: string;
@@ -31,7 +32,21 @@ export function ContinueWatching({ showTitle = true }: ContinueWatchingProps) {
   const deleteMutation = useDeleteHistoryEntry();
 
   if (isLoading) {
-    return null;
+    return (
+      <section className="py-6">
+        {showTitle && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-6 w-48 bg-gray-800" />
+            <div className="h-4 w-16 bg-gray-800" />
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ContinueWatchingCardSkeleton key={i} />
+          ))}
+        </div>
+      </section>
+    );
   }
 
   if (error) {
@@ -69,7 +84,7 @@ export function ContinueWatching({ showTitle = true }: ContinueWatchingProps) {
   return (
     <section className="py-6">
       {showTitle && (
-        <div className="flex items-center justify-between mb-4 ">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Continue Watching</h2>
           {displayItems.length > 0 && (
             <Link
@@ -83,7 +98,7 @@ export function ContinueWatching({ showTitle = true }: ContinueWatchingProps) {
         </div>
       )}
 
-      <div className=" grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {displayItems.map((item: ContinueWatchingItem) => (
           <ContinueWatchingCard
             key={item.historyId}
