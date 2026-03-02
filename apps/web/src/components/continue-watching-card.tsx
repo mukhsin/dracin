@@ -99,11 +99,6 @@ export function ContinueWatchingCard({
                 {formatWatchedTime(item.watchedAt)}
               </p>
             </div>
-            {item.episodeTitle ? (
-              <p className="text-xs text-muted-foreground truncate mt-1">
-                {item.episodeTitle}
-              </p>
-            ) : null}
 
             <div className="mt-2">
               <div className="flex items-center gap-2">
