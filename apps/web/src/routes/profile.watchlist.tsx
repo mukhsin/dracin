@@ -2,7 +2,12 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useWatchlist } from "../hooks/use-watchlist.js";
 import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
-import { Loader2, Bookmark } from "lucide-react";
+import { Bookmark } from "lucide-react";
+import {
+  PageHeaderSkeleton,
+  ProfileGridSkeleton,
+} from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/watchlist")({
   component: WatchlistPage,
@@ -11,12 +16,18 @@ export const Route = createFileRoute("/profile/watchlist")({
 function WatchlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: watchlist, isLoading, error } = useWatchlist();
+  const minDelayDone = useMinSkeletonDelay();
 
-  // Show loading state while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
+
+  // Show loading skeleton while checking auth or fetching data
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12">
+          <PageHeaderSkeleton />
+          <ProfileGridSkeleton />
+        </div>
       </div>
     );
   }

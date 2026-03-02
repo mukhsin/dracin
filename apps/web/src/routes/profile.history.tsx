@@ -2,7 +2,12 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useHistory, useDeleteHistoryEntry } from "../hooks/use-history.js";
 import { useAuth } from "../hooks/use-auth.js";
 import { ContinueWatchingCard } from "../components/continue-watching-card.js";
-import { Loader2, History } from "lucide-react";
+import { History } from "lucide-react";
+import {
+  PageHeaderSkeleton,
+  ProfileHistorySkeleton,
+} from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/history")({
   component: HistoryPage,
@@ -13,11 +18,18 @@ function HistoryPage() {
   const { data: history, isLoading, error } = useHistory();
   const deleteMutation = useDeleteHistoryEntry();
 
-  // Show loading state while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  const minDelayDone = useMinSkeletonDelay();
+
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
+
+  // Show loading skeleton while checking auth or fetching data
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12">
+          <PageHeaderSkeleton />
+          <ProfileHistorySkeleton />
+        </div>
       </div>
     );
   }

@@ -2,7 +2,12 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useFavorites } from "../hooks/use-favorites.js";
 import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
-import { Loader2, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
+import {
+  PageHeaderSkeleton,
+  ProfileGridSkeleton,
+} from "../components/skeletons.js";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 export const Route = createFileRoute("/profile/favorites")({
   component: FavoritesPage,
@@ -11,12 +16,18 @@ export const Route = createFileRoute("/profile/favorites")({
 function FavoritesPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: favorites, isLoading, error } = useFavorites();
+  const minDelayDone = useMinSkeletonDelay();
 
-  // Show loading state while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
+
+  // Show loading skeleton while checking auth or fetching data
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12">
+          <PageHeaderSkeleton />
+          <ProfileGridSkeleton />
+        </div>
       </div>
     );
   }

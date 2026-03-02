@@ -4,13 +4,24 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useMemo, useRef, useEffect } from "react";
+import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
+
 import { useDramasInfinite } from "../hooks/use-drama.js";
 import DramaCard from "../components/drama-card.js";
-import { Loader2, AlertCircle, Search } from "lucide-react";
+import { AlertCircle, Search } from "lucide-react";
+import {
+  PageHeaderSkeleton,
+  DramaCardSkeleton,
+} from "../components/skeletons.js";
 
 // Valid section types
 const VALID_SECTION_TYPES = ["popular", "featured", "latest"] as const;
 type SectionType = (typeof VALID_SECTION_TYPES)[number];
+
+const DRAMA_SKELETON_KEYS = Array.from(
+  { length: 18 },
+  (_, i) => `drama-card-skeleton-${i}`,
+);
 
 function isValidSectionType(t: string | undefined): t is SectionType {
   return !!t && VALID_SECTION_TYPES.includes(t as SectionType);
@@ -52,7 +63,8 @@ function DramasPage() {
     q?: string;
     t?: string;
   };
-  
+  const minDelayDone = useMinSkeletonDelay();
+
   // Build referrer path with search params for back navigation
   const referrer = useMemo(() => {
     const params = new URLSearchParams();
@@ -97,7 +109,7 @@ function DramasPage() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(sentinel);
@@ -109,6 +121,7 @@ function DramasPage() {
 
   // Only show loading skeleton when actually loading without cached data
   const isLoading = dataLoading && !data;
+  const showSkeleton = !minDelayDone || isLoading;
 
   const dramas = useMemo(() => {
     if (!data) return [];
@@ -121,7 +134,6 @@ function DramasPage() {
       search: {},
     });
   };
-
 
   // Determine page title and description based on mode
   const pageTitle = search
@@ -142,21 +154,14 @@ function DramasPage() {
       ? "No dramas available in this section"
       : "Check back later for new dramas";
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-[#0A0A0A]">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <div className="h-8 w-48 bg-gray-800 animate-pulse mb-2" />
-            <div className="h-4 w-64 bg-gray-800 animate-pulse" />
-          </div>
+          <PageHeaderSkeleton />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-[2/3] bg-gray-800 mb-3" />
-                <div className="h-4 w-full bg-gray-800 mb-2" />
-                <div className="h-3 w-2/3 bg-gray-800" />
-              </div>
+            {DRAMA_SKELETON_KEYS.map((key) => (
+              <DramaCardSkeleton key={key} />
             ))}
           </div>
         </div>
@@ -224,7 +229,7 @@ function DramasPage() {
             {/* Loading indicator for next page */}
             {isFetchingNextPage && (
               <div className="flex justify-center mt-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <div className="animate-spin h-6 w-6 border-2 border-t-foreground" />
               </div>
             )}
 
@@ -232,7 +237,7 @@ function DramasPage() {
             {!hasNextPage && dramas.length > 0 && (
               <div className="text-center mt-12 py-8 border-t">
                 <p className="text-muted-foreground text-sm">
-                  You&apos;ve reached the end
+                  You've reached the end
                 </p>
               </div>
             )}
