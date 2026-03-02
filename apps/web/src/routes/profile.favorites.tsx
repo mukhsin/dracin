@@ -3,7 +3,12 @@ import { useFavorites } from "../hooks/use-favorites.js";
 import { useAuth } from "../hooks/use-auth.js";
 import DramaCard from "../components/drama-card.js";
 import { Heart } from "lucide-react";
-import { PageHeaderSkeleton, DramaCardSkeleton } from "../components/skeletons.js";
+import {
+  PageHeaderSkeleton,
+  ProfileGridSkeleton,
+} from "../components/skeletons.js";
+import { useEffect, useState } from "react";
+import { MIN_SKELETON_DELAY_MS } from "../lib/constants";
 
 export const Route = createFileRoute("/profile/favorites")({
   component: FavoritesPage,
@@ -12,18 +17,25 @@ export const Route = createFileRoute("/profile/favorites")({
 function FavoritesPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: favorites, isLoading, error } = useFavorites();
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setMinDelayDone(true),
+      MIN_SKELETON_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, []);
+
+  const showSkeleton = !minDelayDone || isAuthLoading || isLoading;
 
   // Show loading skeleton while checking auth or fetching data
-  if (isAuthLoading || isLoading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <PageHeaderSkeleton />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <DramaCardSkeleton key={i} />
-            ))}
-          </div>
+          <ProfileGridSkeleton />
         </div>
       </div>
     );
