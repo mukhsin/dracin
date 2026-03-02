@@ -99,6 +99,11 @@ export function ContinueWatchingCard({
                 {formatWatchedTime(item.watchedAt)}
               </p>
             </div>
+            {item.episodeTitle ? (
+              <p className="text-xs text-muted-foreground truncate mt-1">
+                {item.episodeTitle}
+              </p>
+            ) : null}
 
             <div className="mt-2">
               <div className="flex items-center gap-2">
@@ -125,8 +130,11 @@ export function ContinueWatchingCard({
       </Link>
 
       <button
+        type="button"
         onClick={() => onDelete(item.historyId)}
         disabled={isDeleting}
+        title="Remove from continue watching"
+        aria-label="Remove from continue watching"
         className="absolute top-0 right-0 rounded-md opacity-100 sm:opacity-0 group-hover:opacity-100
                    hover:bg-destructive/10 hover:text-destructive transition-all"
       >

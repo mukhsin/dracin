@@ -4,10 +4,9 @@ import HeroCarousel from "../components/home/HeroCarousel";
 import ContentSection from "../components/home/ContentSection";
 import { useAuth } from "../hooks/use-auth";
 import { useHomeData } from "../hooks/use-home-data";
-import { useContinueWatching } from "../hooks/use-history";
-import { RefreshCw } from "lucide-react";
-import { HeroSkeleton, SectionSkeleton } from "../components/skeletons.js";
+import { HeroSkeleton, SectionSkeleton } from "../components/skeletons";
 import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
+import { RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -49,19 +48,14 @@ function ErrorState({
 export function HomePage() {
   const { rank1, featured, latest, popular, isError } = useHomeData();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { data: continueWatchingData, isLoading: continueWatchingLoading } =
-    useContinueWatching();
   const minDelayDone = useMinSkeletonDelay();
-
   // Check if any data is already available (cached)
   const hasAnyData = !!(
     rank1.data ||
     featured.data ||
     latest.data ||
-    popular.data ||
-    continueWatchingData
+    popular.data
   );
-
   // Only show skeleton on initial load when no data exists yet
   // If we have cached data, show it immediately even if some sections are still loading
   const isInitialLoading =
@@ -70,9 +64,7 @@ export function HomePage() {
       featured.isLoading ||
       latest.isLoading ||
       popular.isLoading ||
-      continueWatchingLoading ||
       authLoading);
-
   const showSkeleton = !minDelayDone || isInitialLoading;
 
   if (isError) {

@@ -30,9 +30,13 @@ interface ContinueWatchingProps {
 
 export function ContinueWatching({
   showTitle = true,
-  isAuthenticated = true,
+  isAuthenticated = false,
 }: ContinueWatchingProps) {
-  const { data: items, isLoading, error } = useContinueWatching(isAuthenticated);
+  const {
+    data: items,
+    isLoading,
+    error,
+  } = useContinueWatching(isAuthenticated);
   const deleteMutation = useDeleteHistoryEntry();
 
   if (isLoading) {
@@ -45,8 +49,8 @@ export function ContinueWatching({
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <ContinueWatchingCardSkeleton key={i} />
+          {["skeleton-1", "skeleton-2", "skeleton-3"].map((skeletonKey) => (
+            <ContinueWatchingCardSkeleton key={skeletonKey} />
           ))}
         </div>
       </section>
