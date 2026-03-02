@@ -10,11 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
-import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DramasRouteImport } from './routes/dramas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DramasIndexRouteImport } from './routes/dramas.index'
 import { Route as ProfileWatchlistRouteImport } from './routes/profile.watchlist'
+import { Route as ProfileHistoryRouteImport } from './routes/profile.history'
 import { Route as ProfileFavoritesRouteImport } from './routes/profile.favorites'
 import { Route as DramasDramaIdRouteImport } from './routes/dramas.$dramaId'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -24,11 +24,6 @@ import { Route as DramasDramaSlugEpisodeNumberRouteImport } from './routes/drama
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoryRoute = HistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DramasRoute = DramasRouteImport.update({
@@ -49,6 +44,11 @@ const DramasIndexRoute = DramasIndexRouteImport.update({
 const ProfileWatchlistRoute = ProfileWatchlistRouteImport.update({
   id: '/profile/watchlist',
   path: '/profile/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileHistoryRoute = ProfileHistoryRouteImport.update({
+  id: '/profile/history',
+  path: '/profile/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileFavoritesRoute = ProfileFavoritesRouteImport.update({
@@ -81,24 +81,24 @@ const DramasDramaSlugEpisodeNumberRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dramas': typeof DramasRouteWithChildren
-  '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
@@ -107,12 +107,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dramas': typeof DramasRouteWithChildren
-  '/history': typeof HistoryRoute
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/watchlist': typeof ProfileWatchlistRoute
   '/dramas/': typeof DramasIndexRoute
   '/dramas/$dramaSlug/$episodeNumber': typeof DramasDramaSlugEpisodeNumberRoute
@@ -122,24 +122,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dramas'
-    | '/history'
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
     | '/profile/favorites'
+    | '/profile/history'
     | '/profile/watchlist'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/history'
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
     | '/profile/favorites'
+    | '/profile/history'
     | '/profile/watchlist'
     | '/dramas'
     | '/dramas/$dramaSlug/$episodeNumber'
@@ -147,12 +147,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dramas'
-    | '/history'
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
     | '/dramas/$dramaId'
     | '/profile/favorites'
+    | '/profile/history'
     | '/profile/watchlist'
     | '/dramas/'
     | '/dramas/$dramaSlug/$episodeNumber'
@@ -161,11 +161,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DramasRoute: typeof DramasRouteWithChildren
-  HistoryRoute: typeof HistoryRoute
   WatchlistRoute: typeof WatchlistRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ProfileFavoritesRoute: typeof ProfileFavoritesRoute
+  ProfileHistoryRoute: typeof ProfileHistoryRoute
   ProfileWatchlistRoute: typeof ProfileWatchlistRoute
 }
 
@@ -176,13 +176,6 @@ declare module '@tanstack/react-router' {
       path: '/watchlist'
       fullPath: '/watchlist'
       preLoaderRoute: typeof WatchlistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dramas': {
@@ -211,6 +204,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/watchlist'
       fullPath: '/profile/watchlist'
       preLoaderRoute: typeof ProfileWatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/history': {
+      id: '/profile/history'
+      path: '/profile/history'
+      fullPath: '/profile/history'
+      preLoaderRoute: typeof ProfileHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/favorites': {
@@ -269,11 +269,11 @@ const DramasRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DramasRoute: DramasRouteWithChildren,
-  HistoryRoute: HistoryRoute,
   WatchlistRoute: WatchlistRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
   ProfileFavoritesRoute: ProfileFavoritesRoute,
+  ProfileHistoryRoute: ProfileHistoryRoute,
   ProfileWatchlistRoute: ProfileWatchlistRoute,
 }
 export const routeTree = rootRouteImport

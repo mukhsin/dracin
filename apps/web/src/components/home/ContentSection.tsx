@@ -33,7 +33,7 @@ function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
 
   return (
     <section className="py-6">
-      <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex items-center justify-between mb-4 ">
         <h2 className="text-xl font-bold text-foreground">{title}</h2>
         {viewAllLink && (
           <Link
@@ -46,12 +46,12 @@ function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
         )}
       </div>
 
-      <div className="overflow-hidden px-2" ref={emblaRef}>
-        <div className="flex py-4">
+      <div className="overflow-hidden " ref={emblaRef}>
+        <div className="flex gap-3">
           {dramas.map((drama) => (
             <div
               key={drama.id}
-              className="flex-[0_0_auto] w-44 md:w-52 px-2 hover:scale-105 transition-transform duration-300 origin-center"
+              className="flex-[0_0_auto] w-40 md:w-52 hover:scale-105 transition-transform duration-300 origin-center"
             >
               <DramaCard drama={drama} referrer="/" />
             </div>
