@@ -17,15 +17,6 @@ function HistoryPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: history, isLoading, error } = useHistory();
   const deleteMutation = useDeleteHistoryEntry();
-  const [minDelayDone, setMinDelayDone] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(
-      () => setMinDelayDone(true),
-      MIN_SKELETON_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, []);
 
   const minDelayDone = useMinSkeletonDelay();
 
