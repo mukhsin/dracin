@@ -128,7 +128,7 @@ export function useContinueWatching(isAuthenticated = true) {
   return useQuery({
     queryKey: ["history", "continue"],
     queryFn: fetchContinueWatching,
-    enabled: isAuthenticated,
+    enabled: !!isAuthenticated,
   });
 }
 
