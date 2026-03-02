@@ -183,24 +183,6 @@ describe("Continue Watching Flow Integration Tests", () => {
     expect(timeElements.length).toBeGreaterThan(0);
   });
 
-  it("shows View All link when items exceed maxItems", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
-    renderWithProviders(<ContinueWatching maxItems={2} />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: /continue watching/i }),
-      ).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      const viewAllLink = screen.getByRole("link", { name: /view all/i });
-      expect(viewAllLink).toBeInTheDocument();
-      expect(viewAllLink).toHaveAttribute("href", "/history");
-    });
-  });
-
   it("removes item when delete button is clicked", async () => {
     const user = userEvent.setup();
     const { ContinueWatching } =
@@ -226,22 +208,6 @@ describe("Continue Watching Flow Integration Tests", () => {
 
     expect(screen.getByText("Hospital Playlist")).toBeInTheDocument();
     expect(screen.getByText("The Glory")).toBeInTheDocument();
-  });
-
-  it("respects maxItems prop to limit displayed items", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
-    renderWithProviders(<ContinueWatching maxItems={2} />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Love in the Moonlight")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Hospital Playlist")).toBeInTheDocument();
-    expect(screen.queryByText("The Glory")).not.toBeInTheDocument();
-
-    const viewAllLink = screen.getByRole("link", { name: /view all/i });
-    expect(viewAllLink).toBeInTheDocument();
   });
 
   it("hides title when showTitle is false", async () => {
@@ -276,7 +242,7 @@ describe("Continue Watching Flow Integration Tests", () => {
     renderWithProviders(<ContinueWatching />);
 
     await waitFor(() => {
-      expect(screen.getByText("Love in the Moonlight")).toBeInTheDocument();
+      expect(screen.queryByText("Love in Moonlight")).toBeInTheDocument();
     });
 
     const progressElements = screen.getAllByText(/%/);

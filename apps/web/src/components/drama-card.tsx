@@ -91,7 +91,7 @@ function DramaCard({
       </div>
 
       {/* Content */}
-      <div className="p-3 flex flex-col h-28">
+      <div className="py-3 flex flex-col h-24">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base mb-1 line-clamp-2">{title}</h3>
         </div>

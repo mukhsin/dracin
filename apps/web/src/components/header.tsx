@@ -138,7 +138,7 @@ export function Header() {
                         </div>
                         <div className="py-1">
                           <Link
-                            to="/history"
+                            to="/profile/history"
                             onClick={() => setIsProfileMenuOpen(false)}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-primary transition-colors hover:bg-primary/10 transition-colors"
                           >
