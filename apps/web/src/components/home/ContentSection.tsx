@@ -51,7 +51,7 @@ function ContentSection({ title, dramas, viewAllLink }: ContentSectionProps) {
           {dramas.map((drama) => (
             <div
               key={drama.id}
-              className="flex-[0_0_auto] w-40 md:w-52 hover:scale-105 transition-transform duration-300 origin-center"
+              className="flex-[0_0_auto] w-40 md:w-48 hover:scale-105 transition-transform duration-300 origin-center"
             >
               <DramaCard drama={drama} referrer="/" />
             </div>
