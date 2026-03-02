@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogIn, LogOut, Bookmark, Heart } from "lucide-react";
+import { LogIn, LogOut, Bookmark, Heart, History } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { SearchIcon } from "./search-icon";
@@ -137,6 +137,14 @@ export function Header() {
                           </p>
                         </div>
                         <div className="py-1">
+                          <Link
+                            to="/history"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-primary transition-colors hover:bg-primary/10 transition-colors"
+                          >
+                            <History className="w-4 h-4" />
+                            Watch History
+                          </Link>
                           <Link
                             to="/profile/watchlist"
                             onClick={() => setIsProfileMenuOpen(false)}
