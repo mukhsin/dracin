@@ -27,7 +27,7 @@ export function DramaCardSkeleton() {
 export function ContinueWatchingCardSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="flex gap-3 p-3 border rounded-lg">
+      <div className="flex gap-3">
         <div className="w-24 aspect-[2/3] flex-shrink-0 bg-muted" />
         <div className="flex-1 min-w-0 space-y-2">
           <div className="h-4 w-3/4 bg-muted" />
