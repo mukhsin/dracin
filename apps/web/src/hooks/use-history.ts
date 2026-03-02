@@ -124,10 +124,11 @@ export function useHistory() {
   });
 }
 
-export function useContinueWatching() {
+export function useContinueWatching(isAuthenticated = true) {
   return useQuery({
     queryKey: ["history", "continue"],
     queryFn: fetchContinueWatching,
+    enabled: isAuthenticated,
   });
 }
 

@@ -24,10 +24,14 @@ interface ContinueWatchingItem {
 
 interface ContinueWatchingProps {
   showTitle?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function ContinueWatching({ showTitle = true }: ContinueWatchingProps) {
-  const { data: items, isLoading, error } = useContinueWatching();
+export function ContinueWatching({
+  showTitle = true,
+  isAuthenticated = true,
+}: ContinueWatchingProps) {
+  const { data: items, isLoading, error } = useContinueWatching(isAuthenticated);
   const deleteMutation = useDeleteHistoryEntry();
 
   if (isLoading) {
