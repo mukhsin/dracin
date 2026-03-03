@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
+import { emailOTP } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import * as schema from "../db/schema.js";
 import { env } from "./env.js";
@@ -13,10 +14,10 @@ const client = createClient({
 
 const db = drizzle(client, { schema });
 
-async function sendVerificationEmail(params: {
+async function sendResendEmail(params: {
   email: string;
-  name?: string | null;
-  verificationUrl: string;
+  subject: string;
+  bodyHtml: string;
 }) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -27,18 +28,8 @@ async function sendVerificationEmail(params: {
     body: JSON.stringify({
       from: env.RESEND_FROM_EMAIL,
       to: [params.email],
-      subject: "Verify your email address",
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 560px; margin: 0 auto; padding: 24px;">
-          <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to Dracin</h1>
-          <p style="margin-bottom: 16px;">Hi ${params.name?.trim() || "there"},</p>
-          <p style="margin-bottom: 24px;">Please verify your email address to finish creating your account and unlock email/password sign-in.</p>
-          <a href="${params.verificationUrl}" style="display: inline-block; background-color: #111827; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; margin-bottom: 24px;">Verify email</a>
-          <p style="margin-bottom: 8px;">If the button does not work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-word; margin-bottom: 24px;"><a href="${params.verificationUrl}">${params.verificationUrl}</a></p>
-          <p style="color: #6b7280; font-size: 14px;">If you did not create this account, you can safely ignore this email.</p>
-        </div>
-      `,
+      subject: params.subject,
+      html: params.bodyHtml,
     }),
   });
 
@@ -46,7 +37,7 @@ async function sendVerificationEmail(params: {
     const responseText = await response.text();
 
     throw new Error(
-      `Failed to send verification email via Resend: ${response.status} ${responseText}`,
+      `Failed to send email via Resend: ${response.status} ${responseText}`,
     );
   }
 }
@@ -71,15 +62,6 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     sendOnSignIn: true,
-    autoSignInAfterVerification: true,
-    expiresIn: 60 * 60,
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendVerificationEmail({
-        email: user.email,
-        name: user.name,
-        verificationUrl: url,
-      });
-    },
   },
 
   socialProviders: {
@@ -122,7 +104,47 @@ export const auth = betterAuth({
     max: 10,
   },
 
-  plugins: [tanstackStartCookies()],
+  plugins: [
+    emailOTP({
+      sendVerificationOnSignUp: true,
+      overrideDefaultEmailVerification: true,
+      expiresIn: 60 * 10,
+      allowedAttempts: 5,
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        const heading =
+          type === "email-verification"
+            ? "Verify your email"
+            : type === "sign-in"
+              ? "Your sign-in code"
+              : "Your password reset code";
+
+        const description =
+          type === "email-verification"
+            ? "Use this one-time code to verify your Dracin account."
+            : type === "sign-in"
+              ? "Use this one-time code to sign in to Dracin."
+              : "Use this one-time code to reset your Dracin password.";
+
+        await sendResendEmail({
+          email,
+          subject: heading,
+          bodyHtml: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 560px; margin: 0 auto; padding: 24px;">
+              <h1 style="font-size: 24px; margin-bottom: 16px;">${heading}</h1>
+              <p style="margin-bottom: 16px;">${description}</p>
+              <p style="margin-bottom: 12px;">Your verification code is:</p>
+              <div style="display: inline-block; font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f3f4f6; color: #111827; padding: 12px 18px; border-radius: 12px; margin-bottom: 20px;">
+                ${otp}
+              </div>
+              <p style="margin-bottom: 8px;">This code expires in 10 minutes.</p>
+              <p style="color: #6b7280; font-size: 14px;">If you did not request this code, you can safely ignore this email.</p>
+            </div>
+          `,
+        });
+      },
+    }),
+    tanstackStartCookies(),
+  ],
 });
 
 export type Auth = typeof auth;

@@ -40,12 +40,18 @@ describe("Better-Auth Configuration", () => {
     expect(auth.options.emailAndPassword?.requireEmailVerification).toBe(true);
   });
 
-  it("should send verification emails on sign up and sign in", () => {
+  it("should configure email OTP plugin for verification", () => {
+    const pluginIds = (auth.options.plugins ?? [])
+      .map((plugin) =>
+        typeof plugin === "object" && plugin && "id" in plugin
+          ? String(plugin.id)
+          : null,
+      )
+      .filter((id): id is string => id !== null);
+
+    expect(pluginIds).toContain("email-otp");
     expect(auth.options.emailVerification?.sendOnSignUp).toBe(true);
     expect(auth.options.emailVerification?.sendOnSignIn).toBe(true);
-    expect(auth.options.emailVerification?.autoSignInAfterVerification).toBe(
-      true,
-    );
   });
 
   it("should have minimum password length of 8", () => {
