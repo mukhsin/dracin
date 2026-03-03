@@ -5,7 +5,7 @@ import {
   useDeleteHistoryEntry,
 } from "../hooks/use-history.js";
 import { ContinueWatchingCard } from "./continue-watching-card.js";
-import { ContinueWatchingCardSkeleton } from "./skeletons.js";
+import { ContinueWatchingSectionSkeleton } from "./skeletons.js";
 
 interface ContinueWatchingItem {
   historyId: string;
@@ -26,11 +26,13 @@ interface ContinueWatchingItem {
 interface ContinueWatchingProps {
   showTitle?: boolean;
   isAuthenticated?: boolean;
+  isParentLoading?: boolean;
 }
 
 export function ContinueWatching({
   showTitle = true,
   isAuthenticated = false,
+  isParentLoading = false,
 }: ContinueWatchingProps) {
   const {
     data: items,
@@ -39,22 +41,8 @@ export function ContinueWatching({
   } = useContinueWatching(isAuthenticated);
   const deleteMutation = useDeleteHistoryEntry();
 
-  if (isLoading) {
-    return (
-      <section className="py-6">
-        {showTitle && (
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-6 w-48 bg-gray-800" />
-            <div className="h-4 w-16 bg-gray-800" />
-          </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {["skeleton-1", "skeleton-2", "skeleton-3"].map((skeletonKey) => (
-            <ContinueWatchingCardSkeleton key={skeletonKey} />
-          ))}
-        </div>
-      </section>
-    );
+  if (isLoading || isParentLoading) {
+    return <ContinueWatchingSectionSkeleton showTitle={showTitle} />;
   }
 
   if (error) {

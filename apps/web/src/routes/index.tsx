@@ -93,7 +93,7 @@ export function HomePage() {
       ) : null}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isAuthenticated || authLoading ? <ContinueWatching isAuthenticated={isAuthenticated} /> : null}
+        {isAuthenticated || authLoading ? <ContinueWatching isAuthenticated={isAuthenticated} isParentLoading={showSkeleton} /> : null}
 
         {showSkeleton ? (
           <SectionSkeleton />

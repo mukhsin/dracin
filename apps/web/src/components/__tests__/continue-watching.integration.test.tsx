@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/utils.js";
+import { ContinueWatching } from "../../components/continue-watching.js";
 import { server } from "../../test/mocks/server.js";
 import {
   resetMockData,
@@ -48,8 +49,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("shows skeleton cards during loading state", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
@@ -64,8 +63,6 @@ describe("Continue Watching Flow Integration Tests", () => {
 
   it("renders nothing when there is no watch history", async () => {
     server.use(emptyContinueWatchingHandler);
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     const { container } = renderWithProviders(
       <ContinueWatching isAuthenticated />,
     );
@@ -80,8 +77,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("displays drama cards with progress bars when history items exist", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -102,8 +97,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("displays correct progress percentages", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -115,8 +108,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("displays progress bars with correct width styling", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -129,8 +120,6 @@ describe("Continue Watching Flow Integration Tests", () => {
 
   it("navigates to correct episode when clicking drama card", async () => {
     const user = userEvent.setup();
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -146,8 +135,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("shows Continue Watching header only when items exist", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -158,23 +145,23 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("displays episode numbers and titles correctly", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
       expect(screen.getByText(/episode 5/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/the royal secret/i)).toBeInTheDocument();
+    expect(screen.getByText(/episode 5/i)).toBeInTheDocument();
     expect(screen.getByText(/episode 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/first surgery/i)).toBeInTheDocument();
-    expect(screen.getByText(/dreams of architecture/i)).toBeInTheDocument();
+    expect(screen.getByText(/episode 1/i)).toBeInTheDocument();
+    expect(screen.queryByText(/the royal secret/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/first surgery/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/dreams of architecture/i),
+    ).not.toBeInTheDocument();
   });
 
   it("displays duration and progress time", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -187,8 +174,6 @@ describe("Continue Watching Flow Integration Tests", () => {
 
   it("removes item when delete button is clicked", async () => {
     const user = userEvent.setup();
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -217,8 +202,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("hides title when showTitle is false", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching showTitle={false} isAuthenticated />);
 
     await waitFor(() => {
@@ -231,8 +214,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("displays play button overlay on hover area", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {
@@ -243,8 +224,6 @@ describe("Continue Watching Flow Integration Tests", () => {
   });
 
   it("shows progress indicators when continue items render", async () => {
-    const { ContinueWatching } =
-      await import("../../components/continue-watching.js");
     renderWithProviders(<ContinueWatching isAuthenticated />);
 
     await waitFor(() => {

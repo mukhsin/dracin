@@ -3,12 +3,6 @@
  * Used for: favorites, watchlist, drama lists
  * Shows portrait poster + title layout
  */
-
-/**
- * Drama Card Skeleton
- * Used for: favorites, watchlist, drama lists
- * Shows portrait poster + title layout
- */
 export function DramaCardSkeleton() {
   return (
     <div className="animate-pulse">
@@ -39,6 +33,36 @@ export function ContinueWatchingCardSkeleton() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function ContinueWatchingSectionSkeleton({
+  showTitle = true,
+  count = 3,
+}: {
+  showTitle?: boolean;
+  count?: number;
+}) {
+  const keys = Array.from(
+    { length: count },
+    (_, i) => `continue-watching-skel-${i}`,
+  );
+
+  return (
+    <section className="py-6">
+      {showTitle && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-48 bg-gray-800" />
+          <div className="h-4 w-16 bg-gray-800" />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {keys.map((key) => (
+          <ContinueWatchingCardSkeleton key={key} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -184,7 +208,7 @@ export function DramaDetailsInfoSkeleton() {
 export function WatchPageVideoSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="aspect-[9/16] max-h-[70vh] w-full max-w-md bg-gray-800" />
+      <div className="aspect-[9/16] min-h-[70vh] max-h-[70vh] w-full max-w-md bg-gray-800" />
     </div>
   );
 }

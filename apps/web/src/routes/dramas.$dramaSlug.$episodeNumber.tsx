@@ -9,7 +9,7 @@ import {
   WatchPageVideoSkeleton,
   WatchPageNavigationSkeleton,
 } from "../components/skeletons.js";
-
+import { useMinSkeletonDelay } from "@/hooks/use-min-skeleton-delay.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -52,12 +52,10 @@ export const Route = createFileRoute("/dramas/$dramaSlug/$episodeNumber")({
   component: WatchPage,
 });
 
-
 function WatchPage() {
   const { dramaSlug, episodeNumber } = Route.useParams();
   const location = useLocation();
   const search = location.state?.searchQuery || "";
-
 
   const {
     data: episode,
@@ -102,28 +100,29 @@ function WatchPage() {
     return episode?.video?.urls as VideoUrls | undefined;
   }, [episode]);
 
-
   const prevEpisode = episode?.navigation?.prevEpisode;
   const nextEpisode = episode?.navigation?.nextEpisode;
 
-  if (isLoading) {
+  const minDelayDone = useMinSkeletonDelay();
+  const showSkeleton = !minDelayDone || isLoading;
+
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A]">
+      <div className="min-h-screen bg-[#0A0A0A] max-w-lg mx-auto">
         {/* Video Skeleton - Vertical format */}
-        <div className="relative bg-black flex justify-center">
+        <div className="relative py-8 bg-black flex justify-center">
           <WatchPageVideoSkeleton />
         </div>
 
         {/* Navigation Skeleton */}
         <div className="border-t border-gray-800 bg-[#0A0A0A]/95 backdrop-blur">
-          <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="px-4 py-4">
             <WatchPageNavigationSkeleton />
           </div>
         </div>
       </div>
     );
   }
-
 
   if (error || !episode) {
     return (
@@ -178,9 +177,7 @@ function WatchPage() {
         </div>
 
         {(prevEpisode || nextEpisode) && (
-          <div
-            className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none"
-          >
+          <div className="md:relative fixed md:bottom-auto bottom-0 left-0 right-0 z-50 md:z-auto md:border-0 border-t border-gray-800 md:bg-transparent bg-[#0A0A0A]/95 backdrop-blur md:backdrop-blur-none shadow-lg md:shadow-none">
             <div className="max-w-lg mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
                 {prevEpisode ? (

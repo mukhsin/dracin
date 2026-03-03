@@ -1,23 +1,24 @@
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
-import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
-import { useDramaSuggestions } from "../hooks/use-drama-suggestions.js";
-import { AlertCircle, ArrowLeft, Film } from "lucide-react";
-import { formatDramaPlayCount } from "../hooks/use-drama.js";
-import DramaCard from "../components/drama-card.js";
-import { ProgressiveImage } from "../components/progressive-image";
-import { ContinueWatchingButton } from "../components/continue-watching-button";
-import { EpisodePagination } from "../components/episode-pagination";
-import { WatchlistButton } from "../components/watchlist-button";
-import { FavouritesButton } from "../components/favourites-button";
 import useEmblaCarousel from "embla-carousel-react";
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
+import { AlertCircle, ArrowLeft, Film } from "lucide-react";
+import { ContinueWatchingButton } from "../components/continue-watching-button";
+import DramaCard from "../components/drama-card.js";
+import { EpisodePagination } from "../components/episode-pagination";
+import { FavouritesButton } from "../components/favourites-button";
+import { ProgressiveImage } from "../components/progressive-image";
 import {
-  BackButtonSkeleton,
-  DramaDetailsInfoSkeleton,
-  EpisodeGridSkeleton,
-  EpisodeGridMobileSkeleton,
-  PageHeaderSkeleton,
+    BackButtonSkeleton,
+    DramaDetailsInfoSkeleton,
+    EpisodeGridMobileSkeleton,
+    EpisodeGridSkeleton,
+    PageHeaderSkeleton,
 } from "../components/skeletons.js";
+import { WatchlistButton } from "../components/watchlist-button";
+import { useDramaSuggestions } from "../hooks/use-drama-suggestions.js";
+import { useDramaWithEpisodes } from "../hooks/use-drama-with-episodes.js";
+import { formatDramaPlayCount } from "../hooks/use-drama.js";
+import { useMinSkeletonDelay } from "@/hooks/use-min-skeleton-delay.js";
 
 export const Route = createFileRoute("/dramas/$dramaId")({
   component: DramaDetailsPage,
@@ -68,7 +69,10 @@ function DramaDetailsPage() {
     }
   }
 
-  if (isLoading) {
+  const minDelayDone = useMinSkeletonDelay();
+  const showSkeleton = !minDelayDone || isLoading;
+
+  if (showSkeleton) {
     return (
       <div className="min-h-screen bg-[#0A0A0A]">
         <div className="container mx-auto px-4 py-8">
