@@ -3,7 +3,7 @@ import {
   useSearch,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import { useMinSkeletonDelay } from "../hooks/use-min-skeleton-delay";
 
 import { useDramasInfinite } from "../hooks/use-drama.js";
@@ -97,6 +97,14 @@ function DramasPage() {
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  const loadNextPage = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -105,8 +113,8 @@ function DramasPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
+        if (entry.isIntersecting) {
+          loadNextPage();
         }
       },
       { rootMargin: "200px" },
@@ -115,9 +123,50 @@ function DramasPage() {
     observer.observe(sentinel);
 
     return () => {
-      observer.unobserve(sentinel);
+      observer.disconnect();
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [loadNextPage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let scrollTimer: number | null = null;
+
+    const checkIfNearBottom = () => {
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.documentElement.scrollHeight - 300;
+
+      if (scrollPosition >= threshold) {
+        loadNextPage();
+      }
+    };
+
+    const handleScroll = () => {
+      if (scrollTimer) {
+        return;
+      }
+
+      scrollTimer = window.setTimeout(() => {
+        scrollTimer = null;
+        checkIfNearBottom();
+      }, 16);
+    };
+
+    checkIfNearBottom();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      if (scrollTimer) {
+        window.clearTimeout(scrollTimer);
+      }
+
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [loadNextPage]);
 
   // Only show loading skeleton when actually loading without cached data
   const isLoading = dataLoading && !data;
