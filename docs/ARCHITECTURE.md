@@ -26,7 +26,7 @@ This document provides a comprehensive overview of the DramaStream architecture,
 
 ## Overview
 
-DramaStream is a full-stack drama streaming platform built with modern web technologies. The architecture follows a clean separation of concerns with a React-based frontend, Hono-powered API backend, PostgreSQL database, and an intelligent fallback system for high availability.
+DramaStream is a full-stack drama streaming platform built with modern web technologies. The architecture follows a clean separation of concerns with a React-based frontend, Hono-powered API backend, SQLite database, and an intelligent fallback system for high availability.
 
 ### Core Principles
 
@@ -72,6 +72,7 @@ DramaStream is a full-stack drama streaming platform built with modern web techn
 ```
 
 ### Data Flow
+
 ```
 User Request
      │
@@ -117,7 +118,7 @@ User Request
        │
        │  **SQLite**         │
 ┌─────────────────────┐
-│  PostgreSQL         │
+│  SQLite (file)      │
 └─────────────────────┘
 ```
 
@@ -622,7 +623,7 @@ Strategic indexes for query performance:
 
 ## Authentication Flow
 
-Authentication is handled by **Better-Auth**, a modern authentication library with session management.
+Authentication is handled by **Better-Auth**, with session cookie auth and OTP-based email verification for email/password sign-up.
 
 ### Architecture
 
@@ -676,17 +677,18 @@ Authentication is handled by **Better-Auth**, a modern authentication library wi
 // apps/api/src/lib/auth.ts
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { emailOTP } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite" }),
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3001",
 
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
-    requireEmailVerification: false,
+    requireEmailVerification: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
   },
@@ -714,7 +716,15 @@ export const auth = betterAuth({
     max: 10,
   },
 
-  plugins: [tanstackStartCookies()],
+  plugins: [
+    emailOTP({
+      sendVerificationOnSignUp: true,
+      overrideDefaultEmailVerification: true,
+      expiresIn: 60 * 10,
+      allowedAttempts: 5,
+    }),
+    tanstackStartCookies(),
+  ],
 });
 ```
 
@@ -750,11 +760,13 @@ export const requireAuth = async (c, next) => {
 ### Frontend Integration
 
 ```typescript
-// apps/web/src/lib/auth.ts
+// apps/web/src/lib/auth-client.ts
 import { createAuthClient } from "better-auth/react";
+import { emailOTPClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL,
+  plugins: [emailOTPClient()],
 });
 
 // Usage in components
@@ -1081,54 +1093,56 @@ In addition to the circuit breaker pattern for video URLs, the drama listing end
 #### Fallback Flow
 
 ```
+
 ┌───────────────────────────────────────────────┐
-│           DRAMA SERVICE – FALLBACK FLOW       │
+│ DRAMA SERVICE – FALLBACK FLOW │
 └───────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────┐
-│ Client Request                                │
-│ GET /api/dramas?q=romance                     │
+│ Client Request │
+│ GET /api/dramas?q=romance │
 └───────────────────────────────────────────────┘
-                    │
-                    ▼
+│
+▼
 ┌───────────────────────────────────────────────┐
-│ DramaService.list()                           │
+│ DramaService.list() │
 └───────────────────────────────────────────────┘
-                    │
-                    ▼
+│
+▼
 ┌───────────────────────────────────────────────┐
-│ Query Database                                │
+│ Query Database │
 └───────────────────────────────────────────────┘
-                    │
-                    ▼
+│
+▼
 ┌───────────────────────────────────────────────┐
-│ Results Found?                                │
+│ Results Found? │
 └───────────────────────────────────────────────┘
-          │ YES                         │ NO
-          ▼                             ▼
-┌──────────────────────────┐   ┌──────────────────────────┐
-│ Return from DB           │   │ Has search query?        │
-│ source: "db"             │   └──────────────────────────┘
-└──────────────────────────┘              │
-                                          │ YES        │ NO
-                                          ▼            ▼
-                               ┌────────────────┐  ┌────────────────┐
-                               │ api-proxy      │  │ api-proxy      │
-                               │ /drama/search  │  │ /drama/latest  │
-                               └────────────────┘  └────────────────┘
-                                          │
-                                          ▼
-                               ┌──────────────────────────┐
-                               │ Transform Response       │
-                               │ Return to Client         │
-                               │ source: "api-proxy"      │
-                               └──────────────────────────┘
-                                          │
-                                          ▼
-                               ┌──────────────────────────┐
-                               │ Fire-and-Forget          │
-                               │ Cache to DB (background) │
-                               └──────────────────────────┘
+│ YES │ NO
+▼ ▼
+┌──────────────────────────┐ ┌──────────────────────────┐
+│ Return from DB │ │ Has search query? │
+│ source: "db" │ └──────────────────────────┘
+└──────────────────────────┘ │
+│ YES │ NO
+▼ ▼
+┌────────────────┐ ┌────────────────┐
+│ api-proxy │ │ api-proxy │
+│ /drama/search │ │ /drama/latest │
+└────────────────┘ └────────────────┘
+│
+▼
+┌──────────────────────────┐
+│ Transform Response │
+│ Return to Client │
+│ source: "api-proxy" │
+└──────────────────────────┘
+│
+▼
+┌──────────────────────────┐
+│ Fire-and-Forget │
+│ Cache to DB (background) │
+└──────────────────────────┘
+
 ```
 
 ### Fire-and-Forget Caching
@@ -1685,30 +1699,16 @@ CMD ["bun", "run", "start"]
 ```yaml
 # docker-compose.yml
 services:
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: ${DATABASE_USER:-drama}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-drama123}
-      POSTGRES_DB: ${DATABASE_NAME:-dracin}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-drama}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
-      DATABASE_URL: postgresql://${DATABASE_USER:-drama}:${DATABASE_PASSWORD:-drama123}@db:5432/${DATABASE_NAME:-dracin}
+      DATABASE_URL: ${DATABASE_URL:-file:/data/dracin.sqlite}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@dracin.mukhsin.web.id}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -1720,7 +1720,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     environment:
-      VITE_API_URL: http://api:3001
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     depends_on:
       api:
         condition: service_healthy

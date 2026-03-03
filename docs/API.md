@@ -4,7 +4,7 @@ Complete REST API documentation for the Drama Streaming application.
 
 **Base URL:** `http://localhost:3001`
 
-**Authentication:** Most endpoints require Bearer token authentication via the `Authorization` header.
+**Authentication:** Better Auth session cookies (`Set-Cookie` / `Cookie`) are used for authenticated endpoints.
 
 ---
 
@@ -28,6 +28,9 @@ All authentication endpoints are provided by [Better-Auth](https://www.better-au
 
 Register a new user with email and password.
 
+> Email/password sign-up requires email verification via OTP. After successful sign-up, call
+> `POST /api/auth/email-otp/verify-email` with the OTP sent to the user email.
+
 **Request Body:**
 
 | Field    | Type   | Required | Description                 |
@@ -40,6 +43,7 @@ Register a new user with email and password.
 
 ```json
 {
+  "token": null,
   "user": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "user@example.com",
@@ -75,6 +79,8 @@ curl -X POST http://localhost:3001/api/auth/sign-up/email \
 ### POST /api/auth/sign-in/email
 
 Authenticate an existing user.
+
+> If email verification is incomplete, this endpoint returns an auth error and the client should direct the user to OTP verification.
 
 **Request Body:**
 
@@ -122,7 +128,7 @@ curl -X POST http://localhost:3001/api/auth/sign-in/email \
 
 Sign out the current user and invalidate the session.
 
-**Authentication:** Required
+**Authentication:** Required (session cookie)
 
 **Request Body:** None
 
@@ -152,7 +158,7 @@ curl -X POST http://localhost:3001/api/auth/sign-out \
 
 Get the current user's session information.
 
-**Authentication:** Required
+**Authentication:** Required (session cookie)
 
 **Response:**
 
@@ -185,6 +191,65 @@ Get the current user's session information.
 ```bash
 curl http://localhost:3001/api/auth/session \
   -H "Authorization: Bearer <session_token>"
+```
+
+---
+
+### POST /api/auth/email-otp/send-verification-otp
+
+Send (or resend) a verification OTP code to the user email.
+
+**Request Body:**
+
+| Field | Type   | Required | Description                                             |
+| ----- | ------ | -------- | ------------------------------------------------------- |
+| email | string | Yes      | Email address to receive OTP                            |
+| type  | string | Yes      | Must be `"email-verification"` for sign-up verification |
+
+**Status Codes:**
+
+- `200` - OTP sent
+- `400` - Validation error (invalid email/type)
+- `429` - Too many requests / cooldown / rate limit
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:3001/api/auth/email-otp/send-verification-otp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "type": "email-verification"
+  }'
+```
+
+---
+
+### POST /api/auth/email-otp/verify-email
+
+Verify email using the OTP code from email.
+
+**Request Body:**
+
+| Field | Type   | Required | Description           |
+| ----- | ------ | -------- | --------------------- |
+| email | string | Yes      | User email address    |
+| otp   | string | Yes      | 6-digit one-time code |
+
+**Status Codes:**
+
+- `200` - Email verified
+- `400` - Invalid/expired OTP or validation error
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:3001/api/auth/email-otp/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "otp": "123456"
+  }'
 ```
 
 ---
@@ -329,10 +394,10 @@ Get a specific episode by drama slug and episode number. This endpoint is used f
 
 **Path Parameters:**
 
-| Parameter | Type    | Required | Description                |
-| --------- | ------- | -------- | -------------------------- |
-| slug      | string  | Yes      | Drama URL slug             |
-| number    | integer | Yes      | Episode number             |
+| Parameter | Type    | Required | Description    |
+| --------- | ------- | -------- | -------------- |
+| slug      | string  | Yes      | Drama URL slug |
+| number    | integer | Yes      | Episode number |
 
 **Response:**
 
