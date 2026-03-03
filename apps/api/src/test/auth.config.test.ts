@@ -16,6 +16,7 @@ beforeAll(async () => {
   process.env.BETTER_AUTH_URL = "http://localhost:3001";
   process.env.BETTER_AUTH_SECRET =
     "test-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz";
+  process.env.RESEND_API_KEY = "test-resend-api-key";
   process.env.GOOGLE_CLIENT_ID = "test-google-client-id";
   process.env.GOOGLE_CLIENT_SECRET = "test-google-client-secret";
 
@@ -35,8 +36,22 @@ describe("Better-Auth Configuration", () => {
     expect(auth.options.emailAndPassword?.autoSignIn).toBe(true);
   });
 
-  it("should have email verification disabled", () => {
-    expect(auth.options.emailAndPassword?.requireEmailVerification).toBe(false);
+  it("should require email verification for email/password sign up", () => {
+    expect(auth.options.emailAndPassword?.requireEmailVerification).toBe(true);
+  });
+
+  it("should configure email OTP plugin for verification", () => {
+    const pluginIds = (auth.options.plugins ?? [])
+      .map((plugin) =>
+        typeof plugin === "object" && plugin && "id" in plugin
+          ? String(plugin.id)
+          : null,
+      )
+      .filter((id): id is string => id !== null);
+
+    expect(pluginIds).toContain("email-otp");
+    expect(auth.options.emailVerification?.sendOnSignUp).toBe(true);
+    expect(auth.options.emailVerification?.sendOnSignIn).toBe(true);
   });
 
   it("should have minimum password length of 8", () => {

@@ -6,9 +6,9 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import authClient from "../lib/auth-client.js";
-import { mergeGuestHistoryAfterAuthSuccess } from "../lib/auth-guest-merge.js";
 type SignUpSearch = {
   redirect?: string;
 };
@@ -16,6 +16,26 @@ type SignUpSearch = {
 export const Route = createFileRoute("/auth/signup")({
   component: SignUpPage,
 });
+
+function normalizeEmailErrorMessage(
+  message: string | undefined,
+  fallback: string,
+) {
+  if (!message) {
+    return fallback;
+  }
+
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("invalid email address") ||
+    normalized.includes("[body.email]")
+  ) {
+    return "Please enter a valid email address.";
+  }
+
+  return message;
+}
 
 function SignUpPage() {
   const location = useLocation();
@@ -25,6 +45,8 @@ function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSocialSubmitting, setIsSocialSubmitting] = useState(false);
@@ -65,20 +87,33 @@ function SignUpPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        callbackURL: `${window.location.origin}${redirectTo}`,
       });
 
       if (result.error) {
-        setError(result.error.message || "Sign up failed. Please try again.");
+        setError(
+          normalizeEmailErrorMessage(
+            result.error.message,
+            "Sign up failed. Please try again.",
+          ),
+        );
         return;
       }
 
-      await mergeGuestHistoryAfterAuthSuccess();
-      await navigate({ to: redirectTo });
+      await navigate({
+        to: "/auth/verify-email",
+        search: {
+          email: email.trim(),
+          cooldown: "30",
+          redirect: redirectTo === "/dramas" ? undefined : redirectTo,
+        },
+      });
     } catch (err) {
       setError(
-        err instanceof Error && err.message
-          ? err.message
-          : "Sign up failed. Please try again.",
+        normalizeEmailErrorMessage(
+          err instanceof Error ? err.message : undefined,
+          "Sign up failed. Please try again.",
+        ),
       );
     } finally {
       setIsSubmitting(false);
@@ -165,16 +200,32 @@ function SignUpPage() {
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Create a password"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Create a password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -184,17 +235,37 @@ function SignUpPage() {
               >
                 Confirm Password
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Confirm your password"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Confirm your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((current) => !current)}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  aria-pressed={showConfirmPassword}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {error ? (
@@ -213,6 +284,19 @@ function SignUpPage() {
             >
               {isSubmitting ? "Signing Up..." : "Sign Up"}
             </button>
+
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link
+                to="/auth/signin"
+                search={{
+                  redirect: redirectTo === "/dramas" ? undefined : redirectTo,
+                }}
+                className="font-medium text-primary hover:underline"
+              >
+                Sign in
+              </Link>
+            </p>
 
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
@@ -235,19 +319,6 @@ function SignUpPage() {
                 : "Continue with Google"}
             </button>
           </form>
-
-          <p className="mt-4 text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              to="/auth/signin"
-              search={{
-                redirect: redirectTo === "/dramas" ? undefined : redirectTo,
-              }}
-              className="font-medium text-primary hover:underline"
-            >
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

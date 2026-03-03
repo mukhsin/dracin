@@ -25,6 +25,7 @@ infra/cloudflared/*.json
 # Drizzle generated DML files
 apps/api/drizzle/dml/
 apps/api/.data/
+apps/api/.resend/
 
 # Local sqlite file
 local.db

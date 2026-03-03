@@ -18,6 +18,11 @@ const envSchema = z.object({
   API_PROXY_URL: z.string().default("http://localhost:3002"),
   BETTER_AUTH_URL: z.string().url().default("http://localhost:3001"),
   BETTER_AUTH_SECRET: z.string().min(32),
+  RESEND_API_KEY: z.string().min(1),
+  RESEND_FROM_EMAIL: z
+    .string()
+    .email()
+    .default("noreply@dracin.mukhsin.web.id"),
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
 });
