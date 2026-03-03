@@ -1,5 +1,4 @@
 services:
-
   # API Service (Hono)
   api:
     build:
@@ -13,6 +12,8 @@ services:
       DATABASE_URL: ${DATABASE_URL:-file:/data/dracin.sqlite}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-here-min-32-chars}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@dracin.mukhsin.web.id}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       PRIMARY_API_URL: ${PRIMARY_API_URL:-http://api:3001}
