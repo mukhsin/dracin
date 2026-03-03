@@ -8,7 +8,6 @@ import {
 } from "@tanstack/react-router";
 import { FcGoogle } from "react-icons/fc";
 import authClient from "../lib/auth-client.js";
-import { mergeGuestHistoryAfterAuthSuccess } from "../lib/auth-guest-merge.js";
 type SignUpSearch = {
   redirect?: string;
 };
@@ -65,6 +64,7 @@ function SignUpPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        callbackURL: `${window.location.origin}${redirectTo}`,
       });
 
       if (result.error) {
@@ -72,8 +72,13 @@ function SignUpPage() {
         return;
       }
 
-      await mergeGuestHistoryAfterAuthSuccess();
-      await navigate({ to: redirectTo });
+      await navigate({
+        to: "/auth/verify-email",
+        search: {
+          email: email.trim(),
+          redirect: redirectTo === "/dramas" ? undefined : redirectTo,
+        },
+      });
     } catch (err) {
       setError(
         err instanceof Error && err.message
@@ -214,6 +219,19 @@ function SignUpPage() {
               {isSubmitting ? "Signing Up..." : "Sign Up"}
             </button>
 
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link
+                to="/auth/signin"
+                search={{
+                  redirect: redirectTo === "/dramas" ? undefined : redirectTo,
+                }}
+                className="font-medium text-primary hover:underline"
+              >
+                Sign in
+              </Link>
+            </p>
+
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border" />
@@ -235,19 +253,6 @@ function SignUpPage() {
                 : "Continue with Google"}
             </button>
           </form>
-
-          <p className="mt-4 text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              to="/auth/signin"
-              search={{
-                redirect: redirectTo === "/dramas" ? undefined : redirectTo,
-              }}
-              className="font-medium text-primary hover:underline"
-            >
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

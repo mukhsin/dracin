@@ -17,6 +17,7 @@ import { Route as ProfileWatchlistRouteImport } from './routes/profile.watchlist
 import { Route as ProfileHistoryRouteImport } from './routes/profile.history'
 import { Route as ProfileFavoritesRouteImport } from './routes/profile.favorites'
 import { Route as DramasDramaIdRouteImport } from './routes/dramas.$dramaId'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthSigninRouteImport } from './routes/auth.signin'
 import { Route as DramasDramaSlugEpisodeNumberRouteImport } from './routes/dramas.$dramaSlug.$episodeNumber'
@@ -61,6 +62,11 @@ const DramasDramaIdRoute = DramasDramaIdRouteImport.update({
   path: '/$dramaId',
   getParentRoute: () => DramasRoute,
 } as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/auth/verify-email',
+  path: '/auth/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
   path: '/auth/signup',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
   '/profile/history': typeof ProfileHistoryRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
   '/profile/history': typeof ProfileHistoryRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/watchlist': typeof WatchlistRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/dramas/$dramaId': typeof DramasDramaIdRoute
   '/profile/favorites': typeof ProfileFavoritesRoute
   '/profile/history': typeof ProfileHistoryRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
+    | '/auth/verify-email'
     | '/dramas/$dramaId'
     | '/profile/favorites'
     | '/profile/history'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
+    | '/auth/verify-email'
     | '/dramas/$dramaId'
     | '/profile/favorites'
     | '/profile/history'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/auth/signin'
     | '/auth/signup'
+    | '/auth/verify-email'
     | '/dramas/$dramaId'
     | '/profile/favorites'
     | '/profile/history'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   WatchlistRoute: typeof WatchlistRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
   ProfileFavoritesRoute: typeof ProfileFavoritesRoute
   ProfileHistoryRoute: typeof ProfileHistoryRoute
   ProfileWatchlistRoute: typeof ProfileWatchlistRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DramasDramaIdRouteImport
       parentRoute: typeof DramasRoute
     }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/auth/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/auth/signup'
@@ -272,6 +292,7 @@ const rootRouteChildren: RootRouteChildren = {
   WatchlistRoute: WatchlistRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
   ProfileFavoritesRoute: ProfileFavoritesRoute,
   ProfileHistoryRoute: ProfileHistoryRoute,
   ProfileWatchlistRoute: ProfileWatchlistRoute,
