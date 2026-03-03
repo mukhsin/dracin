@@ -6,12 +6,14 @@ import { useDebounce } from "../hooks/use-debounce";
 interface SearchBoxProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
   placeholder?: string;
 }
 
 function SearchBox({
   value,
   onChange,
+  onClear,
   placeholder = "Search dramas...",
 }: SearchBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +36,14 @@ function SearchBox({
       {value && (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={() => {
+            if (onClear) {
+              onClear();
+              return;
+            }
+
+            onChange("");
+          }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
           aria-label="Clear search"
         >
@@ -63,17 +72,15 @@ export function SearchIcon() {
 
   useEffect(() => {
     setIsHydrated(true);
-    // Initialize lastEmittedRef to prevent navigation on initial open
-    lastEmittedRef.current = searchParams.q ?? "";
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync searchValue with URL on initial load / hydration
   useEffect(() => {
-    if (isHydrated && searchParams.q !== undefined) {
-      setSearchValue(searchParams.q);
-      lastEmittedRef.current = searchParams.q;
-    }
+    if (!isHydrated) return;
+
+    const nextSearchValue = searchParams.q ?? "";
+    setSearchValue(nextSearchValue);
+    lastEmittedRef.current = nextSearchValue;
   }, [isHydrated, searchParams.q]);
 
   // Navigate when debounced search changes
@@ -85,9 +92,11 @@ export function SearchIcon() {
     // Don't navigate to empty if we're still typing (searchValue differs from debounced)
     if (!debouncedSearch && searchValue !== debouncedSearch) return;
     // Don't navigate to empty if we had search on open (clear→type transition)
-    if (!debouncedSearch && searchValueOnOpenRef.current !== "") { return; }
+    if (!debouncedSearch && searchValueOnOpenRef.current !== "") {
+      return;
+    }
 
-      lastEmittedRef.current = debouncedSearch;
+    lastEmittedRef.current = debouncedSearch;
     navigate({
       to: "/dramas",
       search: debouncedSearch ? { q: debouncedSearch } : {},
@@ -133,12 +142,22 @@ export function SearchIcon() {
     }
 
     // When closing on dramas page, clear search if value hasn't changed from when opened
-    if (!willExpand && isOnDramasPage && searchValue === searchValueOnOpenRef.current) {
+    if (
+      !willExpand &&
+      isOnDramasPage &&
+      searchValue === searchValueOnOpenRef.current
+    ) {
       navigate({ to: "/dramas", search: {} });
     }
   };
 
-
+  const handleClearSearch = () => {
+    setSearchValue("");
+    setIsExpanded(false);
+    searchValueOnOpenRef.current = "";
+    lastEmittedRef.current = "";
+    navigate({ to: "/dramas", search: {} });
+  };
 
   return (
     <div ref={containerRef} className="relative flex items-center">
@@ -169,6 +188,7 @@ export function SearchIcon() {
           <SearchBox
             value={searchValue}
             onChange={setSearchValue}
+            onClear={handleClearSearch}
             placeholder="Search dramas..."
           />
         </div>
