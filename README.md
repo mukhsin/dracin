@@ -24,7 +24,7 @@
 
 ## Features
 
-- **Authentication** - Secure email/password authentication with Better-Auth
+- **Authentication** - Better Auth with session cookies, email OTP verification, and Google OAuth
 - **Drama Catalog** - Browse dramas with seasons and episodes
 - **Video Player** - Custom player with quality selection (240p to 4K)
 - **Favorites** ❤️ - Save dramas to your favorites list
@@ -65,6 +65,13 @@ Enhanced mobile video player experience:
 - Improved search integration with deferred redirect patterns
 - Fixed Safari precheck instrumentation for better debugging
 
+### Authentication Improvements 🔐
+
+- Switched email/password sign-up to OTP-based email verification with Resend delivery
+- Added a dedicated `/auth/verify-email` verification route with resend cooldown and friendlier validation errors
+- Upgraded OTP entry to a shadcn-style slot input powered by `input-otp`
+- Added Google OAuth alongside email/password auth
+
 ## Tech Stack
 
 | Category           | Technologies                                                        |
@@ -100,6 +107,7 @@ bun install
 # Copy environment files
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
+cp .env.docker.example .env.docker # optional, for Docker deployments
 ```
 
 Edit the `.env` files with your configuration (see [Environment Variables](#environment-variables)).
@@ -147,10 +155,11 @@ drama-stream/
 │   │   ├── src/
 │   │   └── package.json
 │   └── web/                 # TanStack Start frontend
-│       ├── app/
-│       │   ├── routes/      # Page routes
-│       │   ├── components/  # React components
-│       │   └── hooks/       # Custom hooks
+│       ├── src/
+│       │   ├── routes/      # Page routes (auth.signin, auth.signup, auth.verify-email, dramas, profile)
+│       │   ├── components/  # React components (includes OTP input UI)
+│       │   ├── hooks/       # Custom hooks
+│       │   └── lib/         # Auth client and shared helpers
 │       └── package.json
 ├── packages/
 │   └── shared/              # Shared types & utilities
@@ -170,14 +179,19 @@ drama-stream/
 
 ### API (`apps/api/.env`)
 
-| Variable             | Description                     | Required |
-| -------------------- | ------------------------------- | -------- |
-| `DATABASE_URL`       | SQLite database file path       | Yes      |
-| `BETTER_AUTH_SECRET` | Secret key for auth encryption  | Yes      |
-| `API_PROXY_URL`      | Fallback API proxy URL          | No       |
-| `PRIMARY_API_URL`    | Primary API URL for proxy       | No       |
-| `PORT`               | API server port (default: 3001) | No       |
-| `ADMIN_AUTH_SECRET`  | Admin authentication secret     | No       |
+| Variable               | Description                                   | Required |
+| ---------------------- | --------------------------------------------- | -------- |
+| `DATABASE_URL`         | SQLite database file path                     | Yes      |
+| `BETTER_AUTH_SECRET`   | Secret key for auth encryption (min 32 chars) | Yes      |
+| `BETTER_AUTH_URL`      | Better Auth base URL                          | Yes      |
+| `RESEND_API_KEY`       | Resend API key for OTP emails                 | Yes      |
+| `RESEND_FROM_EMAIL`    | Verified sender for OTP emails                | Yes      |
+| `GOOGLE_CLIENT_ID`     | Google OAuth client ID                        | Yes      |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret                    | Yes      |
+| `API_PROXY_URL`        | Fallback API proxy URL                        | No       |
+| `PRIMARY_API_URL`      | Primary API URL for proxy                     | No       |
+| `PORT`                 | API server port (default: 3001)               | No       |
+| `ADMIN_AUTH_SECRET`    | Admin authentication secret                   | No       |
 
 ### Web (`apps/web/.env`)
 
@@ -191,7 +205,12 @@ drama-stream/
 
 ```env
 DATABASE_URL=file:.data/dracin.db
-BETTER_AUTH_SECRET=your-secret-key-here
+BETTER_AUTH_SECRET=your-secret-key-here-min-32-chars
+BETTER_AUTH_URL=http://localhost:3001
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=noreply@dracin.mukhsin.web.id
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 API_PROXY_URL=http://localhost:3002
 PRIMARY_API_URL=http://localhost:3001
 PORT=3001
@@ -244,11 +263,11 @@ VITE_API_URL=http://localhost:3001
 
 The API is built with Hono and provides RESTful endpoints for:
 
-- **Authentication** - `/api/auth/*` (Better-Auth endpoints)
+- **Authentication** - `/api/auth/*` (Better Auth endpoints including OTP verification)
 - **Dramas** - `/api/dramas` - Browse and search dramas
-- **Seasons** - `/api/seasons` - Season information
-- **Episodes** - `/api/episodes` - Episode details and streaming
+- **Videos** - `/api/video/*` and related proxy endpoints for streaming
 - **Watchlist** - `/api/watchlist` - User watchlist management
+- **Favorites** - `/api/favorites` - User favorites management
 - **History** - `/api/history` - Viewing history and progress
 - **Admin** - `/api/admin/*` - System administration
 
@@ -261,14 +280,18 @@ curl http://localhost:3001/api/dramas
 # Search dramas
 curl "http://localhost:3001/api/dramas?search=romance"
 
-# Get drama details
-curl http://localhost:3001/api/dramas/123
+# Send verification OTP
+curl -X POST http://localhost:3001/api/auth/email-otp/send-verification-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","type":"email-verification"}'
 
-# Get episodes for a drama
-curl http://localhost:3001/api/dramas/123/episodes
+# Verify email OTP
+curl -X POST http://localhost:3001/api/auth/email-otp/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","otp":"123456"}'
 ```
 
-For detailed API documentation, see [API_DOCS.md](./API_DOCS.md).
+For detailed API documentation, see [docs/API.md](./docs/API.md).
 
 ---
 
@@ -322,12 +345,13 @@ docker-compose up -d --build
 
 ### Services
 
-| Service   | Port | Description               |
-| --------- | ---- | ------------------------- |
-| web       | 3000 | TanStack Start frontend   |
-| api       | 3001 | Hono API server           |
-| api-proxy | 3002 | Fallback proxy server     |
-| postgres  | N/A  | (Not used - using SQLite) |
+| Service         | Port | Description                  |
+| --------------- | ---- | ---------------------------- |
+| web             | 3000 | TanStack Start frontend      |
+| api             | 3001 | Hono API server              |
+| api-proxy       | 3002 | Fallback proxy server        |
+| drizzle-gateway | 4983 | Drizzle Gateway / DB browser |
+| postgres        | N/A  | (Not used - using SQLite)    |
 
 ### Production Deployment
 
@@ -379,7 +403,7 @@ Shared package: packages/shared (types + schemas used across apps)
 - **TanStack Start**: Full-stack React framework with type-safe routing
 - **Hono**: Lightweight, fast web framework perfect for edge deployment
 - **Drizzle ORM**: Type-safe SQL-like ORM with excellent performance
-- **Better-Auth**: Modern authentication with session management
+- **Better-Auth**: Modern authentication with session cookies, OTP email verification, and Google OAuth
 - **SQLite**: Embedded database for reduced memory footprint and simplified deployment
 - **API-Proxy Fallback**: Circuit breaker pattern ensures high availability
 
