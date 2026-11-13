@@ -50,42 +50,80 @@ async function applyMigration0004() {
   try {
     // Check if already applied
     const check = await client.execute(`PRAGMA table_info(watch_history)`);
-    const hasDramaSlug = check.rows.some(
-      (col: any) => col.name === "drama_slug",
-    );
+    const columns = new Set(check.rows.map((col: any) => col.name));
 
-    if (hasDramaSlug) {
-      console.log("  ✅ Already applied (drama_slug column exists)");
+    if (columns.size === 0) {
+      console.log("  ⏭️  watch_history table not created yet, skipping");
       return;
     }
 
-    await client.execute(
-      `DROP INDEX IF EXISTS "watch_history_user_episode_idx"`,
-    );
-    await client.execute(`DROP INDEX IF EXISTS "watch_history_episode_idx"`);
+    // A failed previous attempt may have added drama_slug/episode_number but
+    // left episode_id behind (it is NOT NULL without a default, so inserts
+    // would fail). Treat that as still needing the rebuild.
+    const needsRebuild =
+      !columns.has("drama_slug") ||
+      !columns.has("episode_number") ||
+      columns.has("episode_id");
 
-    // Disable foreign keys temporarily to allow dropping column with FK
-    await client.execute(`PRAGMA foreign_keys = OFF`);
-
-    await client.execute(
-      `ALTER TABLE "watch_history" ADD COLUMN "drama_slug" text NOT NULL DEFAULT ''`,
-    );
-    await client.execute(
-      `ALTER TABLE "watch_history" ADD COLUMN "episode_number" integer NOT NULL DEFAULT 0`,
-    );
-
-    // Check if episode_id exists before dropping
-    const hasEpisodeId = check.rows.some(
-      (col: any) => col.name === "episode_id",
-    );
-    if (hasEpisodeId) {
-      await client.execute(
-        `ALTER TABLE "watch_history" DROP COLUMN "episode_id"`,
-      );
+    if (!needsRebuild) {
+      console.log("  ✅ Already applied (drama_slug + episode_number exist)");
+      return;
     }
 
-    // Re-enable foreign keys
-    await client.execute(`PRAGMA foreign_keys = ON`);
+    // The original table declares FOREIGN KEY (episode_id) REFERENCES
+    // episodes(id) and SQLite refuses to drop a column used by a foreign key
+    // definition, so the table must be rebuilt rather than altered in place.
+    await client.execute(`PRAGMA foreign_keys = OFF`);
+
+    await client.execute(`DROP TABLE IF EXISTS "watch_history_new"`);
+    await client.execute(`
+      CREATE TABLE "watch_history_new" (
+        "id" text PRIMARY KEY NOT NULL,
+        "user_id" text NOT NULL,
+        "drama_slug" text NOT NULL DEFAULT '',
+        "episode_number" integer NOT NULL DEFAULT 0,
+        "progress" integer DEFAULT 0 NOT NULL,
+        "watched_at" integer DEFAULT (cast((julianday('now') - 2440587.5)*86400000 as integer)) NOT NULL,
+        "completed" integer DEFAULT false NOT NULL,
+        FOREIGN KEY ("user_id") REFERENCES "users"("id") ON UPDATE no action ON DELETE cascade
+      )
+    `);
+
+    await client.execute(`
+      INSERT INTO "watch_history_new" (
+        "id", "user_id", "drama_slug", "episode_number",
+        "progress", "watched_at", "completed"
+      )
+      SELECT
+        "wh"."id",
+        "wh"."user_id",
+        COALESCE((
+          SELECT "d"."slug" FROM "episodes" "e"
+          JOIN "dramas" "d" ON "d"."id" = "e"."drama_id"
+          WHERE "e"."id" = "wh"."episode_id"
+        ), ''),
+        COALESCE((
+          SELECT "e"."number" FROM "episodes" "e" WHERE "e"."id" = "wh"."episode_id"
+        ), 0),
+        "wh"."progress",
+        "wh"."watched_at",
+        "wh"."completed"
+      FROM "watch_history" "wh"
+    `);
+
+    await client.execute(`DROP TABLE "watch_history"`);
+    await client.execute(
+      `ALTER TABLE "watch_history_new" RENAME TO "watch_history"`,
+    );
+
+    // Rows whose episode could not be resolved collapse onto ('', 0), so keep
+    // only the newest row per (user, drama, episode) before the unique index.
+    await client.execute(`
+      DELETE FROM "watch_history" WHERE "rowid" NOT IN (
+        SELECT MAX("rowid") FROM "watch_history"
+        GROUP BY "user_id", "drama_slug", "episode_number"
+      )
+    `);
 
     await client.execute(
       `CREATE UNIQUE INDEX IF NOT EXISTS "watch_history_user_drama_episode_idx" ON "watch_history" ("user_id", "drama_slug", "episode_number")`,
@@ -93,6 +131,15 @@ async function applyMigration0004() {
     await client.execute(
       `CREATE INDEX IF NOT EXISTS "watch_history_drama_slug_idx" ON "watch_history" ("drama_slug")`,
     );
+    await client.execute(
+      `CREATE INDEX IF NOT EXISTS "watch_history_user_watched_at_idx" ON "watch_history" ("user_id", "watched_at")`,
+    );
+    await client.execute(
+      `CREATE INDEX IF NOT EXISTS "watch_history_user_idx" ON "watch_history" ("user_id")`,
+    );
+
+    // Re-enable foreign keys
+    await client.execute(`PRAGMA foreign_keys = ON`);
 
     console.log("  ✅ Migration 0004 applied successfully");
   } catch (error) {
@@ -111,12 +158,21 @@ async function applyMigration0005() {
       (col: any) => col.name === "play_count",
     );
 
-    if (playCountCol && playCountCol.type === "INTEGER") {
+    // SQLite reports the declared type verbatim ("integer"), so compare
+    // case-insensitively - otherwise this rebuild would run on every boot.
+    if (
+      playCountCol &&
+      String(playCountCol.type).trim().toUpperCase() === "INTEGER"
+    ) {
       console.log("  ✅ Already applied (play_count is INTEGER)");
       return;
     }
 
     // Create new table with integer play_count
+    // Drop leftover from a previously interrupted repair attempt.
+    await client.execute(`DROP TABLE IF EXISTS "dramas_new"`);
+    // Rebuilding dramas must not cascade-delete episodes/history rows.
+    await client.execute(`PRAGMA foreign_keys = OFF`);
     await client.execute(`
       CREATE TABLE "dramas_new" (
         "id" text PRIMARY KEY NOT NULL,
@@ -185,6 +241,8 @@ async function applyMigration0005() {
     await client.execute(
       `CREATE INDEX IF NOT EXISTS "dramas_language_idx" ON "dramas" ("language")`,
     );
+
+    await client.execute(`PRAGMA foreign_keys = ON`);
 
     console.log("  ✅ Migration 0005 applied successfully");
   } catch (error) {
@@ -296,6 +354,12 @@ async function recordMigrations() {
       )
     `);
 
+    // Must be greater than the folderMillis of the last correctly ordered
+    // journal entry (0003_hot_mystique), yet smaller than any future
+    // drizzle-kit generated timestamp. Writing "now" here would make
+    // drizzle-kit skip every future migration forever.
+    const JOURNAL_BASE_TIMESTAMP = 1771479073546; // 0003_hot_mystique
+
     // Record migrations
     const migrations = [
       "0004_watch_history_refactor",
@@ -304,13 +368,21 @@ async function recordMigrations() {
       "0007_add_favorites_table",
     ];
 
-    for (const migration of migrations) {
-      if (!appliedMigrations.has(migration)) {
-        await client.execute(`
-          INSERT OR IGNORE INTO "__drizzle_migrations" (hash) VALUES ('${migration}')
-        `);
-        console.log(`  ✅ Recorded: ${migration}`);
+    for (const [index, migration] of migrations.entries()) {
+      const existing = await client.execute({
+        sql: `SELECT id FROM "__drizzle_migrations" WHERE hash = ? LIMIT 1`,
+        args: [migration],
+      });
+
+      if (existing.rows.length > 0) {
+        continue;
       }
+
+      await client.execute({
+        sql: `INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES (?, ?)`,
+        args: [migration, JOURNAL_BASE_TIMESTAMP + index + 1],
+      });
+      console.log(`  ✅ Recorded: ${migration}`);
     }
   } catch (error) {
     console.error("❌ Error recording migrations:", error);

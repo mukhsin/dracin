@@ -1,33 +1,45 @@
 #!/bin/sh
 # Entrypoint script for API container
-# Runs migrations and starts the server
+# Applies migrations, verifies the schema, then starts the server
 
 set -e
 
-echo "🔧 Running database migrations..."
+# Single source of truth for the database location.
+# Both drizzle.config.ts and the runtime read DATABASE_URL. Without it the
+# migrator defaults to file:/data/dracin.sqlite while the runtime falls back to
+# file:./.data/dracin.db, so migrations and queries would hit different files.
+export DATABASE_URL="${DATABASE_URL:-file:/data/dracin.sqlite}"
+
+echo "🗄️  DATABASE_URL=${DATABASE_URL}"
+
+# Make sure the parent directory of a local SQLite file exists.
+case "$DATABASE_URL" in
+    file:*)
+        db_path="${DATABASE_URL#file:}"
+        case "$db_path" in
+            "" | :memory:*) ;;
+            *) mkdir -p "$(dirname "$db_path")" ;;
+        esac
+        ;;
+esac
+
 cd /app/apps/api
 
-# Run drizzle-kit migrate with better error handling
+echo "🔧 Running database migrations..."
 if bunx drizzle-kit migrate --config ./drizzle.config.ts; then
-    echo "✅ Migrations completed successfully"
+    echo "✅ drizzle-kit migrate completed"
 else
-    echo "⚠️  Migration failed or skipped, checking database state..."
-    
-    # Check if critical tables exist
-    if ! bun run -e "
-        import { createClient } from '@libsql/client';
-        const client = createClient({ url: process.env.DATABASE_URL || 'file:/data/dracin.sqlite' });
-        const result = await client.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='drama_lists'\");
-        if (result.rows.length === 0) {
-            console.log('❌ drama_lists table missing, running repair...');
-            process.exit(1);
-        }
-        console.log('✅ Database appears valid');
-        await client.close();
-    " 2>/dev/null; then
-        echo "🚨 Database tables missing! Running emergency repair..."
-        bun run scripts/repair-migrations.ts
-    fi
+    echo "⚠️  drizzle-kit migrate failed - falling back to idempotent repair"
+fi
+
+# Always converge the schema. drizzle-kit silently skips migrations whose
+# journal "when" timestamp is older than the last applied one (0004-0007 in
+# this repo are older than 0003), so this idempotent pass keeps every
+# environment consistent regardless of migration bookkeeping.
+echo "🔧 Verifying schema..."
+if ! bun run scripts/repair-migrations.ts; then
+    echo "🚨 Schema verification failed"
+    exit 1
 fi
 
 echo "🚀 Starting API server..."
